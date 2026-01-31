@@ -49,8 +49,7 @@ jobs:
 
   deploy-manual:
     name: Deploy to Render (manual)
-    needs: validate
-    if: needs.validate.outputs.valid == 'true'
+    if: always()
     runs-on: ubuntu-latest
     # This job is intended to be triggered manually via workflow_dispatch.
     steps:
