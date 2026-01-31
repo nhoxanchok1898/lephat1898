@@ -1,64 +1,104 @@
 name: Deploy to Render
 
+name: Deploy to Render
+
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  deploy:
-    name: Deploy to Render
+  validate:
+    name: Validate Render credentials & service
     runs-on: ubuntu-latest
+    outputs:
+      valid: ${{ steps.check.outputs.valid }}
     steps:
       - uses: actions/checkout@v4
-      - name: Trigger Render deploy via API
+      - name: Validate secrets
+        id: check
         env:
           RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
         run: |
-          set -x
+          set -euo pipefail
           if [ -z "$RENDER_SERVICE_ID" ] || [ -z "$RENDER_API_KEY" ]; then
-            echo "RENDER_SERVICE_ID or RENDER_API_KEY not set. Aborting deploy.";
-            exit 1;
+            echo "secrets_missing=true" >> $GITHUB_OUTPUT
+            echo "RENDER_SERVICE_ID or RENDER_API_KEY not set."
+            exit 1
           fi
-          echo "Triggering deploy for service $RENDER_SERVICE_ID"
-          payload=$(cat <<'JSON'
+          echo "Checking Render service exists: $RENDER_SERVICE_ID"
+          resp=$(curl -sS -w "\nHTTP_CODE:%{http_code}\n" -H "Authorization: Bearer $RENDER_API_KEY" "https://api.render.com/v1/services/$RENDER_SERVICE_ID") || true
+          http_code=$(echo "$resp" | awk -F'HTTP_CODE:' '/HTTP_CODE/{print $2}' | tr -d '\r' || true)
+          body=$(echo "$resp" | sed -e 's/HTTP_CODE:.*//')
+          echo "$body" > validation_body.json
+          echo "HTTP_CODE=$http_code" > validation_status.txt
+          cat validation_status.txt
+          if [ "$http_code" != "200" ]; then
+            echo "Service validation failed (HTTP $http_code)" >&2
+            echo "valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          echo "valid=true" >> $GITHUB_OUTPUT
+
+      - name: Upload validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-validation
+          path: |
+            validation_body.json
+            validation_status.txt
+
+  deploy:
+    name: Deploy to Render (robust)
+    needs: validate
+    if: needs.validate.outputs.valid == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare payload
+        run: |
+          cat > render_payload.json <<'JSON'
 {"clearCache": true}
 JSON
-)
-
-          echo "$payload" > render_payload.json
-          echo "Saved payload to render_payload.json"
-
-          # send request: write headers/body/trace to files AND print verbose output to console
-          curl -v -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
+          cat render_payload.json
+      - name: Trigger deploy with retries and strict checks
+        env:
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          set -euo pipefail
+          echo "Triggering deploy for $RENDER_SERVICE_ID"
+          # attempt deploy with retries; save headers/body/trace and stdout
+          curl --retry 3 --retry-delay 5 --retry-connrefused -v -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
             -H "Authorization: Bearer $RENDER_API_KEY" \
             -H "Accept: application/json" \
             -H "Content-Type: application/json" \
             --data-binary @render_payload.json \
-            -D render_response_headers.txt \
-            -o render_response_body.txt \
-            --trace-ascii render_curl_trace.txt \
-            -w "\nHTTP_CODE:%{http_code}\n" 2>&1 | tee render_curl_stdout.txt || true
+            -D deploy_response_headers.txt \
+            -o deploy_response_body.txt \
+            --trace-ascii deploy_curl_trace.txt \
+            -w "\nHTTP_CODE:%{http_code}\n" 2>&1 | tee deploy_curl_stdout.txt || true
 
-          echo "Saved response headers to render_response_headers.txt"
-          echo "Saved response body to render_response_body.txt"
-          echo "Saved curl trace to render_curl_trace.txt"
-          echo "Saved verbose stdout to render_curl_stdout.txt"
-          echo $? > curl_exit_code.txt || true
-          ls -la || true
+          # extract HTTP code
+          http_code=$(grep -oE 'HTTP_CODE:[0-9]{3}' deploy_curl_stdout.txt | tail -n1 | cut -d: -f2 || true)
+          echo "HTTP_CODE=$http_code" > deploy_status.txt
+          cat deploy_status.txt
+          if [ -z "$http_code" ] || [ "$http_code" -ge 300 ]; then
+            echo "Deploy failed or returned non-2xx/3xx: $http_code" >&2
+            exit 1
+          fi
 
-      - name: Upload Render debug artifacts
+      - name: Upload deploy artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: render-debug
+          name: render-deploy-debug
           path: |
             render_payload.json
-            render_response_headers.txt
-            render_response_body.txt
-            render_response_status.txt
-            render_response_headers.txt
-            render_response_body.txt
-            render_curl_trace.txt
-            render_curl_stdout.txt
+            deploy_response_headers.txt
+            deploy_response_body.txt
+            deploy_curl_trace.txt
+            deploy_curl_stdout.txt
+            deploy_status.txt
             curl_exit_code.txt
