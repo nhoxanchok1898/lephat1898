@@ -98,7 +98,17 @@ JSON
           echo "CURL_EXIT=$curl_exit" >> deploy_status.txt
           cat deploy_status.txt
 
+      - name: Ensure debug files exist
+        if: always()
+        run: |
+          for f in render_payload.json deploy_response_headers.txt deploy_response_body.txt deploy_curl_trace.txt deploy_curl_stdout.txt deploy_status.txt; do
+            if [ ! -f "$f" ]; then
+              echo "MISSING: $f" > "$f"
+            fi
+          done
+
       - name: Upload deploy artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: render-deploy-debug
