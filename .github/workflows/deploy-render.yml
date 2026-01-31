@@ -30,16 +30,22 @@ JSON
           echo "$payload" > render_payload.json
           echo "Saved payload to render_payload.json"
 
-          # send request and capture headers + body
-          resp=$(curl -sS -w "\nHTTP_CODE:%{http_code}\n" -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
+          # send request and capture headers, body and curl trace for full debugging
+          curl -sS -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
             -H "Authorization: Bearer $RENDER_API_KEY" \
             -H "Accept: application/json" \
             -H "Content-Type: application/json" \
-            --data-binary "$payload")
+            --data-binary @render_payload.json \
+            -D render_response_headers.txt \
+            -o render_response_body.txt \
+            --trace-ascii render_curl_trace.txt \
+            -w "\nHTTP_CODE:%{http_code}\n" > render_response_status.txt 2>&1 || true
 
-          echo "$resp" > render_response.txt
-          echo "Saved response to render_response.txt"
-          cat render_response.txt || true
+          echo "Saved response headers to render_response_headers.txt"
+          echo "Saved response body to render_response_body.txt"
+          echo "Saved curl trace to render_curl_trace.txt"
+          echo "Saved status/output to render_response_status.txt"
+          echo $? > curl_exit_code.txt || true
           ls -la || true
 
       - name: Upload Render debug artifacts
@@ -48,4 +54,8 @@ JSON
           name: render-debug
           path: |
             render_payload.json
-            render_response.txt
+            render_response_headers.txt
+            render_response_body.txt
+            render_response_status.txt
+            render_curl_trace.txt
+            curl_exit_code.txt
