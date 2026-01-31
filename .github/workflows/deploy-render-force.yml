@@ -20,20 +20,40 @@ JSON
         env:
           RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
+          # ensure we don't exit on error so logs are captured
           set +e
           RENDER_API_KEY_CLEAN=$(printf "%s" "$RENDER_API_KEY" | tr -d '\r' || true)
           RENDER_SERVICE_ID_CLEAN=$(printf "%s" "$RENDER_SERVICE_ID" | tr -d '\r' || true)
+          RENDER_DEPLOY_HOOK_CLEAN=$(printf "%s" "$RENDER_DEPLOY_HOOK" | tr -d '\r' || true)
 
-          echo "Triggering Render deploy for $RENDER_SERVICE_ID_CLEAN"
+          echo "Triggering Render deploy (hook present? ${RENDER_DEPLOY_HOOK_CLEAN:+yes})"
 
-          curl --retry 3 --retry-delay 5 --retry-connrefused -v -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID_CLEAN/deploys" \
-            -H "Authorization: Bearer $RENDER_API_KEY_CLEAN" \
-            -H "Accept: application/json" \
-            -H "Content-Type: application/json" \
-            --data-binary @render_payload.json \
-            -D deploy_response_headers.txt -o deploy_response_body.txt --trace-ascii deploy_curl_trace.txt -w "\nHTTP_CODE:%{http_code}\n" 2>&1 | tee deploy_curl_stdout.txt || true
-          echo "CURL_EXIT=$?" > deploy_status.txt || true
+          if [ -n "$RENDER_DEPLOY_HOOK_CLEAN" ]; then
+            echo "Using deploy hook URL"
+            curl --retry 3 --retry-delay 5 --retry-connrefused -v -X POST "$RENDER_DEPLOY_HOOK_CLEAN" \
+              -H "Authorization: Bearer $RENDER_API_KEY_CLEAN" \
+              -H "Accept: application/json" \
+              -H "Content-Type: application/json" \
+              --data-binary @render_payload.json \
+              -D deploy_response_headers.txt -o deploy_response_body.txt --trace-ascii deploy_curl_trace.txt -w "\nHTTP_CODE:%{http_code}\n" 2>&1 | tee deploy_curl_stdout.txt || true
+            echo "CURL_EXIT=$?" > deploy_status.txt || true
+          elif [ -n "$RENDER_SERVICE_ID_CLEAN" ]; then
+            echo "Using Render REST API with service id"
+            curl --retry 3 --retry-delay 5 --retry-connrefused -v -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID_CLEAN/deploys" \
+              -H "Authorization: Bearer $RENDER_API_KEY_CLEAN" \
+              -H "Accept: application/json" \
+              -H "Content-Type: application/json" \
+              --data-binary @render_payload.json \
+              -D deploy_response_headers.txt -o deploy_response_body.txt --trace-ascii deploy_curl_trace.txt -w "\nHTTP_CODE:%{http_code}\n" 2>&1 | tee deploy_curl_stdout.txt || true
+            echo "CURL_EXIT=$?" > deploy_status.txt || true
+          else
+            echo "No deploy hook or service id found in secrets" > deploy_response_body.txt
+            echo "CURL_EXIT=127" > deploy_status.txt
+          fi
+
+          # restore errexit behavior for remaining steps
           set -e
 
       - name: Ensure debug files exist
@@ -45,6 +65,7 @@ JSON
           done
 
       - name: Upload deploy logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: render-deploy-debug
