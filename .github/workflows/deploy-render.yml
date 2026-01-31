@@ -15,6 +15,18 @@ jobs:
       valid: ${{ steps.check.outputs.valid }}
     steps:
       - uses: actions/checkout@v4
+      - name: Record validation start
+        if: always()
+        run: |
+          echo "validation_start: $(date -u)" > validation_run_start.txt
+          echo "run_id: $GITHUB_RUN_ID" >> validation_run_start.txt
+          cat validation_run_start.txt
+      - name: Upload validation start artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-validation-start
+          path: validation_run_start.txt
       - name: Validate secrets
         id: check
         env:
@@ -57,6 +69,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Record deploy start
+        if: always()
+        run: |
+          echo "deploy_start: $(date -u)" > deploy_run_start.txt
+          echo "run_id: $GITHUB_RUN_ID" >> deploy_run_start.txt
+          cat deploy_run_start.txt
+      - name: Upload deploy start artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-deploy-start
+          path: deploy_run_start.txt
       - name: Prepare payload
         run: |
           cat > render_payload.json <<'JSON'
