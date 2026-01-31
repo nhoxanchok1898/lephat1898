@@ -1,0 +1,79 @@
+param(
+  [string]$workflow = "django-ci.yml",
+  [string]$ref = "main",
+  [int]$timeoutSeconds = 1200,
+  [int]$pollInterval = 5
+)
+
+function Fail($msg){ Write-Error $msg; exit 2 }
+
+# Check gh
+if (-not (Get-Command gh -ErrorAction SilentlyContinue)){
+  Fail "gh CLI not found. Install it: winget install GitHub.cli"
+}
+
+# Trigger workflow
+Write-Host "Triggering workflow '$workflow' on ref '$ref'..."
+$trigger = gh workflow run $workflow --ref $ref 2>&1
+if ($LASTEXITCODE -ne 0){
+  Write-Host $trigger
+  Fail "Failed to trigger workflow."
+}
+Write-Host $trigger
+
+$start = Get-Date
+$runId = $null
+
+Write-Host "Polling for run id and status (timeout ${timeoutSeconds}s)..."
+while ((Get-Date) - $start).TotalSeconds -lt $timeoutSeconds {
+  try {
+    $list = gh run list --workflow $workflow --limit 5 2>&1
+  } catch {
+    Fail "Failed to list runs: $_"
+  }
+
+  # Try to extract run id from the topmost line that starts with digits
+  $lines = $list -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
+  foreach ($ln in $lines) {
+    if ($ln -match '^(\d+)'){
+      $runId = $Matches[1]; break
+    }
+  }
+
+  if ($runId) {
+    Write-Host "Found run id: $runId"
+    # Check status
+    $statusRaw = gh run view $runId 2>&1
+    if ($LASTEXITCODE -ne 0){
+      Write-Host $statusRaw
+      Fail "Failed to view run $runId"
+    }
+
+    $statusText = ($statusRaw -split "`n" | Where-Object { $_ -match 'Status:' } | Select-Object -First 1)
+    if (-not $statusText) { $statusText = ($statusRaw -split "`n" | Where-Object { $_ -match 'Conclusion:' } | Select-Object -First 1) }
+    $statusText = $statusText -replace '^.*Status:\s*',''
+    $statusText = $statusText.Trim()
+    Write-Host "Run status: $statusText"
+
+    if ($statusText -and ($statusText -ieq 'completed' -or $statusText -ieq 'failure' -or $statusText -ieq 'cancelled' -or $statusText -ieq 'success' -or $statusText -ieq 'neutral')){
+      break
+    }
+  }
+
+  Start-Sleep -Seconds $pollInterval
+}
+
+if (-not $runId){ Fail "Timed out waiting for run id." }
+
+Write-Host "Showing logs for run $runId..."
+gh run view $runId --log
+
+Write-Host "Downloading artifacts for run $runId into ./artifacts/$runId ..."
+gh run download $runId --dir ./artifacts/$runId
+if ($LASTEXITCODE -ne 0){
+  Fail "Failed to download artifacts for run $runId"
+}
+
+Write-Host "Done. Artifacts saved to ./artifacts/$runId"
+
+exit 0
