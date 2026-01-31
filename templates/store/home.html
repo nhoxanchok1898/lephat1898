@@ -1,0 +1,56 @@
+{% extends 'store/base.html' %}
+{% load static %}
+{% block title %}Home - Paint Store{% endblock %}
+{% block content %}
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-left">
+        <h1 class="headline">Mua sơn chất lượng — Giá hợp lý</h1>
+        <p class="sub">Chọn màu, thể tích và thương hiệu bạn tin dùng. Giao hàng nhanh chóng.</p>
+        <p>
+          <a class="btn" href="{% url 'store:product_list' %}">Xem sản phẩm</a>
+          <a class="btn secondary" href="{% url 'store:contact' %}">Liên hệ</a>
+        </p>
+      </div>
+      <div class="hero-media" aria-hidden="true">
+        <img src="{% static 'images/paint-splash.svg' %}" alt="paint splash" class="media-img">
+      </div>
+    </div>
+  </section>
+
+  <h2 class="mt-3">Thương hiệu nổi bật</h2>
+  <div class="brands">
+    {% for b in brands %}
+      <div class="brand-item text-center">
+        {% if b.logo %}
+          <img src="{{ b.logo.url }}" class="brand-logo" alt="{{ b.name }}">
+        {% endif %}
+        <div class="muted">{{ b.name }}</div>
+      </div>
+    {% empty %}
+      <p>No brands yet.</p>
+    {% endfor %}
+  </div>
+
+  <h2 class="mt-4">Sản phẩm mới</h2>
+  <div class="product-grid container">
+    {% for p in new_products %}
+      <article class="card product-card">
+        <div class="product-thumb">
+          {% if p.image %}
+            <img src="{{ p.image.url }}" alt="{{ p.name }}" class="img-fluid">
+          {% else %}
+            <img src="{% static 'images/product-placeholder.svg' %}" alt="No image" class="img-fluid">
+          {% endif %}
+        </div>
+        <div class="card-body">
+          <div class="title">{{ p.name }}</div>
+          <div class="price">{{ p.price }} VND</div>
+          <div style="margin-top:8px"><a class="btn" href="{% url 'store:product_detail' p.pk %}">Xem chi tiết</a></div>
+        </div>
+      </article>
+    {% empty %}
+      <p>No products yet.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

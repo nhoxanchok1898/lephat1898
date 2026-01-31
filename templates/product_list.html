@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Product List{% endblock %}
+
+{% block content %}
+<h2>Product List</h2>
+<form method="get">
+    <label>Category:</label>
+    <select name="category">
+        <option value="">All</option>
+        <option value="paint">Sơn</option>
+        <option value="waterproof">Chống thấm</option>
+        <option value="putty">Bột trét</option>
+        <option value="other">Khác</option>
+    </select>
+
+    <label>Brand:</label>
+    <select name="brand">
+        <option value="">All</option>
+        {% for brand in brands %}
+        <option value="{{ brand.name }}">{{ brand.name }}</option>
+        {% endfor %}
+    </select>
+
+    <label>Unit:</label>
+    <select name="unit">
+        <option value="">All</option>
+        <option value="L">Lít</option>
+        <option value="KG">Kg</option>
+    </select>
+
+    <button type="submit">Filter</button>
+</form>
+
+<ul>
+    {% for product in products %}
+    <li>
+        <a href="/products/{{ product.id }}/">{{ product.name }}</a> - {{ product.price }} {{ product.unit }}
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

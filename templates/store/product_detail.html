@@ -1,0 +1,61 @@
+{% extends 'store/base.html' %}
+{% load static %}
+{% load watermark_extras %}
+{% block title %}{{ product.name }} - Paint Store{% endblock %}
+{% block meta %}
+  <meta name="description" content="{{ product.name }} — {{ product.brand.name }}. Giá: {{ product.price }}. Mua ngay tại Paint Store." />
+  <meta property="og:title" content="{{ product.name }}" />
+  <meta property="og:description" content="{{ product.name }} — {{ product.brand.name }}" />
+  <meta property="og:image" content="{% if product.image %}{{ product.image.url }}{% else %}{{ STATIC_URL }}images/product-placeholder.svg{% endif %}" />
+{% endblock %}
+{% block content %}
+  <section class="container product-detail" aria-labelledby="product-title">
+    <div class="product-detail-inner">
+      <div class="product-media card">
+        {% if product.image %}
+          <img src="{{ product.image|watermarked }}" alt="{{ product.name }}" class="img-fluid product-main-img">
+        {% else %}
+          <img src="{% static 'images/product-placeholder.svg' %}" alt="No image" class="img-fluid product-main-img">
+        {% endif %}
+      </div>
+      <div class="product-info">
+        <h1 id="product-title">{{ product.name }}</h1>
+        <div class="price">{{ product.price }} VND</div>
+        <div class="muted small">{{ product.brand.name }} • {% if product.category %}{{ product.category.name }}{% else %}—{% endif %}</div>
+        <p class="mt-2">Thể tích: <strong>{{ product.volume }}</strong> {{ product.unit_type }}</p>
+        <form method="post" action="{% url 'store:cart_add' product.pk %}" aria-label="Add {{ product.name }} to cart">
+          {% csrf_token %}
+          <label for="quantity">Số lượng</label>
+          <div class="mt-2" style="display:flex;gap:8px;align-items:center">
+            <input id="quantity" type="number" name="quantity" value="1" min="1" class="form-control" style="width:120px" aria-label="Quantity">
+            <button class="btn" type="submit">Thêm vào giỏ</button>
+          </div>
+        </form>
+        <div class="mt-3">
+          <a class="btn secondary" href="{% url 'store:product_list' %}">Quay lại danh sách</a>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+{% block scripts %}
+  {{ block.super }}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": "{{ product.name }}",
+    "image": "{% if product.image %}{{ product.image.url }}{% else %}{{ STATIC_URL }}images/product-placeholder.svg{% endif %}",
+    "description": "{{ product.name }} — {{ product.brand.name }}",
+    "sku": "{{ product.pk }}",
+    "brand": { "@type": "Brand", "name": "{{ product.brand.name }}" },
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "VND",
+      "price": "{{ product.price }}",
+      "availability": "{% if product.is_active %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
+      "url": "{{ product.get_absolute_url }}"
+    }
+  }
+  </script>
+{% endblock %}
