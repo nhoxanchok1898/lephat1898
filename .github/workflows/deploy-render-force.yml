@@ -16,6 +16,24 @@ jobs:
 {"clearCache": true}
 JSON
           cat render_payload.json
+      - name: DEBUG — pre-curl checkpoint
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          echo "=== DEBUG CHECKPOINT ==="
+          echo "PWD=$(pwd)"
+          echo "USER=$(whoami)"
+          echo "SHELL=$SHELL"
+          echo "DATE=$(date)"
+
+          echo "---- Secrets presence ----"
+          [ -n "$RENDER_DEPLOY_HOOK" ] && echo "RENDER_DEPLOY_HOOK=SET" || echo "RENDER_DEPLOY_HOOK=EMPTY"
+          [ -n "$RENDER_API_KEY" ] && echo "RENDER_API_KEY=SET" || echo "RENDER_API_KEY=EMPTY"
+          [ -n "$RENDER_SERVICE_ID" ] && echo "RENDER_SERVICE_ID=SET" || echo "RENDER_SERVICE_ID=EMPTY"
+
+          echo "---- Writing sentinel files ----"
+          echo "debug checkpoint reached" > debug_checkpoint.txt
       - name: Force trigger deploy (always)
         env:
           RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
@@ -71,6 +89,8 @@ JSON
           name: render-deploy-debug
           path: |
             render_payload.json
+            render_deploy_test.txt
+            debug_checkpoint.txt
             deploy_response_headers.txt
             deploy_response_body.txt
             deploy_curl_trace.txt
