@@ -1,0 +1,104 @@
+name: Deploy to Render - Safe Staged
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  validate:
+    name: Validate Render credentials
+    runs-on: ubuntu-latest
+    outputs:
+      valid: ${{ steps.check.outputs.valid }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check secrets
+        id: check
+        env:
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$RENDER_SERVICE_ID" ] || [ -z "$RENDER_API_KEY" ]; then
+            echo "valid=false" >> $GITHUB_OUTPUT
+            echo "Missing Render secrets" >&2
+            exit 1
+          fi
+          echo "Checking Render service: $RENDER_SERVICE_ID"
+          resp=$(curl -sS -w "\nHTTP_CODE:%{http_code}\n" -H "Authorization: Bearer $RENDER_API_KEY" "https://api.render.com/v1/services/$RENDER_SERVICE_ID") || true
+          http_code=$(echo "$resp" | awk -F'HTTP_CODE:' '/HTTP_CODE/{print $2}' | tr -d '\r' || true)
+          body=$(echo "$resp" | sed -e 's/HTTP_CODE:.*//')
+          echo "$body" > validation_body.json || true
+          echo "HTTP_CODE=$http_code" > validation_status.txt || true
+          if [ "$http_code" != "200" ]; then
+            echo "valid=false" >> $GITHUB_OUTPUT
+            echo "Service check HTTP $http_code" >&2
+            exit 1
+          fi
+          echo "valid=true" >> $GITHUB_OUTPUT
+
+      - name: Upload validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-validation
+          path: |
+            validation_body.json
+            validation_status.txt
+
+  deploy-manual:
+    name: Deploy to Render (manual)
+    needs: validate
+    if: needs.validate.outputs.valid == 'true'
+    runs-on: ubuntu-latest
+    # This job is intended to be triggered manually via workflow_dispatch.
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare payload
+        run: |
+          cat > render_payload.json <<'JSON'
+{"clearCache": true}
+JSON
+          cat render_payload.json
+      - name: Show curl command (dry-run)
+        run: |
+          echo "curl -v -X POST https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys -H 'Authorization: Bearer ****' -H 'Content-Type: application/json' --data-binary @render_payload.json"
+      - name: Trigger deploy (REAL)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          set -euo pipefail
+          RENDER_API_KEY_CLEAN=$(printf "%s" "$RENDER_API_KEY" | tr -d '\r')
+          RENDER_SERVICE_ID_CLEAN=$(printf "%s" "$RENDER_SERVICE_ID" | tr -d '\r')
+          curl --retry 3 --retry-delay 5 --retry-connrefused -v -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID_CLEAN/deploys" \
+            -H "Authorization: Bearer $RENDER_API_KEY_CLEAN" \
+            -H "Accept: application/json" \
+            -H "Content-Type: application/json" \
+            --data-binary @render_payload.json \
+            -D deploy_response_headers.txt -o deploy_response_body.txt --trace-ascii deploy_curl_trace.txt -w "\nHTTP_CODE:%{http_code}\n" 2>&1 | tee deploy_curl_stdout.txt || true
+          echo "CURL_EXIT=$?" > deploy_status.txt || true
+
+      - name: Ensure debug files exist
+        if: always()
+        run: |
+          for f in render_payload.json deploy_response_headers.txt deploy_response_body.txt deploy_curl_trace.txt deploy_curl_stdout.txt deploy_status.txt; do
+            if [ ! -f "$f" ]; then
+              echo "MISSING: $f" > "$f"
+            fi
+          done
+
+      - name: Upload deploy artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-deploy-debug
+          path: |
+            render_payload.json
+            deploy_response_headers.txt
+            deploy_response_body.txt
+            deploy_curl_trace.txt
+            deploy_curl_stdout.txt
+            deploy_status.txt
