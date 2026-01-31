@@ -1,6 +1,9 @@
 param(
   [string]$workflow = "django-ci.yml",
   [string]$ref = "main",
+param(
+  [string]$workflow = "django-ci.yml",
+  [string]$ref = "main",
   [int]$timeoutSeconds = 1200,
   [int]$pollInterval = 5
 )
