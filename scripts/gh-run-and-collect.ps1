@@ -27,37 +27,48 @@ $runId = $null
 Write-Host "Polling for run id and status (timeout ${timeoutSeconds}s)..."
 while ((Get-Date) - $start).TotalSeconds -lt $timeoutSeconds {
   try {
-    $list = gh run list --workflow $workflow --limit 5 2>&1
+    $json = gh run list --workflow $workflow --limit 5 --json databaseId,headBranch,createdAt,status,conclusion 2>&1
   } catch {
     Fail "Failed to list runs: $_"
   }
 
-  # Try to extract run id from the topmost line that starts with digits
-  $lines = $list -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
-  foreach ($ln in $lines) {
-    if ($ln -match '^(\d+)'){
-      $runId = $Matches[1]; break
+  # If gh returned an error string, show it
+  if ($json -is [string] -and $json.Trim().StartsWith('{') -ne $true -and $json.Trim().StartsWith('[') -ne $true) {
+    Write-Host $json
+  }
+
+  try {
+    $runs = $json | ConvertFrom-Json -ErrorAction Stop
+  } catch {
+    # Could not parse JSON; fallback to text parsing
+    $runs = @()
+  }
+
+  if ($runs -and $runs.Count -gt 0) {
+    # pick the newest run for the workflow on the desired ref
+    $candidate = $runs | Sort-Object {[datetime]$_.createdAt} -Descending | Select-Object -First 1
+    if ($candidate) { $runId = $candidate.databaseId }
+  } else {
+    # fallback: text parse of gh run list
+    $lines = $json -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
+    foreach ($ln in $lines) {
+      if ($ln -match '^(\d+)') { $runId = $Matches[1]; break }
     }
   }
 
   if ($runId) {
     Write-Host "Found run id: $runId"
     # Check status
-    $statusRaw = gh run view $runId 2>&1
-    if ($LASTEXITCODE -ne 0){
-      Write-Host $statusRaw
-      Fail "Failed to view run $runId"
-    }
+    $statusRaw = gh run view $runId --json status,conclusion 2>&1
+    if ($LASTEXITCODE -ne 0) { Write-Host $statusRaw; Fail "Failed to view run $runId" }
 
-    $statusText = ($statusRaw -split "`n" | Where-Object { $_ -match 'Status:' } | Select-Object -First 1)
-    if (-not $statusText) { $statusText = ($statusRaw -split "`n" | Where-Object { $_ -match 'Conclusion:' } | Select-Object -First 1) }
-    $statusText = $statusText -replace '^.*Status:\s*',''
+    try { $statusObj = $statusRaw | ConvertFrom-Json -ErrorAction Stop } catch { $statusObj = $null }
+    $statusText = $null
+    if ($statusObj) { $statusText = $statusObj.status } else { $statusText = ($statusRaw -split "`n" | Where-Object { $_ -match 'Status:' } | Select-Object -First 1) -replace '^.*Status:\s*','' }
     $statusText = $statusText.Trim()
     Write-Host "Run status: $statusText"
 
-    if ($statusText -and ($statusText -ieq 'completed' -or $statusText -ieq 'failure' -or $statusText -ieq 'cancelled' -or $statusText -ieq 'success' -or $statusText -ieq 'neutral')){
-      break
-    }
+    if ($statusText -and ($statusText -ieq 'completed' -or $statusText -ieq 'failure' -or $statusText -ieq 'cancelled' -or $statusText -ieq 'success' -or $statusText -ieq 'neutral')){ break }
   }
 
   Start-Sleep -Seconds $pollInterval
