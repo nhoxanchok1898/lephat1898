@@ -1,0 +1,46 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block title %}Share Wishlist - Paint Store{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Share Your Wishlist</h3>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <p>Share your wishlist with friends and family. They'll be able to see the products you want!</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">Generate Share Link</button>
+                </form>
+                
+                <div class="mt-4">
+                    <h5>Your Wishlist Items:</h5>
+                    <ul class="list-group">
+                        {% for item in wishlist_items %}
+                        <li class="list-group-item">
+                            {{ item.product.name }} - ${{ item.product.price }}
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item">No items in wishlist</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

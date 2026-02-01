@@ -107,3 +107,75 @@ class OrderAdmin(admin.ModelAdmin):
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ('id', 'order', 'product', 'quantity', 'price')
+
+
+# Register new e-commerce models
+from .models import UserProfile, Wishlist, Review, ReviewImage, ReviewHelpful, PaymentLog, EmailLog
+
+
+class ReviewImageInline(admin.TabularInline):
+    model = ReviewImage
+    extra = 0
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'phone', 'email_verified', 'created_at')
+    list_filter = ('email_verified', 'created_at')
+    search_fields = ('user__username', 'user__email', 'phone')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(Wishlist)
+class WishlistAdmin(admin.ModelAdmin):
+    list_display = ('user', 'product', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('user__username', 'product__name')
+    readonly_fields = ('created_at',)
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ('product', 'user', 'rating', 'verified_purchase', 'is_approved', 'helpful_count', 'created_at')
+    list_filter = ('rating', 'verified_purchase', 'is_approved', 'created_at')
+    search_fields = ('product__name', 'user__username', 'comment')
+    list_editable = ('is_approved',)
+    readonly_fields = ('created_at', 'updated_at')
+    inlines = [ReviewImageInline]
+    actions = ['approve_reviews']
+    
+    def approve_reviews(self, request, queryset):
+        queryset.update(is_approved=True)
+        self.message_user(request, f'{queryset.count()} reviews approved.')
+    approve_reviews.short_description = 'Approve selected reviews'
+
+
+@admin.register(ReviewImage)
+class ReviewImageAdmin(admin.ModelAdmin):
+    list_display = ('review', 'image', 'created_at')
+    list_filter = ('created_at',)
+    readonly_fields = ('created_at',)
+
+
+@admin.register(ReviewHelpful)
+class ReviewHelpfulAdmin(admin.ModelAdmin):
+    list_display = ('review', 'user', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('review__product__name', 'user__username')
+    readonly_fields = ('created_at',)
+
+
+@admin.register(PaymentLog)
+class PaymentLogAdmin(admin.ModelAdmin):
+    list_display = ('order', 'transaction_id', 'amount', 'status', 'payment_method', 'created_at')
+    list_filter = ('status', 'payment_method', 'created_at')
+    search_fields = ('transaction_id', 'order__full_name')
+    readonly_fields = ('created_at',)
+
+
+@admin.register(EmailLog)
+class EmailLogAdmin(admin.ModelAdmin):
+    list_display = ('recipient', 'subject', 'template_name', 'status', 'sent_at')
+    list_filter = ('status', 'sent_at')
+    search_fields = ('recipient', 'subject')
+    readonly_fields = ('sent_at',)
