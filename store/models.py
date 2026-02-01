@@ -147,6 +147,13 @@ class ProductViewAnalytics(models.Model):
 
     def __str__(self):
         return f"Analytics for {self.product.name}"
+    
+    def update_view_count(self):
+        """Update view count and last viewed timestamp"""
+        from django.utils import timezone
+        self.total_views += 1
+        self.last_viewed = timezone.now()
+        self.save()
 
 
 class StockLevel(models.Model):
@@ -308,6 +315,55 @@ class Coupon(models.Model):
 
     def __str__(self):
         return self.code
+    
+    def is_valid(self):
+        """Check if coupon is valid and can be used"""
+        from django.utils import timezone
+        now = timezone.now()
+        
+        # Check if active
+        if not self.is_active:
+            return False
+        
+        # Check date range (start_date and end_date)
+        if self.start_date and now < self.start_date:
+            return False
+        if self.end_date and now > self.end_date:
+            return False
+        
+        # Check date range (valid_from and valid_to)
+        if self.valid_from and now < self.valid_from:
+            return False
+        if self.valid_to and now > self.valid_to:
+            return False
+        
+        # Check usage limit
+        if self.max_uses and self.used_count >= self.max_uses:
+            return False
+        
+        return True
+    
+    def calculate_discount(self, cart_total):
+        """Calculate discount amount based on cart total"""
+        from decimal import Decimal
+        
+        if not self.is_valid():
+            return Decimal('0')
+        
+        # Use discount_value if available (new unified field)
+        if self.discount_value:
+            if self.discount_type == self.DISCOUNT_PERCENTAGE:
+                return (cart_total * self.discount_value / Decimal('100'))
+            elif self.discount_type == self.DISCOUNT_FIXED:
+                return min(self.discount_value, cart_total)
+        
+        # Fallback to legacy fields
+        if self.discount_percentage:
+            return (cart_total * self.discount_percentage / Decimal('100'))
+        elif self.discount_amount:
+            return min(self.discount_amount, cart_total)
+        
+        return Decimal('0')
 
 
 class AppliedCoupon(models.Model):
