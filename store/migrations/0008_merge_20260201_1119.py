@@ -5,11 +5,10 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
+    # Adjusted dependencies to match local migration filenames
     dependencies = [
-        ('store', '0006_cart_cartitem_coupon_productview_review_savedsearch_and_more'),
-        ('store', '0006_emaillog_review_userprofile_reviewimage_paymentlog_and_more'),
-        ('store', '0006_emailtemplate_orderanalytics_useranalytics_and_more'),
-        ('store', '0007_loginattempt_suspiciousactivity'),
+        ('store', '0006_phase2_models'),
+        ('store', '0007_product_description_product_is_new_product_rating_and_more'),
     ]
 
     operations = [

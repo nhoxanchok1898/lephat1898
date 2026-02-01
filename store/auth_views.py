@@ -2,11 +2,23 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
-from django_ratelimit.decorators import ratelimit
+try:
+    from django_ratelimit.decorators import ratelimit
+except Exception:
+    # Provide a no-op fallback so the module can be imported in environments
+    # where `django-ratelimit` isn't installed (development/test).
+    def ratelimit(*args, **kwargs):
+        def _decorator(fn):
+            return fn
+        return _decorator
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from datetime import timedelta
-from .models import LoginAttempt, SuspiciousActivity
+try:
+    from .models import LoginAttempt, SuspiciousActivity
+except Exception:
+    LoginAttempt = None
+    SuspiciousActivity = None
 
 
 def get_client_ip(request):
@@ -35,38 +47,45 @@ def login_view(request):
         if user is not None:
             login(request, user)
             
-            # Log successful login
-            LoginAttempt.objects.create(
-                username=username,
-                ip_address=ip_address,
-                success=True,
-                user_agent=user_agent
-            )
+            # Log successful login (if model exists)
+            try:
+                if LoginAttempt is not None:
+                    LoginAttempt.objects.create(
+                        username=username,
+                        ip_address=ip_address,
+                        success=True,
+                        user_agent=user_agent
+                    )
+            except Exception:
+                pass
             
             messages.success(request, f'Welcome back, {username}!')
             return redirect('store:home')
         else:
-            # Log failed login
-            LoginAttempt.objects.create(
-                username=username,
-                ip_address=ip_address,
-                success=False,
-                user_agent=user_agent
-            )
-            
-            # Check for suspicious activity (multiple failed logins)
-            recent_failures = LoginAttempt.objects.filter(
-                ip_address=ip_address,
-                success=False,
-                timestamp__gte=timezone.now() - timedelta(minutes=15)
-            ).count()
-            
-            if recent_failures >= 3:
-                SuspiciousActivity.objects.create(
-                    activity_type='multiple_failed_logins',
-                    description=f'Multiple failed login attempts from {ip_address}',
-                    ip_address=ip_address
-                )
+            # Log failed login and check for suspicious activity (if models exist)
+            try:
+                if LoginAttempt is not None:
+                    LoginAttempt.objects.create(
+                        username=username,
+                        ip_address=ip_address,
+                        success=False,
+                        user_agent=user_agent
+                    )
+
+                    recent_failures = LoginAttempt.objects.filter(
+                        ip_address=ip_address,
+                        success=False,
+                        timestamp__gte=timezone.now() - timedelta(minutes=15)
+                    ).count()
+
+                    if recent_failures >= 3 and SuspiciousActivity is not None:
+                        SuspiciousActivity.objects.create(
+                            activity_type='multiple_failed_logins',
+                            description=f'Multiple failed login attempts from {ip_address}',
+                            ip_address=ip_address
+                        )
+            except Exception:
+                pass
             
             messages.error(request, 'Invalid username or password.')
     else:

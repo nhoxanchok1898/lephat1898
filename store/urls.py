@@ -1,6 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from django.contrib.auth import views as dj_auth_views
 from . import views
+from . import auth_views
 from . import recommendation_views
 from . import inventory_views
 from . import analytics_views
@@ -31,6 +33,14 @@ urlpatterns = [
     path('cart/ajax/remove/<int:pk>/', views.cart_remove_ajax, name='cart_remove_ajax'),
     path('cart/remove/<int:pk>/', views.cart_remove, name='cart_remove'),
     path('checkout/', views.checkout_view, name='checkout'),
+    # Auth views inside the `store` namespace so templates using
+    # `{% url 'store:login' %}` resolve correctly.
+    path('login/', dj_auth_views.LoginView.as_view(template_name='auth/login.html'), name='login'),
+    path('logout/', dj_auth_views.LogoutView.as_view(), name='logout'),
+    # App-level auth endpoints (register, custom login/logout handlers)
+    path('auth/register/', auth_views.register_view, name='register'),
+    path('auth/login/', auth_views.login_view, name='auth_login'),
+    path('auth/logout/', auth_views.logout_view, name='auth_logout'),
     path('checkout/success/', views.checkout_success, name='checkout_success'),
     path('payments/stripe/create/', views.stripe_create_session, name='stripe_create'),
     path('payments/stripe/success/', views.stripe_success, name='stripe_success'),
@@ -74,6 +84,12 @@ urlpatterns = [
     path('inventory/alerts/', inventory_views.low_stock_alert_view, name='low_stock_alerts'),
     path('inventory/pre-order/<int:product_id>/', inventory_views.pre_order_create, name='pre_order'),
     path('inventory/notify/<int:product_id>/', inventory_views.back_in_stock_notification, name='back_in_stock'),
+
+    # Wishlist (session-backed) URLs
+    path('wishlist/', views.wishlist_view, name='wishlist'),
+    path('wishlist/add/<int:product_id>/', views.wishlist_add, name='wishlist_add'),
+    path('wishlist/remove/<int:product_id>/', views.wishlist_remove, name='wishlist_remove'),
+    path('wishlist/share/', views.wishlist_share, name='wishlist_share'),
     
     # Analytics URLs
     path('dashboard/', analytics_views.admin_dashboard, name='admin_dashboard'),

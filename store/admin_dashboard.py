@@ -141,11 +141,28 @@ def get_sales_trend_data(start_date):
         orders=Count('id', distinct=True)
     ).order_by('day')
     
-    return {
-        'labels': [item['day'].strftime('%Y-%m-%d') for item in sales_by_day],
-        'revenue': [float(item['revenue'] or 0) for item in sales_by_day],
-        'orders': [item['orders'] for item in sales_by_day],
-    }
+    labels = []
+    revenue = []
+    orders = []
+    for item in sales_by_day:
+        day = item.get('day')
+        # Some DB backends may return date as string; normalize to date
+        if isinstance(day, str):
+            try:
+                day_obj = datetime.strptime(day, '%Y-%m-%d').date()
+            except Exception:
+                # fallback: keep as string
+                labels.append(str(day))
+            else:
+                labels.append(day_obj.strftime('%Y-%m-%d'))
+        elif hasattr(day, 'strftime'):
+            labels.append(day.strftime('%Y-%m-%d'))
+        else:
+            labels.append(str(day))
+        revenue.append(float(item.get('revenue') or 0))
+        orders.append(item.get('orders') or 0)
+
+    return {'labels': labels, 'revenue': revenue, 'orders': orders}
 
 
 def get_top_products_data(limit=10):
@@ -203,7 +220,18 @@ def get_user_growth_data(start_date):
     for item in users_by_day:
         total += item['count']
         cumulative.append(total)
-        labels.append(item['day'].strftime('%Y-%m-%d'))
+        day = item.get('day')
+        if isinstance(day, str):
+            try:
+                day_obj = datetime.strptime(day, '%Y-%m-%d').date()
+            except Exception:
+                labels.append(str(day))
+            else:
+                labels.append(day_obj.strftime('%Y-%m-%d'))
+        elif hasattr(day, 'strftime'):
+            labels.append(day.strftime('%Y-%m-%d'))
+        else:
+            labels.append(str(day))
     
     return {
         'labels': labels,

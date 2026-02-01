@@ -620,6 +620,60 @@ def trending_products(request):
     })
 
 
+# --- Wishlist views (session-backed, minimal implementation) ---
+@login_required
+def wishlist_view(request):
+    w = request.session.get('wishlist', [])
+    products = Product.objects.filter(pk__in=w)
+    total = sum([p.price for p in products])
+    return render(request, 'wishlist/wishlist.html', {
+        'wishlist_items': products,
+        'total_value': total,
+    })
+
+
+@require_POST
+@login_required
+def wishlist_add(request, product_id):
+    # Add product id to session wishlist
+    try:
+        p = Product.objects.get(pk=product_id, is_active=True)
+    except Product.DoesNotExist:
+        return JsonResponse({'error': 'not found'}, status=404)
+    w = request.session.setdefault('wishlist', [])
+    if product_id not in w:
+        w.append(product_id)
+        request.session.modified = True
+    # If request is AJAX/Fetch, return JSON; otherwise redirect back
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+        return JsonResponse({'status': 'ok', 'added': product_id})
+    return redirect(request.META.get('HTTP_REFERER', 'store:product_list'))
+
+
+@require_POST
+@login_required
+def wishlist_remove(request, product_id):
+    w = request.session.get('wishlist', [])
+    if product_id in w:
+        try:
+            w.remove(product_id)
+            request.session.modified = True
+        except ValueError:
+            pass
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+        return JsonResponse({'status': 'ok', 'removed': product_id})
+    return redirect('store:wishlist')
+
+
+@login_required
+def wishlist_share(request):
+    # Minimal sharing page (static form in template)
+    w = request.session.get('wishlist', [])
+    products = Product.objects.filter(pk__in=w)
+    owner = request.user
+    return render(request, 'wishlist/share.html', {'wishlist_items': products, 'owner': owner})
+
+
 @login_required
 def admin_dashboard(request):
     """Enhanced admin dashboard with KPIs and analytics"""

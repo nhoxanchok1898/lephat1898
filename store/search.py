@@ -48,13 +48,18 @@ class ProductSearch:
         page_obj = paginator.get_page(page)
         
         return {
-            'results': page_obj.object_list,
+            'results': list(page_obj.object_list),
             'page': page,
             'total_pages': paginator.num_pages,
             'total_results': paginator.count,
             'has_next': page_obj.has_next(),
             'has_previous': page_obj.has_previous(),
-            'facets': facets,
+            'facets': {
+                'categories': list(facets.get('categories') or []),
+                'brands': list(facets.get('brands') or []),
+                'price_ranges': facets.get('price_ranges'),
+                'ratings': facets.get('ratings'),
+            },
         }
     
     def _full_text_search(self, query):
