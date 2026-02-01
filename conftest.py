@@ -9,8 +9,6 @@ import pytest  # noqa: E402
 
 django.setup()
 
-collect_ignore = ["tools/integration_test.py"]
-
 @pytest.fixture(scope="session", autouse=True)
 def _migrate_db_once():
     call_command("migrate", run_syncdb=True, interactive=False, verbosity=0)
