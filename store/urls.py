@@ -48,18 +48,18 @@ urlpatterns = [
     path('inventory/notify/<int:product_id>/', inventory_views.back_in_stock_notification, name='back_in_stock'),
     
     # Analytics URLs
-    path('admin/dashboard/', analytics_views.admin_dashboard, name='admin_dashboard'),
-    path('admin/analytics/data/', analytics_views.analytics_data, name='analytics_data'),
-    path('admin/analytics/sales/', analytics_views.sales_chart_data, name='sales_chart'),
-    path('admin/analytics/performance/', analytics_views.product_performance, name='product_performance'),
+    path('dashboard/', analytics_views.admin_dashboard, name='admin_dashboard'),
+    path('analytics/data/', analytics_views.analytics_data, name='analytics_data'),
+    path('analytics/sales/', analytics_views.sales_chart_data, name='sales_chart'),
+    path('analytics/performance/', analytics_views.product_performance, name='product_performance'),
     
     # Coupon URLs
     path('coupons/apply/', coupon_views.apply_coupon, name='apply_coupon'),
     path('coupons/remove/', coupon_views.remove_coupon, name='remove_coupon'),
-    path('admin/coupons/', coupon_views.coupon_list_admin, name='coupon_list_admin'),
-    path('admin/coupons/create/', coupon_views.coupon_create_admin, name='coupon_create_admin'),
-    path('admin/coupons/<int:coupon_id>/edit/', coupon_views.coupon_edit_admin, name='coupon_edit_admin'),
-    path('admin/coupons/<int:coupon_id>/delete/', coupon_views.coupon_delete_admin, name='coupon_delete_admin'),
+    path('coupons/admin/', coupon_views.coupon_list_admin, name='coupon_list_admin'),
+    path('coupons/admin/create/', coupon_views.coupon_create_admin, name='coupon_create_admin'),
+    path('coupons/admin/<int:coupon_id>/edit/', coupon_views.coupon_edit_admin, name='coupon_edit_admin'),
+    path('coupons/admin/<int:coupon_id>/delete/', coupon_views.coupon_delete_admin, name='coupon_delete_admin'),
     
     # REST API URLs
     path('api/', include(router.urls)),

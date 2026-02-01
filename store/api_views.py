@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status, filters
-from rest_framework.decorators import api_view, action
+from rest_framework.decorators import api_view, action, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
 from .models import Product, Order, ProductView
 from .serializers import (
@@ -42,7 +42,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             'similar': ProductSerializer(similar, many=True).data,
         })
     
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], permission_classes=[AllowAny])
     def track_view(self, request, pk=None):
         """Track product view"""
         product = self.get_object()
@@ -75,6 +75,7 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def cart_view_api(request):
     """Get current cart contents"""
     cart = request.session.get('cart', {})
@@ -101,6 +102,7 @@ def cart_view_api(request):
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def cart_add_api(request):
     """Add item to cart"""
     product_id = request.data.get('product_id')
@@ -113,6 +115,10 @@ def cart_add_api(request):
         product = Product.objects.get(pk=product_id, is_active=True)
     except Product.DoesNotExist:
         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Ensure session key exists
+    if not request.session.session_key:
+        request.session.create()
     
     cart = request.session.get('cart', {})
     product_key = str(product_id)
@@ -133,6 +139,7 @@ def cart_add_api(request):
 
 
 @api_view(['DELETE'])
+@permission_classes([AllowAny])
 def cart_remove_api(request, product_id):
     """Remove item from cart"""
     cart = request.session.get('cart', {})
@@ -148,6 +155,7 @@ def cart_remove_api(request, product_id):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def recommendations_api(request):
     """Get personalized recommendations"""
     product_id = request.GET.get('product_id')
