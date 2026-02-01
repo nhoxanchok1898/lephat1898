@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -132,3 +133,25 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Media files (user uploads)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Sentry configuration: initialize when a DSN is available and not in DEBUG.
+try:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+except Exception:
+    sentry_sdk = None
+
+# Prefer environment variable `SENTRY_DSN`; fallback to hardcoded DSN if provided.
+SENTRY_DSN = os.environ.get(
+    'SENTRY_DSN',
+    'https://d9474e438ed65845b699c0eb9f47659e@o4510808746557440.ingest.us.sentry.io/4510808749309952',
+)
+
+if sentry_sdk and SENTRY_DSN and not DEBUG:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        # Add data like request headers and IP for users
+        # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+        send_default_pii=True,
+    )

@@ -17,7 +17,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+
+def trigger_error(request):
+    # Endpoint to force an exception for testing Sentry integration
+    division_by_zero = 1 / 0
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('store.urls')),
+    path('sentry-debug/', trigger_error),
 ]
