@@ -3,10 +3,10 @@ from rest_framework.decorators import api_view, action, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
-from .models import Product, Order, ProductView
+from .models import Product, Order, ProductView, Brand, Category
 from .serializers import (
     ProductSerializer, OrderSerializer, ProductViewSerializer,
-    CartSerializer, CouponSerializer
+    CartSerializer, CouponSerializer, BrandSerializer, CategorySerializer
 )
 from .recommendation_views import (
     get_also_viewed, get_also_bought, get_similar_products
@@ -55,6 +55,28 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         )
         
         return Response({'success': True})
+
+
+class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for categories
+    GET /api/categories/ - List all categories
+    GET /api/categories/<id>/ - Get category details
+    """
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+
+class BrandViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for brands
+    GET /api/brands/ - List all brands
+    GET /api/brands/<id>/ - Get brand details
+    """
+    queryset = Brand.objects.all()
+    serializer_class = BrandSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
 
 class OrderViewSet(viewsets.ReadOnlyModelViewSet):
