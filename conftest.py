@@ -9,6 +9,8 @@ import pytest  # noqa: E402
 
 django.setup()
 
+collect_ignore = ["tools/integration_test.py"]
+
 @pytest.fixture(scope="session", autouse=True)
 def _migrate_db_once():
     call_command("migrate", run_syncdb=True, interactive=False, verbosity=0)
@@ -19,4 +21,8 @@ def pytest_ignore_collect(path=None, collection_path=None, config=None):  # noqa
     target = collection_path or path
     if target is None:
         return False
-    return Path(target).match("tools/integration_test.py")
+    try:
+        path_obj = Path(target)
+    except TypeError:
+        return False
+    return path_obj.name == "integration_test.py" and "tools" in path_obj.parts
