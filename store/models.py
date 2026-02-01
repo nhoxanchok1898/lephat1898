@@ -53,7 +53,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=12, decimal_places=2)
     sale_price = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     unit_type = models.CharField(max_length=3, choices=UNIT_CHOICES, default=UNIT_LIT)
-    volume = models.PositiveIntegerField(help_text='Volume in selected unit, e.g., 5, 18, 20')
+    volume = models.PositiveIntegerField(default=1, help_text='Volume in selected unit, e.g., 5, 18, 20')
     quantity = models.PositiveIntegerField(default=0)
     stock_quantity = models.PositiveIntegerField(default=0)
     image = models.ImageField(upload_to='products/', blank=True, null=True)
@@ -86,6 +86,14 @@ class Product(models.Model):
         else:
             self.is_on_sale = False
         super().save(*args, **kwargs)
+    
+    def get_price(self):
+        """Get the effective price (sale price if available, otherwise regular price)"""
+        return self.sale_price if self.sale_price else self.price
+    
+    def is_in_stock(self):
+        """Check if product is in stock"""
+        return self.stock_quantity > 0
 
 
 class Order(models.Model):
@@ -364,6 +372,10 @@ class Coupon(models.Model):
             return min(self.discount_amount, cart_total)
         
         return Decimal('0')
+    
+    def apply_discount(self, cart_total):
+        """Apply discount to cart total (alias for calculate_discount)"""
+        return self.calculate_discount(cart_total)
 
 
 class AppliedCoupon(models.Model):
@@ -475,6 +487,10 @@ class CartItem(models.Model):
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
+    
+    def get_total_price(self):
+        """Get total price for this cart item"""
+        return self.product.get_price() * self.quantity
 
 
 class UserProfile(models.Model):
