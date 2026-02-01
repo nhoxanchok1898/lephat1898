@@ -1,5 +1,26 @@
 from pathlib import Path
 import os
+
+# Sentry: optional import and initialization
+try:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+except Exception:
+    sentry_sdk = None
+
+# Initialize Sentry if a DSN is provided via env (or fallback to the provided DSN)
+SENTRY_DSN = os.environ.get(
+    'SENTRY_DSN',
+    'https://d9474e438ed65845b699ceb9f47659ee0e451080874655740.ingest.us.sentry.io/4510808749309952',
+)
+
+if sentry_sdk and SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=1.0,
+        send_default_pii=False,
+    )
 try:
     from dotenv import load_dotenv  # type: ignore[reportMissingImports]
 except Exception:
