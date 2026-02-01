@@ -162,3 +162,87 @@ def profile_view(request):
     }
     
     return render(request, 'auth/profile.html', context)
+
+
+@login_required
+def profile_update_view(request):
+    """
+    Update user profile view
+    Allows users to edit their profile information
+    """
+    user = request.user
+    
+    # Get or create user profile
+    try:
+        profile = user.profile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=user)
+    
+    if request.method == 'POST':
+        # Update user information
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        address = request.POST.get('address', '').strip()
+        
+        # Update user fields
+        user.first_name = first_name
+        user.last_name = last_name
+        
+        # Update email if changed
+        if email and email != user.email:
+            if User.objects.filter(email=email).exclude(pk=user.pk).exists():
+                messages.error(request, 'Email already in use by another account.')
+            else:
+                user.email = email
+                user.save()
+        else:
+            user.save()
+        
+        # Update profile
+        profile.phone = phone
+        profile.address = address
+        profile.save()
+        
+        messages.success(request, 'Profile updated successfully.')
+        return redirect('store:profile')
+    
+    context = {
+        'user': user,
+        'profile': profile,
+    }
+    
+    return render(request, 'auth/profile_update.html', context)
+
+
+def password_reset_request_view(request):
+    """
+    Password reset request view
+    Allows users to request a password reset email
+    """
+    if request.user.is_authenticated:
+        return redirect('store:home')
+    
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        
+        if not email:
+            messages.error(request, 'Email is required.')
+            return render(request, 'auth/password_reset_request.html')
+        
+        # Check if email exists
+        try:
+            user = User.objects.get(email=email)
+            # In a real application, send password reset email here
+            # For now, just show a success message
+            messages.success(request, 
+                'If an account exists with this email, you will receive password reset instructions.')
+        except User.DoesNotExist:
+            # Don't reveal whether email exists for security
+            messages.success(request, 
+                'If an account exists with this email, you will receive password reset instructions.')
+        
+        return redirect('store:login')
+    
+    return render(request, 'auth/password_reset_request.html')
