@@ -9,21 +9,23 @@ from store.models import (
 class UserProfileModelTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', email='test@example.com', password='testpass123')
+        # Profile is automatically created by signal, just get it
+        self.profile = UserProfile.objects.get(user=self.user)
     
     def test_user_profile_creation(self):
-        profile = UserProfile.objects.create(
-            user=self.user,
-            phone='123-456-7890',
-            address='123 Test St',
-            email_verified=True
-        )
-        self.assertEqual(profile.user, self.user)
-        self.assertEqual(profile.phone, '123-456-7890')
-        self.assertTrue(profile.email_verified)
+        # Profile is auto-created by signal, update its fields
+        self.profile.phone = '123-456-7890'
+        self.profile.address = '123 Test St'
+        self.profile.email_verified = True
+        self.profile.save()
+        
+        self.assertEqual(self.profile.user, self.user)
+        self.assertEqual(self.profile.phone, '123-456-7890')
+        self.assertTrue(self.profile.email_verified)
     
     def test_user_profile_str(self):
-        profile = UserProfile.objects.create(user=self.user)
-        self.assertEqual(str(profile), f"Profile of {self.user.username}")
+        # Profile is auto-created by signal
+        self.assertEqual(str(self.profile), f"Profile of {self.user.username}")
 
 
 class WishlistModelTest(TestCase):
