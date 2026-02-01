@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from . import auth_views, wishlist_views, review_views
+from . import auth_views, wishlist_views, review_views, order_views
 
 app_name = 'store'
 
@@ -47,4 +47,9 @@ urlpatterns = [
     path('reviews/helpful/<int:pk>/', review_views.review_helpful, name='review_helpful'),
     path('reviews/moderate/', review_views.review_moderate, name='review_moderate'),
     path('reviews/delete/<int:pk>/', review_views.review_delete, name='review_delete'),
+    
+    # Order URLs
+    path('orders/', order_views.order_history, name='order_history'),
+    path('orders/<int:order_id>/', order_views.order_detail, name='order_detail'),
+    path('orders/<int:order_id>/status/', order_views.order_status_api, name='order_status_api'),
 ]
