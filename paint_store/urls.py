@@ -14,6 +14,7 @@ sitemaps = {
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/v1/', include('store.api_urls')),  # Phase 2A: REST API
     path('', include('store.urls', namespace='store')),
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
     path('robots.txt', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
