@@ -4,6 +4,7 @@ from django.contrib.auth import views as dj_auth_views
 from . import views
 from . import auth_views
 from . import order_views
+from . import review_views
 from . import recommendation_views
 from . import inventory_views
 from . import analytics_views
@@ -26,6 +27,14 @@ urlpatterns = [
     path('', views.home_view, name='home'),
     path('products/', views.product_list, name='product_list'),
     path('products/<int:pk>/', views.product_detail, name='product_detail'),
+    # Review URLs
+    path('products/<int:pk>/reviews/', review_views.review_list, name='review_list'),
+    path('products/<int:pk>/reviews/create/', review_views.review_create, name='review_create'),
+    path('reviews/<int:pk>/approve/', review_views.review_approve, name='review_approve'),
+    path('reviews/<int:pk>/helpful/', review_views.review_helpful, name='review_helpful'),
+    path('reviews/<int:pk>/delete/', review_views.review_delete, name='review_delete'),
+    path('reviews/moderate/', review_views.review_moderate, name='review_moderate'),
+    # Cart URLs
     path('cart/add/<int:pk>/', views.cart_add, name='cart_add'),
     path('cart/', views.cart_view, name='cart_view'),
     path('cart/update/<int:pk>/', views.cart_update, name='cart_update'),

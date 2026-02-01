@@ -183,14 +183,13 @@ def product_detail(request, pk):
         ip_address=ip_address
     )
     
-    # Update daily analytics
-    today = timezone.now().date()
+    # Update product analytics
     analytics, created = ProductViewAnalytics.objects.get_or_create(
         product=p,
-        date=today,
-        defaults={'view_count': 0}
+        defaults={'total_views': 0, 'unique_views': 0}
     )
-    analytics.view_count += 1
+    analytics.total_views += 1
+    analytics.last_viewed = timezone.now()
     analytics.save()
     
     # Get recommendations (products viewed by users who viewed this product)
@@ -201,8 +200,8 @@ def product_detail(request, pk):
         views__user__in=viewers,
         is_active=True
     ).exclude(pk=p.pk).annotate(
-        view_count=Count('views')
-    ).order_by('-view_count')[:6]
+        total_views=Count('views')
+    ).order_by('-total_views')[:6]
     
     # Get products in the same category
     related_products = Product.objects.filter(
