@@ -1,6 +1,7 @@
-Django==4.2.0
-python-dotenv==1.0.0
-gunicorn==21.2.0
-psycopg2-binary==2.9.13
-Pillow==10.1.0
-requests==2.31.0
+# requirements.txt
+
+# Compatible versions for Python 3.11+
+flask==2.1.0
+numpy==1.21.0
+psycopg2-binary==2.9.9    # downgraded to 2.9.9 for compatibility with Python 3.11+
+requests==2.26.0
