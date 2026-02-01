@@ -83,9 +83,9 @@ jobs:
           path: deploy_run_start.txt
       - name: Prepare payload
         run: |
-          cat > render_payload.json <<'JSON'
-{"clearCache": true}
-JSON
+          cat > render_payload.json <<'EOF'
+          {"clearCache": true}
+          EOF
           cat render_payload.json
       - name: Trigger deploy with retries and strict checks
         env:
