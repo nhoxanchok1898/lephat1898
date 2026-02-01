@@ -22,34 +22,8 @@ urlpatterns = [
     path('payments/stripe/webhook/', views.stripe_webhook, name='stripe_webhook'),
     path('contact/', views.contact_view, name='contact'),
     path('ajax/search_suggestions/', views.search_suggestions, name='search_suggestions'),
-    
-    # Authentication URLs
-    path('auth/register/', auth_views.register_view, name='register'),
-    path('auth/login/', auth_views.login_view, name='login'),
-    path('auth/logout/', auth_views.logout_view, name='logout'),
-    path('auth/profile/', auth_views.profile_view, name='profile'),
-    path('auth/profile/update/', auth_views.profile_update, name='profile_update'),
-    path('auth/password-reset/', auth_views.password_reset_request, name='password_reset_request'),
-    path('auth/password-reset/<uidb64>/<token>/', auth_views.password_reset_confirm, name='password_reset_confirm'),
-    
-    # Wishlist URLs
-    path('wishlist/', wishlist_views.wishlist_view, name='wishlist'),
-    path('wishlist/add/<int:pk>/', wishlist_views.wishlist_add, name='wishlist_add'),
-    path('wishlist/remove/<int:pk>/', wishlist_views.wishlist_remove, name='wishlist_remove'),
-    path('wishlist/share/', wishlist_views.wishlist_share, name='wishlist_share'),
-    path('wishlist/shared/<str:username>/', wishlist_views.wishlist_shared_view, name='wishlist_shared'),
-    path('wishlist/check/<int:pk>/', wishlist_views.wishlist_check, name='wishlist_check'),
-    
-    # Review URLs
-    path('reviews/create/<int:pk>/', review_views.review_create, name='review_create'),
-    path('reviews/list/<int:pk>/', review_views.review_list, name='review_list'),
-    path('reviews/approve/<int:pk>/', review_views.review_approve, name='review_approve'),
-    path('reviews/helpful/<int:pk>/', review_views.review_helpful, name='review_helpful'),
-    path('reviews/moderate/', review_views.review_moderate, name='review_moderate'),
-    path('reviews/delete/<int:pk>/', review_views.review_delete, name='review_delete'),
-    
-    # Order URLs
-    path('orders/', order_views.order_history, name='order_history'),
-    path('orders/<int:order_id>/', order_views.order_detail, name='order_detail'),
-    path('orders/<int:order_id>/status/', order_views.order_status_api, name='order_status_api'),
+    path('search/recent/', views.recent_searches, name='recent_searches'),
+    path('search/popular/', views.popular_searches, name='popular_searches'),
+    path('trending/', views.trending_products, name='trending_products'),
+    path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
 ]

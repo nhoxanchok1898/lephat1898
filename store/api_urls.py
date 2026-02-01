@@ -1,38 +1,13 @@
-"""
-API URLs for Phase 2A REST API
-"""
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework.authtoken.views import obtain_auth_token
+from . import api_views
 
-from .api_views import (
-    BrandViewSet, CategoryViewSet, ProductViewSet,
-    OrderViewSet, CartViewSet, ReviewViewSet, WishlistViewSet,
-    analytics_overview, track_search
-)
-from .api_docs import api_documentation
-
-# Create router for viewsets
 router = DefaultRouter()
-router.register(r'brands', BrandViewSet, basename='brand')
-router.register(r'categories', CategoryViewSet, basename='category')
-router.register(r'products', ProductViewSet, basename='product')
-router.register(r'orders', OrderViewSet, basename='order')
-router.register(r'cart', CartViewSet, basename='cart')
-router.register(r'reviews', ReviewViewSet, basename='review')
-router.register(r'wishlist', WishlistViewSet, basename='wishlist')
+router.register(r'products', api_views.ProductViewSet, basename='product')
+router.register(r'categories', api_views.CategoryViewSet, basename='category')
+router.register(r'brands', api_views.BrandViewSet, basename='brand')
+router.register(r'orders', api_views.OrderViewSet, basename='order')
 
 urlpatterns = [
-    # Documentation
-    path('', api_documentation, name='api_documentation'),
-    
-    # Authentication
-    path('auth/token/', obtain_auth_token, name='api_token_auth'),
-    
-    # Analytics
-    path('analytics/overview/', analytics_overview, name='analytics_overview'),
-    path('search/track/', track_search, name='track_search'),
-    
-    # Include router URLs
     path('', include(router.urls)),
 ]
