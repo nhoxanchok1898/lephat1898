@@ -55,11 +55,12 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     form = ProductAdminForm
-    list_display = ('id', 'thumbnail', 'name', 'brand', 'category', 'price', 'unit_type', 'volume', 'is_active')
-    list_filter = ('brand', 'category', 'unit_type', 'is_active')
+    list_display = ('id', 'thumbnail', 'name', 'brand', 'category', 'price', 'sale_price', 'stock_quantity', 'unit_type', 'volume', 'is_active', 'is_on_sale')
+    list_filter = ('brand', 'category', 'unit_type', 'is_active', 'is_on_sale')
     search_fields = ('name', 'brand__name')
-    readonly_fields = ('thumbnail',)
+    readonly_fields = ('thumbnail', 'view_count', 'rating')
     ordering = ('-id',)
+    list_editable = ('is_active', 'is_on_sale')
 
     def thumbnail(self, obj):
         if obj.image:
@@ -82,13 +83,13 @@ class ProductAdmin(admin.ModelAdmin):
                 obj.volume = v_l
         super().save_model(request, obj, form, change)
 
-from .models import Order, OrderItem
-
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'full_name', 'phone', 'created_at')
+    list_display = ('id', 'full_name', 'phone', 'payment_status', 'created_at')
     readonly_fields = ('created_at',)
+    list_filter = ('payment_status', 'payment_method')
+    search_fields = ('full_name', 'phone', 'payment_reference')
     actions = ['export_orders_csv']
 
     def export_orders_csv(self, request, queryset):

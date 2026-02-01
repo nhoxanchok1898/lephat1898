@@ -67,21 +67,44 @@ class Product(models.Model):
     ]
 
     name = models.CharField(max_length=250)
+    description = models.TextField(blank=True, default='')
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     price = models.DecimalField(max_digits=12, decimal_places=2)
+    sale_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     unit_type = models.CharField(max_length=3, choices=UNIT_CHOICES, default=UNIT_LIT)
     volume = models.PositiveIntegerField(help_text='Volume in selected unit, e.g., 5, 18, 20')
     image = models.ImageField(upload_to='products/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    is_new = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # New fields for Phase 2
+    stock_quantity = models.PositiveIntegerField(default=0)
+    is_on_sale = models.BooleanField(default=False)
+    sale_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
+    view_count = models.PositiveIntegerField(default=0)
+    description = models.TextField(blank=True, null=True)
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['name', 'brand']),
+            models.Index(fields=['is_active', 'created_at']),
+            models.Index(fields=['category', 'is_active']),
+        ]
 
     def __str__(self):
         return self.name
+
+    def get_price(self):
+        """Return sale price if available, otherwise regular price"""
+        return self.sale_price if self.sale_price else self.price
+
+    def is_on_sale(self):
+        """Check if product is on sale"""
+        return self.sale_price is not None and self.sale_price < self.price
 
 
 @receiver(post_save, sender=Product)
