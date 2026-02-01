@@ -71,14 +71,15 @@ def product_list(request):
             Q(brand__name__icontains=q)
         )
         # Track search query
-        ip_address = get_client_ip(request)
-        user = request.user if request.user.is_authenticated else None
-        SearchQuery.objects.create(
-            query=q,
-            user=user,
-            results_count=qs.count(),
-            ip_address=ip_address
-        )
+        # Note: SearchQuery model not implemented yet
+        # ip_address = get_client_ip(request)
+        # user = request.user if request.user.is_authenticated else None
+        # SearchQuery.objects.create(
+        #     query=q,
+        #     user=user,
+        #     results_count=qs.count(),
+        #     ip_address=ip_address
+        # )
     
     if min_price:
         try:
@@ -577,17 +578,21 @@ def search_suggestions(request):
 @login_required
 def recent_searches(request):
     """Show user's recent searches"""
-    searches = SearchQuery.objects.filter(user=request.user).order_by('-created_at')[:20]
+    # Note: SearchQuery model not implemented yet
+    searches = []
+    # searches = SearchQuery.objects.filter(user=request.user).order_by('-created_at')[:20]
     return render(request, 'store/recent_searches.html', {'searches': searches})
 
 
 def popular_searches(request):
     """Show popular search queries"""
-    # Get top 20 most common search queries
-    popular = SearchQuery.objects.values('query').annotate(
-        count=Count('id'),
-        total_results=Sum('results_count')
-    ).order_by('-count')[:20]
+    # Note: SearchQuery model not implemented yet
+    popular = []
+    # # Get top 20 most common search queries
+    # popular = SearchQuery.objects.values('query').annotate(
+    #     count=Count('id'),
+    #     total_results=Sum('results_count')
+    # ).order_by('-count')[:20]
     return render(request, 'store/popular_searches.html', {'popular': popular})
 
 

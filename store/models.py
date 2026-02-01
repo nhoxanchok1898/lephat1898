@@ -80,7 +80,7 @@ class Product(models.Model):
     is_on_sale = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    # New fields for Phase 2
+    # Phase 2 fields
     stock_quantity = models.PositiveIntegerField(default=0)
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
     view_count = models.PositiveIntegerField(default=0)
