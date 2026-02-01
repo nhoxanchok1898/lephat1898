@@ -38,8 +38,8 @@ def get_also_viewed(product):
         views__user_id__in=viewers,
         is_active=True
     ).exclude(id=product.id).annotate(
-        view_count=Count('views')
-    ).order_by('-view_count')[:10]
+        views_count=Count('views')
+    ).order_by('-views_count')[:10]
     
     return also_viewed
 
