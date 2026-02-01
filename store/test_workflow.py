@@ -82,7 +82,7 @@ class CompleteWorkflowTest(TestCase):
         self.assertTrue(Review.objects.filter(product=self.product, user=user).exists())
         
         # 9. User views order history
-        response = self.client.get('/orders/')
+        response = self.client.get('/orders/history/')
         self.assertEqual(response.status_code, 200)
         
         # 10. User views profile

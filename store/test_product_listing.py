@@ -37,9 +37,11 @@ class ProductListingUITest(TestCase):
             price=Decimal('150000'),
             sale_price=Decimal('120000'),
             quantity=10,
-            is_active=True,
-            created_at=now  # Newest product
+            is_active=True
         )
+        # Update created_at after creation since auto_now_add=True ignores passed values
+        Product.objects.filter(pk=self.product1.pk).update(created_at=now)
+        self.product1.refresh_from_db()
         
         self.product2 = Product.objects.create(
             name="Sơn Jotun Xanh",
@@ -48,9 +50,10 @@ class ProductListingUITest(TestCase):
             brand=self.brand_jotun,
             price=Decimal('200000'),
             quantity=5,
-            is_active=True,
-            created_at=now - timedelta(days=60)  # Oldest (60 days old)
+            is_active=True
         )
+        Product.objects.filter(pk=self.product2.pk).update(created_at=now - timedelta(days=60))
+        self.product2.refresh_from_db()
         
         self.product3 = Product.objects.create(
             name="Chống thấm Dulux",
@@ -59,9 +62,10 @@ class ProductListingUITest(TestCase):
             brand=self.brand_dulux,
             price=Decimal('300000'),
             quantity=0,  # Out of stock
-            is_active=True,
-            created_at=now - timedelta(days=10)  # 10 days old
+            is_active=True
         )
+        Product.objects.filter(pk=self.product3.pk).update(created_at=now - timedelta(days=10))
+        self.product3.refresh_from_db()
         
         self.product4 = Product.objects.create(
             name="Sơn Jotun Đỏ",
@@ -70,9 +74,10 @@ class ProductListingUITest(TestCase):
             brand=self.brand_jotun,
             price=Decimal('180000'),
             quantity=20,
-            is_active=True,
-            created_at=now - timedelta(days=5)  # 5 days old
+            is_active=True
         )
+        Product.objects.filter(pk=self.product4.pk).update(created_at=now - timedelta(days=5))
+        self.product4.refresh_from_db()
     
     def test_product_list_page_loads(self):
         """Test that product list page loads successfully"""
