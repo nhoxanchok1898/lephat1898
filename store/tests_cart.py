@@ -84,8 +84,11 @@ class CartCheckoutTests(TestCase):
         data = resp.json()
         self.assertEqual(data['pk'], self.product.pk)
         self.assertEqual(data['quantity'], 4)
-        self.assertAlmostEqual(float(data['subtotal']), 400.00, places=2)  # 4 * 100
-        self.assertAlmostEqual(float(data['total']), 400.00, places=2)
+        # Calculate expected values from test data
+        expected_subtotal = 4 * self.product.price
+        expected_total = 4 * self.product.price
+        self.assertAlmostEqual(float(data['subtotal']), float(expected_subtotal), places=2)
+        self.assertAlmostEqual(float(data['total']), float(expected_total), places=2)
 
     def test_cart_summary_ajax(self):
         """Test AJAX cart summary endpoint"""
@@ -101,7 +104,9 @@ class CartCheckoutTests(TestCase):
         self.assertEqual(len(data['items']), 1)
         self.assertEqual(data['items'][0]['pk'], self.product.pk)
         self.assertEqual(data['items'][0]['qty'], 2)
-        self.assertAlmostEqual(float(data['total']), 200.00, places=2)
+        # Calculate expected total from test data
+        expected_total = 2 * self.product.price
+        self.assertAlmostEqual(float(data['total']), float(expected_total), places=2)
 
     def test_cart_remove_ajax(self):
         """Test AJAX cart remove endpoint"""
