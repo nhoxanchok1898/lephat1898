@@ -581,7 +581,7 @@ class CartItem(models.Model):
     def get_total_price(self):
         """Calculate total price for this cart item"""
         # Use the product's current price (which includes sale price if applicable)
-        price = self.product.get_price() if hasattr(self.product, 'get_price') else self.price
+        price = self.product.get_price()
         return price * self.quantity
 
 

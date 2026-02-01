@@ -38,7 +38,7 @@ class ProductListingUITest(TestCase):
             sale_price=Decimal('120000'),
             quantity=10,
             is_active=True,
-            created_at=now  # Most recent
+            created_at=now  # Newest product
         )
         
         self.product2 = Product.objects.create(
