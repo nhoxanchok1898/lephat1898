@@ -1,6 +1,7 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 try:
     from django_ratelimit.decorators import ratelimit
@@ -15,10 +16,11 @@ from django.views.decorators.http import require_POST
 from django.utils import timezone
 from datetime import timedelta
 try:
-    from .models import LoginAttempt, SuspiciousActivity
+    from .models import LoginAttempt, SuspiciousActivity, UserProfile
 except Exception:
     LoginAttempt = None
     SuspiciousActivity = None
+    UserProfile = None
 
 
 def get_client_ip(request):
@@ -97,18 +99,44 @@ def login_view(request):
 def register_view(request):
     """User registration"""
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        password2 = request.POST.get('password2', '')
+        
+        # Validate form data
+        errors = []
+        
+        if not username or not email or not password or not password2:
+            errors.append('All fields are required')
+        
+        if password != password2:
+            errors.append('Passwords do not match')
+        
+        # Check if username already exists
+        from django.contrib.auth.models import User
+        if username and User.objects.filter(username=username).exists():
+            errors.append('Username already exists')
+        
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+            form = UserCreationForm()
+            return render(request, 'auth/register.html', {'form': form})
+        
+        # Create user
+        try:
+            user = User.objects.create_user(username=username, email=email, password=password)
+            # UserProfile is automatically created by post_save signal
+            
             login(request, user)
             messages.success(request, 'Registration successful!')
             return redirect('store:home')
-        else:
-            messages.error(request, 'Registration failed. Please check the form.')
-    else:
-        form = UserCreationForm()
+        except Exception as e:
+            messages.error(request, f'Registration failed: {str(e)}')
     
-    return render(request, 'registration/register.html', {'form': form})
+    form = UserCreationForm()
+    return render(request, 'auth/register.html', {'form': form})
 
 
 def logout_view(request):
@@ -116,3 +144,20 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'You have been logged out.')
     return redirect('store:home')
+
+
+@login_required
+def profile_view(request):
+    """User profile view"""
+    user = request.user
+    
+    # Get or create user profile
+    if UserProfile is not None:
+        profile, created = UserProfile.objects.get_or_create(user=user)
+    else:
+        profile = None
+    
+    return render(request, 'auth/profile.html', {
+        'user': user,
+        'profile': profile
+    })

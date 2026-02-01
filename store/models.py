@@ -508,6 +508,16 @@ class UserProfile(models.Model):
         return f"Profile of {self.user.username}"
 
 
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Automatically create UserProfile when a User is created"""
+    if created:
+        try:
+            UserProfile.objects.create(user=instance)
+        except Exception:
+            pass
+
+
 class Wishlist(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlist')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlisted_by')
@@ -521,14 +531,14 @@ class Wishlist(models.Model):
 
 
 class Review(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='ratings')
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     rating = models.PositiveSmallIntegerField(default=5)
     comment = models.TextField(blank=True, default='')
     verified_purchase = models.BooleanField(default=False)
     is_approved = models.BooleanField(default=False)
     helpful_count = models.IntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         user = self.user.username if self.user else 'Anonymous'

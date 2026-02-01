@@ -16,9 +16,7 @@ sitemaps = {
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('store.api_urls')),
-    # explicit auth views so `{% url 'login' %}` resolves
-    path('login/', auth_views.LoginView.as_view(template_name='auth/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    # Auth URLs are handled in store/urls.py to avoid duplication
     path('', include('store.urls', namespace='store')),
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
     path('robots.txt', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
