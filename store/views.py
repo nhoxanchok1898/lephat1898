@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.mail import send_mail
 from django.conf import settings
-from django.db.models import Q, Avg
+from django.db.models import Q, Avg, F
 from django.core.cache import cache
 
 from .models import (
@@ -49,13 +49,6 @@ def product_list(request):
     if brand:
         qs = qs.filter(brand__id=brand)
     if q:
-        # Track search query
-        SearchQuery.objects.create(
-            query=q,
-            user=request.user if request.user.is_authenticated else None,
-            session_key=request.session.session_key,
-            results_count=qs.count()
-        )
         qs = qs.filter(
             Q(name__icontains=q) | 
             Q(brand__name__icontains=q) |
@@ -69,6 +62,15 @@ def product_list(request):
         qs = qs.filter(price__gte=price_min)
     if price_max:
         qs = qs.filter(price__lte=price_max)
+
+    # Track search query after all filters are applied
+    if q:
+        SearchQuery.objects.create(
+            query=q,
+            user=request.user if request.user.is_authenticated else None,
+            session_key=request.session.session_key or '',
+            results_count=qs.count()
+        )
 
     # Sorting
     sort = request.GET.get('sort', '-created_at')
@@ -124,6 +126,10 @@ def product_list(request):
 def product_detail(request, pk):
     p = get_object_or_404(Product.objects.select_related('brand', 'category'), pk=pk, is_active=True)
     
+    # Ensure session exists for tracking
+    if not request.session.session_key:
+        request.session.create()
+    
     # Track product view
     ProductView.objects.create(
         product=p,
@@ -131,9 +137,9 @@ def product_detail(request, pk):
         session_key=request.session.session_key
     )
     
-    # Increment view count
-    p.view_count += 1
-    p.save(update_fields=['view_count'])
+    # Increment view count atomically to avoid race conditions
+    Product.objects.filter(pk=p.pk).update(view_count=F('view_count') + 1)
+    p.refresh_from_db()  # Refresh to get updated view_count
     
     # Get reviews with average rating
     reviews = Review.objects.filter(product=p).select_related('user').order_by('-created_at')

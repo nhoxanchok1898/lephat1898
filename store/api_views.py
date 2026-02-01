@@ -6,7 +6,7 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Q, Count, Avg
+from django.db.models import Q, Count, Avg, F
 from django.utils import timezone
 from datetime import timedelta
 
@@ -79,6 +79,10 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         """Track product views when retrieving a product"""
         instance = self.get_object()
 
+        # Ensure session exists
+        if not request.session.session_key:
+            request.session.create()
+
         # Track view
         ProductView.objects.create(
             product=instance,
@@ -86,9 +90,8 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             session_key=request.session.session_key
         )
 
-        # Increment view count
-        instance.view_count += 1
-        instance.save(update_fields=['view_count'])
+        # Increment view count atomically to avoid race conditions
+        Product.objects.filter(pk=instance.pk).update(view_count=F('view_count') + 1)
 
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
@@ -178,10 +181,10 @@ class CartViewSet(viewsets.ModelViewSet):
         if self.request.user.is_authenticated:
             return Cart.objects.filter(user=self.request.user).prefetch_related('items__product')
         else:
-            session_key = self.request.session.session_key
-            if not session_key:
+            # Ensure session exists
+            if not self.request.session.session_key:
                 self.request.session.create()
-                session_key = self.request.session.session_key
+            session_key = self.request.session.session_key
             return Cart.objects.filter(session_key=session_key).prefetch_related('items__product')
 
     def get_or_create_cart(self):
@@ -189,10 +192,10 @@ class CartViewSet(viewsets.ModelViewSet):
         if self.request.user.is_authenticated:
             cart, created = Cart.objects.get_or_create(user=self.request.user)
         else:
-            session_key = self.request.session.session_key
-            if not session_key:
+            # Ensure session exists
+            if not self.request.session.session_key:
                 self.request.session.create()
-                session_key = self.request.session.session_key
+            session_key = self.request.session.session_key
             cart, created = Cart.objects.get_or_create(session_key=session_key)
         return cart
 
