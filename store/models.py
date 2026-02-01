@@ -14,7 +14,8 @@ class Brand(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('store:product_detail', args=[self.pk])
+        """Return product list filtered by this brand"""
+        return reverse('store:product_list') + f'?brand={self.pk}'
 
 
 
@@ -76,6 +77,10 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        """Return the detail page URL for this product"""
+        return reverse('store:product_detail', args=[self.pk])
 
 
 @receiver(post_save, sender=Product)
