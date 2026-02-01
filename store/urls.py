@@ -14,6 +14,7 @@ from . import payment_webhooks
 from . import admin_dashboard
 from . import monitoring
 from . import search_views
+from . import wishlist_views
 
 app_name = 'store'
 
@@ -99,11 +100,13 @@ urlpatterns = [
     path('inventory/pre-order/<int:product_id>/', inventory_views.pre_order_create, name='pre_order'),
     path('inventory/notify/<int:product_id>/', inventory_views.back_in_stock_notification, name='back_in_stock'),
 
-    # Wishlist (session-backed) URLs
-    path('wishlist/', views.wishlist_view, name='wishlist'),
-    path('wishlist/add/<int:product_id>/', views.wishlist_add, name='wishlist_add'),
-    path('wishlist/remove/<int:product_id>/', views.wishlist_remove, name='wishlist_remove'),
-    path('wishlist/share/', views.wishlist_share, name='wishlist_share'),
+    # Wishlist (database-backed) URLs
+    path('wishlist/', wishlist_views.wishlist_view, name='wishlist'),
+    path('wishlist/add/<int:pk>/', wishlist_views.wishlist_add, name='wishlist_add'),
+    path('wishlist/remove/<int:pk>/', wishlist_views.wishlist_remove, name='wishlist_remove'),
+    path('wishlist/check/<int:pk>/', wishlist_views.wishlist_check, name='wishlist_check'),
+    path('wishlist/share/', wishlist_views.wishlist_share, name='wishlist_share'),
+    path('wishlist/shared/<str:username>/', wishlist_views.wishlist_shared_view, name='wishlist_shared'),
     
     # Analytics URLs
     path('dashboard/', analytics_views.admin_dashboard, name='admin_dashboard'),

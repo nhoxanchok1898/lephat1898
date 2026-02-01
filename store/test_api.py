@@ -153,6 +153,7 @@ class APITests(TestCase):
         url = reverse('store:api-order-list')
         response = self.client.get(url)
         
+        # With TokenAuthentication configured, DRF returns 401 for missing credentials
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
     
     def test_orders_endpoint_with_auth(self):
