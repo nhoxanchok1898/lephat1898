@@ -1,127 +1,177 @@
-from rest_framework import viewsets, filters, permissions
-from rest_framework.decorators import action
+from rest_framework import viewsets, status, filters
+from rest_framework.decorators import api_view, action, permission_classes
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
-from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Q, Avg, Count
-
-from .models import Product, Category, Brand, Order, OrderItem
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
+from django.shortcuts import get_object_or_404
+from .models import Product, Order, ProductView
 from .serializers import (
-    ProductSerializer, ProductListSerializer,
-    CategorySerializer, BrandSerializer,
-    OrderSerializer
+    ProductSerializer, OrderSerializer, ProductViewSerializer,
+    CartSerializer, CouponSerializer
 )
-
-
-class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 12
-    page_size_query_param = 'page_size'
-    max_page_size = 100
+from .recommendation_views import (
+    get_also_viewed, get_also_bought, get_similar_products
+)
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    API endpoint for products.
-    
-    list: Get all products
-    retrieve: Get a single product by ID
-    search: Search products
-    featured: Get featured/new products
-    trending: Get trending products
+    API endpoint for products
+    GET /api/products/ - List all products
+    GET /api/products/<id>/ - Get product details
     """
     queryset = Product.objects.filter(is_active=True)
-    pagination_class = StandardResultsSetPagination
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['category', 'brand', 'is_new']
-    search_fields = ['name', 'description', 'brand__name']
+    serializer_class = ProductSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'brand__name', 'category__name']
     ordering_fields = ['price', 'created_at', 'name']
     ordering = ['-created_at']
     
-    def get_serializer_class(self):
-        if self.action == 'list':
-            return ProductListSerializer
-        return ProductSerializer
-    
-    @action(detail=False, methods=['get'])
-    def featured(self, request):
-        """Get featured/new products"""
-        products = self.queryset.filter(is_new=True)[:12]
-        serializer = ProductListSerializer(products, many=True)
-        return Response(serializer.data)
-    
-    @action(detail=False, methods=['get'])
-    def trending(self, request):
-        """Get trending products based on views"""
-        from datetime import timedelta
-        from django.utils import timezone
-        
-        seven_days_ago = timezone.now() - timedelta(days=7)
-        products = self.queryset.filter(
-            views__viewed_at__gte=seven_days_ago
-        ).annotate(
-            view_count=Count('views')
-        ).order_by('-view_count')[:12]
-        
-        serializer = ProductListSerializer(products, many=True)
-        return Response(serializer.data)
-    
-    @action(detail=False, methods=['get'])
-    def on_sale(self, request):
-        """Get products on sale"""
-        products = self.queryset.filter(sale_price__isnull=False)
-        page = self.paginate_queryset(products)
-        if page is not None:
-            serializer = ProductListSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        serializer = ProductListSerializer(products, many=True)
-        return Response(serializer.data)
-    
     @action(detail=True, methods=['get'])
     def recommendations(self, request, pk=None):
-        """Get recommended products for a specific product"""
+        """Get recommendations for a product"""
         product = self.get_object()
         
-        # Get products viewed by users who viewed this product
-        from .models import ProductView
-        viewers = ProductView.objects.filter(product=product).exclude(
-            user__isnull=True
-        ).values_list('user', flat=True).distinct()
+        also_viewed = get_also_viewed(product)[:5]
+        also_bought = get_also_bought(product)[:5]
+        similar = get_similar_products(product)[:5]
         
-        recommended = Product.objects.filter(
-            views__user__in=viewers,
-            is_active=True
-        ).exclude(pk=product.pk).annotate(
-            view_count=Count('views')
-        ).order_by('-view_count')[:6]
+        return Response({
+            'also_viewed': ProductSerializer(also_viewed, many=True).data,
+            'also_bought': ProductSerializer(also_bought, many=True).data,
+            'similar': ProductSerializer(similar, many=True).data,
+        })
+    
+    @action(detail=True, methods=['post'], permission_classes=[AllowAny])
+    def track_view(self, request, pk=None):
+        """Track product view"""
+        product = self.get_object()
+        user = request.user if request.user.is_authenticated else None
         
-        serializer = ProductListSerializer(recommended, many=True)
-        return Response(serializer.data)
-
-
-class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
-    """API endpoint for categories"""
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-    pagination_class = None  # No pagination for categories
-
-
-class BrandViewSet(viewsets.ReadOnlyModelViewSet):
-    """API endpoint for brands"""
-    queryset = Brand.objects.all()
-    serializer_class = BrandSerializer
-    pagination_class = None  # No pagination for brands
+        ProductView.objects.create(
+            product=product,
+            user=user,
+            session_key=request.session.session_key if not user else None
+        )
+        
+        return Response({'success': True})
 
 
 class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    API endpoint for orders (read-only, requires authentication)
+    API endpoint for orders
+    GET /api/orders/ - List user's orders
+    GET /api/orders/<id>/ - Get order details
     """
     serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    pagination_class = StandardResultsSetPagination
+    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        # Users can only see their own orders
-        # For demo purposes, we'll just return all orders
-        # In production, link orders to users
-        return Order.objects.all().order_by('-created_at')
+        # In a real app, filter by user's email or user relationship
+        # For now, return all orders (staff only should see this)
+        if self.request.user.is_staff:
+            return Order.objects.all()
+        return Order.objects.none()
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def cart_view_api(request):
+    """Get current cart contents"""
+    cart = request.session.get('cart', {})
+    items = []
+    total = 0
+    
+    for product_id, quantity in cart.items():
+        try:
+            product = Product.objects.get(pk=int(product_id), is_active=True)
+            item_total = product.price * quantity
+            total += item_total
+            items.append({
+                'product': ProductSerializer(product).data,
+                'quantity': quantity,
+                'item_total': str(item_total)
+            })
+        except Product.DoesNotExist:
+            continue
+    
+    return Response({
+        'items': items,
+        'total': str(total)
+    })
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def cart_add_api(request):
+    """Add item to cart"""
+    product_id = request.data.get('product_id')
+    quantity = int(request.data.get('quantity', 1))
+    
+    if not product_id:
+        return Response({'error': 'product_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        product = Product.objects.get(pk=product_id, is_active=True)
+    except Product.DoesNotExist:
+        return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Ensure session key exists
+    if not request.session.session_key:
+        request.session.create()
+    
+    cart = request.session.get('cart', {})
+    product_key = str(product_id)
+    
+    if product_key in cart:
+        cart[product_key] += quantity
+    else:
+        cart[product_key] = quantity
+    
+    request.session['cart'] = cart
+    request.session.modified = True
+    
+    return Response({
+        'success': True,
+        'product': ProductSerializer(product).data,
+        'quantity': cart[product_key]
+    })
+
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def cart_remove_api(request, product_id):
+    """Remove item from cart"""
+    cart = request.session.get('cart', {})
+    product_key = str(product_id)
+    
+    if product_key in cart:
+        del cart[product_key]
+        request.session['cart'] = cart
+        request.session.modified = True
+        return Response({'success': True})
+    
+    return Response({'error': 'Item not in cart'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def recommendations_api(request):
+    """Get personalized recommendations"""
+    product_id = request.GET.get('product_id')
+    
+    if product_id:
+        try:
+            product = Product.objects.get(pk=product_id, is_active=True)
+            similar = get_similar_products(product)[:10]
+            return Response({
+                'recommendations': ProductSerializer(similar, many=True).data
+            })
+        except Product.DoesNotExist:
+            return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Return trending products
+    trending = Product.objects.filter(is_active=True).order_by('-created_at')[:10]
+    return Response({
+        'recommendations': ProductSerializer(trending, many=True).data
+    })
