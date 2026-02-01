@@ -1,5 +1,27 @@
 from pathlib import Path
 import os
+
+# Sentry: optional import and initialization
+try:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+except Exception:
+    sentry_sdk = None
+
+# Initialize Sentry only if a valid DSN is provided via environment variable
+SENTRY_DSN = os.environ.get('SENTRY_DSN', '')
+
+if sentry_sdk and SENTRY_DSN:
+    try:
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[DjangoIntegration()],
+            traces_sample_rate=1.0,
+            send_default_pii=False,
+        )
+    except Exception:
+        # Silently ignore Sentry initialization errors (e.g., invalid DSN)
+        pass
 try:
     from dotenv import load_dotenv  # type: ignore[reportMissingImports]
 except Exception:
@@ -43,6 +65,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sitemaps',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'corsheaders',
     'store.apps.StoreConfig',
 ]
 
@@ -51,7 +76,7 @@ ROOT_URLCONF = 'paint_store.urls'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-        # temporary middleware (removed in finalization)
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -117,4 +142,48 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Development email backend (prints emails to console)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'noreply@example.com'
-# Touch this file to trigger the development autoreloader when needed
+
+# REST Framework Configuration
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',
+        'user': '1000/hour'
+    },
+    'DEFAULT_FILTER_BACKENDS': [
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+}
+
+# CORS Configuration for mobile apps
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+CORS_ALLOW_CREDENTIALS = True
+
+# Stripe Configuration (existing from context)
+STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY', '')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
+
+# Celery Configuration (for email queue - optional)
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE

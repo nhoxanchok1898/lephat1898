@@ -12,6 +12,18 @@
     <textarea name="address" required></textarea><br>
     <label>Phone:</label>
     <input type="text" name="phone" required><br>
+    <label>Payment method:</label>
+    <select name="payment_method">
+        <option value="offline">Pay on delivery</option>
+        <option value="stripe">Stripe (simulated)</option>
+        <option value="paypal">PayPal (simulated)</option>
+    </select>
+    <br>
     <button type="submit">Place Order</button>
+    <hr>
+    <form action="/store/payments/stripe/create/" method="post">
+        {% csrf_token %}
+        <button type="submit">Pay with Stripe</button>
+    </form>
 </form>
 {% endblock %}

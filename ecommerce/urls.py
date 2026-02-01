@@ -18,8 +18,15 @@ from django.contrib import admin
 from django.urls import path, include
 from store import views as store_views
 
+
+def trigger_error(request):
+    # Endpoint to force an exception for testing Sentry integration
+    division_by_zero = 1 / 0
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('wishlist/', store_views.wishlist_view, name='wishlist'),
     path('', include('store.urls')),
+    path('sentry-debug/', trigger_error),
 ]
