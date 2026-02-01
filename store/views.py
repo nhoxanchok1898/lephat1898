@@ -443,6 +443,8 @@ def stripe_success(request):
 def stripe_webhook(request):
     # Verify webhook signature and update order payment status when a
     # checkout session completes. Requires STRIPE_WEBHOOK_SECRET in env.
+    from .models import PaymentLog
+    
     payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
     webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET')
@@ -461,12 +463,24 @@ def stripe_webhook(request):
         session = event['data']['object']
         # session.payment_intent or session.id can be used to match orders
         pay_ref = session.get('payment_intent') or session.get('id')
+        amount = session.get('amount_total', 0) / 100  # Convert from cents
+        
         # find orders with this payment_reference
         orders = Order.objects.filter(payment_reference__icontains=pay_ref)
         for o in orders:
             o.payment_status = 'paid'
             o.payment_reference = pay_ref
             o.save()
+            
+            # Log the payment
+            PaymentLog.objects.create(
+                order=o,
+                transaction_id=pay_ref,
+                amount=amount,
+                status='success',
+                payment_method='stripe',
+                raw_response=str(event)
+            )
 
     return JsonResponse({'status': 'received'})
 
