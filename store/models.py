@@ -431,6 +431,55 @@ class UserProfile(models.Model):
         return f"Profile of {self.user.username}"
 
 
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Automatically create UserProfile when a User is created"""
+    if created:
+        try:
+            UserProfile.objects.create(user=instance)
+        except Exception:
+            pass
+
+
+class LoginAttempt(models.Model):
+    """Track login attempts for security monitoring"""
+    username = models.CharField(max_length=150)
+    ip_address = models.GenericIPAddressField()
+    success = models.BooleanField(default=False)
+    user_agent = models.CharField(max_length=255, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['ip_address', 'success', '-timestamp']),
+            models.Index(fields=['username', '-timestamp']),
+        ]
+
+    def __str__(self):
+        status = "Success" if self.success else "Failed"
+        return f"{status} login: {self.username} from {self.ip_address} at {self.timestamp}"
+
+
+class SuspiciousActivity(models.Model):
+    """Track suspicious security activities"""
+    activity_type = models.CharField(max_length=100)
+    description = models.TextField()
+    ip_address = models.GenericIPAddressField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = "Suspicious Activities"
+        indexes = [
+            models.Index(fields=['activity_type', '-created_at']),
+            models.Index(fields=['ip_address', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.activity_type} from {self.ip_address} at {self.created_at}"
+
+
 class Wishlist(models.Model):
     """Wishlist model"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlist')
