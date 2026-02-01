@@ -2,7 +2,14 @@ from django.contrib import admin
 from django import forms
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from .models import Brand, Category, Product
+from .models import (
+    Brand, Category, Product, Order, OrderItem,
+    SearchQuery, SearchFilter, ProductView,
+    CartSession, CartItem, Coupon,
+    ProductRating, StockLevel, StockAlert, PreOrder, BackInStockNotification,
+    ProductViewAnalytics, OrderAnalytics, UserAnalytics,
+    EmailTemplate, EmailQueue, CartAbandonment
+)
 
 
 class ProductAdminForm(forms.ModelForm):
@@ -75,8 +82,6 @@ class ProductAdmin(admin.ModelAdmin):
                 obj.volume = v_l
         super().save_model(request, obj, form, change)
 
-from .models import Order, OrderItem
-
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
@@ -107,3 +112,126 @@ class OrderAdmin(admin.ModelAdmin):
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ('id', 'order', 'product', 'quantity', 'price')
+
+
+# ===== Advanced Search System =====
+@admin.register(SearchQuery)
+class SearchQueryAdmin(admin.ModelAdmin):
+    list_display = ('query', 'user', 'results_count', 'created_at', 'ip_address')
+    list_filter = ('created_at',)
+    search_fields = ('query', 'user__username')
+    readonly_fields = ('created_at',)
+
+
+@admin.register(SearchFilter)
+class SearchFilterAdmin(admin.ModelAdmin):
+    list_display = ('name', 'user', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('name', 'user__username')
+
+
+@admin.register(ProductView)
+class ProductViewAdmin(admin.ModelAdmin):
+    list_display = ('product', 'user', 'session_key', 'viewed_at', 'ip_address')
+    list_filter = ('viewed_at',)
+    search_fields = ('product__name', 'user__username')
+    readonly_fields = ('viewed_at',)
+
+
+# ===== Shopping Cart =====
+@admin.register(CartSession)
+class CartSessionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'created_at', 'updated_at', 'get_total')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(CartItem)
+class CartItemAdmin(admin.ModelAdmin):
+    list_display = ('cart', 'product', 'quantity', 'get_subtotal')
+    list_filter = ('created_at',)
+
+
+@admin.register(Coupon)
+class CouponAdmin(admin.ModelAdmin):
+    list_display = ('code', 'discount_percent', 'discount_amount', 'valid_from', 'valid_to', 'active', 'used_count', 'max_uses')
+    list_filter = ('active', 'valid_from', 'valid_to')
+    search_fields = ('code',)
+
+
+# ===== Product Recommendations =====
+@admin.register(ProductRating)
+class ProductRatingAdmin(admin.ModelAdmin):
+    list_display = ('product', 'user', 'rating', 'created_at')
+    list_filter = ('rating', 'created_at')
+    search_fields = ('product__name', 'user__username')
+
+
+# ===== Inventory Management =====
+@admin.register(StockLevel)
+class StockLevelAdmin(admin.ModelAdmin):
+    list_display = ('product', 'quantity', 'reserved', 'available_quantity', 'low_stock_threshold', 'is_low_stock', 'updated_at')
+    list_filter = ('updated_at',)
+    search_fields = ('product__name',)
+
+
+@admin.register(StockAlert)
+class StockAlertAdmin(admin.ModelAdmin):
+    list_display = ('product', 'message', 'is_resolved', 'created_at', 'resolved_at')
+    list_filter = ('is_resolved', 'created_at')
+    search_fields = ('product__name', 'message')
+
+
+@admin.register(PreOrder)
+class PreOrderAdmin(admin.ModelAdmin):
+    list_display = ('product', 'user', 'quantity', 'status', 'expected_date', 'created_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('product__name', 'user__username')
+
+
+@admin.register(BackInStockNotification)
+class BackInStockNotificationAdmin(admin.ModelAdmin):
+    list_display = ('product', 'email', 'notified', 'created_at', 'notified_at')
+    list_filter = ('notified', 'created_at')
+    search_fields = ('product__name', 'email')
+
+
+# ===== Analytics =====
+@admin.register(ProductViewAnalytics)
+class ProductViewAnalyticsAdmin(admin.ModelAdmin):
+    list_display = ('product', 'date', 'view_count')
+    list_filter = ('date',)
+    search_fields = ('product__name',)
+
+
+@admin.register(OrderAnalytics)
+class OrderAnalyticsAdmin(admin.ModelAdmin):
+    list_display = ('date', 'order_count', 'revenue', 'items_sold')
+    list_filter = ('date',)
+
+
+@admin.register(UserAnalytics)
+class UserAnalyticsAdmin(admin.ModelAdmin):
+    list_display = ('date', 'new_users', 'active_users', 'total_users')
+    list_filter = ('date',)
+
+
+# ===== Email System =====
+@admin.register(EmailTemplate)
+class EmailTemplateAdmin(admin.ModelAdmin):
+    list_display = ('name', 'subject', 'template_type', 'created_at', 'updated_at')
+    list_filter = ('template_type', 'created_at')
+    search_fields = ('name', 'subject')
+
+
+@admin.register(EmailQueue)
+class EmailQueueAdmin(admin.ModelAdmin):
+    list_display = ('to_email', 'subject', 'status', 'retry_count', 'created_at', 'sent_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('to_email', 'subject')
+
+
+@admin.register(CartAbandonment)
+class CartAbandonmentAdmin(admin.ModelAdmin):
+    list_display = ('email', 'total_amount', 'notified', 'created_at', 'notified_at')
+    list_filter = ('notified', 'created_at')
+    search_fields = ('email', 'session_key')
