@@ -1,0 +1,15 @@
+{% extends 'store/base.html' %}
+{% block title %}Wishlist — Paint Store{% endblock %}
+
+{% block content %}
+  <h1>Your wishlist</h1>
+  {% if products %}
+    <ul>
+      {% for p in products %}
+        <li><a href="{% url 'store:product_detail' p.pk %}">{{ p.name }}</a> — {{ p.price }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>Your wishlist is empty.</p>
+  {% endif %}
+{% endblock %}

@@ -17,5 +17,6 @@ urlpatterns = [
     path('checkout/', views.checkout_view, name='checkout'),
     path('checkout/success/', views.checkout_success, name='checkout_success'),
     path('contact/', views.contact_view, name='contact'),
+    path('wishlist/', views.wishlist_view, name='wishlist'),
     path('ajax/search_suggestions/', views.search_suggestions, name='search_suggestions'),
 ]

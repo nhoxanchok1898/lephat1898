@@ -253,6 +253,20 @@ def contact_view(request):
     return render(request, 'store/contact.html')
 
 
+def wishlist_view(request):
+    """Simple wishlist page stub to satisfy template reverses.
+    Stores wishlist in session as a list of product pks under 'wishlist'.
+    """
+    wishlist = request.session.setdefault('wishlist', [])
+    products = []
+    for pk in wishlist:
+        try:
+            products.append(Product.objects.get(pk=int(pk)))
+        except Exception:
+            continue
+    return render(request, 'store/wishlist.html', {'products': products})
+
+
 def search_suggestions(request):
     q = request.GET.get('q', '')
     results = []
