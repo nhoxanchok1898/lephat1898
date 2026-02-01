@@ -153,7 +153,8 @@ class APITests(TestCase):
         url = reverse('store:api-order-list')
         response = self.client.get(url)
         
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        # DRF's IsAuthenticated permission returns 403 for unauthenticated requests
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
     
     def test_orders_endpoint_with_auth(self):
         """Test orders endpoint with authentication"""

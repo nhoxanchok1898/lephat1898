@@ -74,7 +74,7 @@ class CompleteWorkflowTest(TestCase):
         self.assertTrue(Order.objects.filter(full_name='Test User').exists())
         
         # 8. User writes a review
-        response = self.client.post(f'/reviews/create/{self.product.pk}/', {
+        response = self.client.post(f'/products/{self.product.pk}/reviews/create/', {
             'rating': 5,
             'comment': 'Great product!'
         })

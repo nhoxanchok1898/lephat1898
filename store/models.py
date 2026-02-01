@@ -374,6 +374,10 @@ class Coupon(models.Model):
 
     def apply_discount(self, cart_total):
         """Return the new cart total after applying the coupon."""
+        # Check minimum purchase amount requirement
+        if cart_total < self.min_purchase_amount:
+            return cart_total
+        
         # Prefer explicit percentage/amount fields
         if self.discount_percentage is not None:
             factor = (100 - self.discount_percentage) / 100
@@ -573,6 +577,12 @@ class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    def get_total_price(self):
+        """Calculate total price for this cart item"""
+        # Use the product's current price (which includes sale price if applicable)
+        price = self.product.get_price() if hasattr(self.product, 'get_price') else self.price
+        return price * self.quantity
 
 
 class PaymentLog(models.Model):

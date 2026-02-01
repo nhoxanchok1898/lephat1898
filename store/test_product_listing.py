@@ -26,7 +26,9 @@ class ProductListingUITest(TestCase):
         self.brand_dulux = Brand.objects.create(name="Dulux", slug="dulux")
         self.brand_jotun = Brand.objects.create(name="Jotun", slug="jotun")
         
-        # Create products
+        # Create products with explicit timestamps to ensure consistent ordering
+        now = timezone.now()
+        
         self.product1 = Product.objects.create(
             name="Sơn Dulux Trắng",
             slug="son-dulux-trang",
@@ -36,7 +38,7 @@ class ProductListingUITest(TestCase):
             sale_price=Decimal('120000'),
             quantity=10,
             is_active=True,
-            created_at=timezone.now()
+            created_at=now  # Most recent
         )
         
         self.product2 = Product.objects.create(
@@ -47,7 +49,7 @@ class ProductListingUITest(TestCase):
             price=Decimal('200000'),
             quantity=5,
             is_active=True,
-            created_at=timezone.now() - timedelta(days=60)
+            created_at=now - timedelta(days=60)  # Oldest (60 days old)
         )
         
         self.product3 = Product.objects.create(
@@ -58,7 +60,7 @@ class ProductListingUITest(TestCase):
             price=Decimal('300000'),
             quantity=0,  # Out of stock
             is_active=True,
-            created_at=timezone.now() - timedelta(days=10)
+            created_at=now - timedelta(days=10)  # 10 days old
         )
         
         self.product4 = Product.objects.create(
@@ -69,7 +71,7 @@ class ProductListingUITest(TestCase):
             price=Decimal('180000'),
             quantity=20,
             is_active=True,
-            created_at=timezone.now() - timedelta(days=5)
+            created_at=now - timedelta(days=5)  # 5 days old
         )
     
     def test_product_list_page_loads(self):
@@ -144,8 +146,10 @@ class ProductListingUITest(TestCase):
         self.assertContains(response, "Sơn Dulux Trắng")
         self.assertContains(response, "Chống thấm Dulux")
         self.assertContains(response, "Sơn Jotun Đỏ")
-        # product2 is 60 days old
-        self.assertNotContains(response, "Sơn Jotun Xanh")
+        # product2 is 60 days old - check it's not in the product list
+        products = list(response.context['products'])
+        product_names = [p.name for p in products]
+        self.assertNotIn("Sơn Jotun Xanh", product_names)
     
     def test_in_stock_filter(self):
         """Test filtering products in stock"""
@@ -168,7 +172,11 @@ class ProductListingUITest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Sơn Jotun Xanh")
         self.assertContains(response, "Sơn Jotun Đỏ")
-        self.assertNotContains(response, "Dulux")
+        # Check that Dulux products are not in the results
+        products = list(response.context['products'])
+        product_names = [p.name for p in products]
+        self.assertNotIn("Sơn Dulux Trắng", product_names)
+        self.assertNotIn("Chống thấm Dulux", product_names)
     
     def test_sort_by_price_ascending(self):
         """Test sorting by price (low to high)"""
