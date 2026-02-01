@@ -1,0 +1,94 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Home - Paint Store</title>
+    <meta name="description" content="Paint Store — Sơn chất lượng cho nhà bạn. Tìm kiếm theo thương hiệu, loại và giá." />
+    <link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" sizes="192x192" href="/static/images/favicon-192.png">
+    <meta name="theme-color" content="#0d6efd">
+    <meta property="og:site_name" content="Paint Store" />
+    <meta name="twitter:card" content="summary_large_image" />
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="/static/css/site.css" rel="stylesheet">
+    <link href="/static/css/mini-cart.css" rel="stylesheet">
+  </head>
+  <body>
+    <a class="visually-hidden-focusable" href="#main-content">Skip to content</a>
+    <header class="site-header">
+      <nav class="container site-nav" role="navigation" aria-label="Main navigation">
+        <button id="nav-toggle" class="nav-toggle" aria-label="Open menu">☰</button>
+        <div class="brand"><a href="/"><img src="/static/images/logo.svg" alt="Paint Store" class="brand-logo"> Paint Store</a></div>
+        <div class="nav-links" role="menubar" aria-label="Primary links">
+          <a role="menuitem" href="/products/"><img class="icon" src="/static/images/icons/search.svg" alt="Search"> Products</a>
+          <a role="menuitem" href="/contact/">Contact</a>
+          <a class="btn" role="menuitem" href="/products/">Shop</a>
+          <a class="icon-only" id="mini-cart-toggle" href="/cart/" aria-label="Cart"><img class="icon" src="/static/images/icons/cart.svg" alt="Cart"></a>
+        </div>
+      </nav>
+      <div id="mobile-nav" class="mobile-nav" hidden>
+        <ul>
+          <li><a href="/products/">Products</a></li>
+          <li><a href="/products/">Shop</a></li>
+          <li><a href="/cart/">Cart</a></li>
+          <li><a href="/contact/">Contact</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <main id="main-content" class="container container-main">
+      
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-left">
+        <h1 class="headline">Mua sơn chất lượng — Giá hợp lý</h1>
+        <p class="sub">Chọn màu, thể tích và thương hiệu bạn tin dùng. Giao hàng nhanh chóng.</p>
+        <p>
+          <a class="btn" href="/products/">Xem sản phẩm</a>
+          <a class="btn secondary" href="/contact/">Liên hệ</a>
+        </p>
+      </div>
+      <div class="hero-media" aria-hidden="true">
+        <img src="/static/images/paint-splash.svg" alt="paint splash" class="media-img">
+      </div>
+    </div>
+  </section>
+
+  <h2 class="mt-3">Thương hiệu nổi bật</h2>
+  <div class="brands">
+    
+      <p>No brands yet.</p>
+    
+  </div>
+
+  <h2 class="mt-4">Sản phẩm mới</h2>
+  <div class="product-grid container">
+    
+      <p>No products yet.</p>
+    
+  </div>
+
+    </main>
+
+    <footer class="site-footer">
+      <div class="container text-center small">
+        &copy;  Paint Store — Liên hệ: 0123-456-789
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+      <script src="/static/js/lazy.js"></script>
+      <script src="/static/js/search.js"></script>
+      <script src="/static/js/ui.js"></script>
+        <script src="/static/js/mini-cart.js"></script>
+      
+    <link rel="stylesheet" href="/static/css/cart-qty.css">
+    <script src="/static/js/cart-qty.js" defer></script>
+  </body>
+</html>
