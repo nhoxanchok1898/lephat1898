@@ -77,6 +77,9 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return reverse('store:product_detail', args=[self.pk])
+
 
 @receiver(post_save, sender=Product)
 def apply_product_image_watermark(sender, instance: Product, created, **kwargs):
