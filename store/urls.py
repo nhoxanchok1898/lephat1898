@@ -16,6 +16,9 @@ urlpatterns = [
     path('cart/remove/<int:pk>/', views.cart_remove, name='cart_remove'),
     path('checkout/', views.checkout_view, name='checkout'),
     path('checkout/success/', views.checkout_success, name='checkout_success'),
+    path('payments/stripe/create/', views.stripe_create_session, name='stripe_create'),
+    path('payments/stripe/success/', views.stripe_success, name='stripe_success'),
+    path('payments/stripe/webhook/', views.stripe_webhook, name='stripe_webhook'),
     path('contact/', views.contact_view, name='contact'),
     path('ajax/search_suggestions/', views.search_suggestions, name='search_suggestions'),
 ]

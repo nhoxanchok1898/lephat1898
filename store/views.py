@@ -6,6 +6,9 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 from .models import Brand, Category, Product, Order, OrderItem
+import os
+import stripe
+from django.views.decorators.csrf import csrf_exempt
 
 
 def home_view(request):
@@ -211,6 +214,7 @@ def checkout_view(request):
         name = request.POST.get('name')
         phone = request.POST.get('phone')
         address = request.POST.get('address')
+        payment_method = request.POST.get('payment_method', 'offline')
         order = Order.objects.create(full_name=name, phone=phone, address=address)
         for pid, qty in cart.items():
             try:
@@ -220,6 +224,16 @@ def checkout_view(request):
             OrderItem.objects.create(order=order, product=p, quantity=qty, price=p.price)
         request.session.pop('cart', None)
         request.session.modified = True
+        # record payment details (stubbed). In a real integration you would
+        # create a payment with Stripe/PayPal and update these fields
+        order.payment_method = payment_method
+        # for demo / local dev mark as paid when method is 'stripe' or 'paypal'
+        if payment_method in ('stripe', 'paypal'):
+            order.payment_status = 'paid'
+            order.payment_reference = f"{payment_method.upper()}-SIM-{order.id}"
+        else:
+            order.payment_status = 'pending'
+        order.save()
         # send notification email (development: console backend)
         try:
             items_text = []
@@ -247,6 +261,125 @@ def checkout_view(request):
 
 def checkout_success(request):
     return render(request, 'store/checkout_success.html')
+
+
+def stripe_create_session(request):
+    cart = _get_cart(request)
+    if not cart:
+        return redirect('store:checkout')
+
+    # read secret key from env
+    stripe_key = os.environ.get('STRIPE_SECRET_KEY')
+    if not stripe_key:
+        # Stripe not configured; fallback to checkout page
+        return redirect('store:checkout')
+    stripe.api_key = stripe_key
+
+    line_items = []
+    for pid, qty in cart.items():
+        try:
+            p = Product.objects.get(pk=int(pid))
+        except Product.DoesNotExist:
+            continue
+        line_items.append({
+            'price_data': {
+                'currency': 'usd',
+                'product_data': {'name': p.name},
+                'unit_amount': int(p.price * 100),
+            },
+            'quantity': qty,
+        })
+
+    domain = os.environ.get('SITE_URL', 'http://127.0.0.1:8000')
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=line_items,
+            mode='payment',
+            success_url=f"{domain}/store/payments/stripe/success/?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{domain}/store/checkout/",
+        )
+    except Exception:
+        return redirect('store:checkout')
+
+    return redirect(session.url)
+
+
+def stripe_success(request):
+    session_id = request.GET.get('session_id')
+    stripe_key = os.environ.get('STRIPE_SECRET_KEY')
+    if not stripe_key or not session_id:
+        return redirect('store:checkout_success')
+    stripe.api_key = stripe_key
+    try:
+        sess = stripe.checkout.Session.retrieve(session_id, expand=['line_items', 'payment_intent'])
+    except Exception:
+        return redirect('store:checkout_success')
+
+    # create an order from session line items (best-effort)
+    try:
+        name = sess['customer_details'].get('name') or 'Stripe Customer'
+    except Exception:
+        name = 'Stripe Customer'
+    order = Order.objects.create(full_name=name, phone='', address='')
+    for item in sess.get('line_items', {}).get('data', []):
+        prod_name = item['description']
+        qty = item['quantity']
+        # attempt to match product by name, else create a generic product entry
+        try:
+            p = Product.objects.filter(name__iexact=prod_name).first()
+        except Exception:
+            p = None
+        price = (item['price']['unit_amount'] / 100) if item.get('price') else 0
+        if p:
+            OrderItem.objects.create(order=order, product=p, quantity=qty, price=price)
+        else:
+            # create a placeholder product-like row by linking to first product
+            first = Product.objects.first()
+            if first:
+                OrderItem.objects.create(order=order, product=first, quantity=qty, price=price)
+    order.payment_method = 'stripe'
+    order.payment_status = 'paid'
+    order.payment_reference = sess.get('payment_intent') or session_id
+    order.save()
+
+    # clear cart
+    request.session.pop('cart', None)
+    request.session.modified = True
+
+    return redirect('store:checkout_success')
+
+
+@csrf_exempt
+def stripe_webhook(request):
+    # Verify webhook signature and update order payment status when a
+    # checkout session completes. Requires STRIPE_WEBHOOK_SECRET in env.
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
+    webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET')
+    if not webhook_secret:
+        return JsonResponse({'error': 'webhook not configured'}, status=400)
+
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
+    except ValueError:
+        return JsonResponse({'error': 'invalid payload'}, status=400)
+    except stripe.error.SignatureVerificationError:
+        return JsonResponse({'error': 'invalid signature'}, status=400)
+
+    # Handle the checkout.session.completed event
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        # session.payment_intent or session.id can be used to match orders
+        pay_ref = session.get('payment_intent') or session.get('id')
+        # find orders with this payment_reference
+        orders = Order.objects.filter(payment_reference__icontains=pay_ref)
+        for o in orders:
+            o.payment_status = 'paid'
+            o.payment_reference = pay_ref
+            o.save()
+
+    return JsonResponse({'status': 'received'})
 
 
 def contact_view(request):
