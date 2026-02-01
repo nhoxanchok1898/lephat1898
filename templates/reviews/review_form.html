@@ -1,0 +1,85 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block title %}Write Review - {{ product.name }} - Paint Store{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Write a Review for {{ product.name }}</h3>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Rating</label>
+                        <div class="rating-input">
+                            <input type="radio" name="rating" value="5" id="rating5" required>
+                            <label for="rating5">⭐⭐⭐⭐⭐</label>
+                            
+                            <input type="radio" name="rating" value="4" id="rating4">
+                            <label for="rating4">⭐⭐⭐⭐</label>
+                            
+                            <input type="radio" name="rating" value="3" id="rating3">
+                            <label for="rating3">⭐⭐⭐</label>
+                            
+                            <input type="radio" name="rating" value="2" id="rating2">
+                            <label for="rating2">⭐⭐</label>
+                            
+                            <input type="radio" name="rating" value="1" id="rating1">
+                            <label for="rating1">⭐</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Your Review</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="5" required placeholder="Tell us about your experience with this product..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="images" class="form-label">Add Photos (optional, max 5)</label>
+                        <input type="file" class="form-control" id="images" name="images" multiple accept="image/*">
+                        <small class="text-muted">You can upload up to 5 images</small>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                        <a href="{% url 'store:product_detail' product.pk %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.rating-input {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.rating-input input[type="radio"] {
+    margin-right: 10px;
+}
+.rating-input label {
+    cursor: pointer;
+    font-size: 1.2em;
+}
+.rating-input input[type="radio"]:checked + label {
+    color: #ffc107;
+    font-weight: bold;
+}
+</style>
+{% endblock %}
