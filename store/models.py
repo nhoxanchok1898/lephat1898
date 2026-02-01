@@ -77,15 +77,13 @@ class Product(models.Model):
     image = models.ImageField(upload_to='products/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_new = models.BooleanField(default=False)
+    is_on_sale = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     # New fields for Phase 2
     stock_quantity = models.PositiveIntegerField(default=0)
-    is_on_sale = models.BooleanField(default=False)
-    sale_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
     view_count = models.PositiveIntegerField(default=0)
-    description = models.TextField(blank=True, null=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -102,8 +100,8 @@ class Product(models.Model):
         """Return sale price if available, otherwise regular price"""
         return self.sale_price if self.sale_price else self.price
 
-    def is_on_sale(self):
-        """Check if product is on sale"""
+    def get_is_on_sale(self):
+        """Check if product is on sale (method version)"""
         return self.sale_price is not None and self.sale_price < self.price
 
 
@@ -443,3 +441,21 @@ class NewsletterSubscription(models.Model):
 
     def __str__(self):
         return f"{self.email} - {'Active' if self.is_active else 'Unsubscribed'}"
+
+
+# ============= Search Models =============
+
+class SearchQuery(models.Model):
+    """Track search queries for analytics"""
+    query = models.CharField(max_length=255)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    session_key = models.CharField(max_length=40, null=True, blank=True)
+    result_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = "Search Queries"
+    
+    def __str__(self):
+        return f"{self.query} - {self.created_at}"

@@ -12,7 +12,7 @@ from datetime import timedelta
 from .models import (
     Brand, Category, Product, Order, OrderItem,
     SearchQuery, ProductView, StockLevel,
-    ProductRating, ProductViewAnalytics
+    ProductViewAnalytics
 )
 import os
 import stripe
