@@ -56,11 +56,11 @@ class CategoryAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     form = ProductAdminForm
     list_display = ('id', 'thumbnail', 'name', 'brand', 'category', 'price', 'sale_price', 'stock_quantity', 'unit_type', 'volume', 'is_active', 'is_on_sale')
-    list_filter = ('brand', 'category', 'unit_type', 'is_active', 'is_on_sale')
+    list_filter = ('brand', 'category', 'unit_type', 'is_active')
     search_fields = ('name', 'brand__name')
-    readonly_fields = ('thumbnail', 'view_count', 'rating')
+    readonly_fields = ('thumbnail', 'view_count', 'rating', 'is_on_sale')
     ordering = ('-id',)
-    list_editable = ('is_active', 'is_on_sale')
+    list_editable = ('is_active',)
 
     def thumbnail(self, obj):
         if obj.image:
