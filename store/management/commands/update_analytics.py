@@ -35,10 +35,9 @@ class Command(BaseCommand):
         # Update User Analytics
         new_users_today = User.objects.filter(date_joined__date=today).count()
         total_users = User.objects.count()
-        # Active users = users who created an order today
-        active_users = User.objects.filter(
-            order__created_at__date=today
-        ).distinct().count()
+        # For demo purposes, set active users to 0 since orders aren't linked to users
+        # In production, link orders to users and count distinct users who placed orders
+        active_users = 0
         
         UserAnalytics.objects.update_or_create(
             date=today,
