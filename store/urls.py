@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import auth_views, wishlist_views, review_views, order_views
 
 app_name = 'store'
 
