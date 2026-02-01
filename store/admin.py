@@ -8,7 +8,8 @@ from .models import (
     CartSession, CartItem, Coupon,
     ProductRating, StockLevel, StockAlert, PreOrder, BackInStockNotification,
     ProductViewAnalytics, OrderAnalytics, UserAnalytics,
-    EmailTemplate, EmailQueue, CartAbandonment
+    EmailTemplate, EmailQueue, CartAbandonment,
+    LoginAttempt, SuspiciousActivity
 )
 
 
@@ -235,3 +236,20 @@ class CartAbandonmentAdmin(admin.ModelAdmin):
     list_display = ('email', 'total_amount', 'notified', 'created_at', 'notified_at')
     list_filter = ('notified', 'created_at')
     search_fields = ('email', 'session_key')
+
+
+# ===== Security =====
+@admin.register(LoginAttempt)
+class LoginAttemptAdmin(admin.ModelAdmin):
+    list_display = ('username', 'ip_address', 'success', 'timestamp', 'user_agent')
+    list_filter = ('success', 'timestamp')
+    search_fields = ('username', 'ip_address')
+    readonly_fields = ('timestamp',)
+
+
+@admin.register(SuspiciousActivity)
+class SuspiciousActivityAdmin(admin.ModelAdmin):
+    list_display = ('user', 'activity_type', 'ip_address', 'is_resolved', 'created_at', 'resolved_at')
+    list_filter = ('activity_type', 'is_resolved', 'created_at')
+    search_fields = ('user__username', 'ip_address', 'description')
+    readonly_fields = ('created_at',)

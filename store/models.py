@@ -417,3 +417,43 @@ class CartAbandonment(models.Model):
 
     def __str__(self):
         return f"Abandoned cart - {self.email or self.session_key}"
+
+
+# ===== Security =====
+class LoginAttempt(models.Model):
+    """Track login attempts for security monitoring"""
+    username = models.CharField(max_length=150)
+    ip_address = models.GenericIPAddressField()
+    success = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    user_agent = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        status = 'Success' if self.success else 'Failed'
+        return f"{self.username} - {status} - {self.timestamp}"
+
+
+class SuspiciousActivity(models.Model):
+    """Track suspicious activities for admin alerts"""
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    activity_type = models.CharField(max_length=50, choices=[
+        ('multiple_failed_logins', 'Multiple Failed Logins'),
+        ('unusual_location', 'Unusual Location'),
+        ('rapid_requests', 'Rapid Requests'),
+        ('suspicious_pattern', 'Suspicious Pattern'),
+    ])
+    description = models.TextField()
+    ip_address = models.GenericIPAddressField()
+    is_resolved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = 'Suspicious Activities'
+
+    def __str__(self):
+        return f"{self.activity_type} - {self.ip_address} - {self.created_at}"

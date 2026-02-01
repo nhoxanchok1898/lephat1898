@@ -4,11 +4,29 @@ from django.http import JsonResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db.models import Q, Count, Avg, Sum
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from datetime import timedelta
 
-from .models import Brand, Category, Product, Order, OrderItem
+from .models import (
+    Brand, Category, Product, Order, OrderItem,
+    SearchQuery, ProductView, StockLevel,
+    ProductRating, ProductViewAnalytics
+)
 import os
 import stripe
 from django.views.decorators.csrf import csrf_exempt
+
+
+def get_client_ip(request):
+    """Get client IP address from request"""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 
 def home_view(request):
@@ -19,15 +37,76 @@ def home_view(request):
 
 def product_list(request):
     qs = Product.objects.filter(is_active=True)
+    
+    # Get filter parameters
     category = request.GET.get('category')
     brand = request.GET.get('brand')
     q = request.GET.get('q')
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    on_sale = request.GET.get('on_sale')
+    new_arrivals = request.GET.get('new_arrivals')
+    in_stock = request.GET.get('in_stock')
+    sort_by = request.GET.get('sort', 'newest')
+    
+    # Apply filters
     if category:
         qs = qs.filter(category__id=category)
     if brand:
         qs = qs.filter(brand__id=brand)
     if q:
-        qs = qs.filter(name__icontains=q) | qs.filter(brand__name__icontains=q)
+        # Full-text search on name and description
+        qs = qs.filter(
+            Q(name__icontains=q) | 
+            Q(description__icontains=q) |
+            Q(brand__name__icontains=q)
+        )
+        # Track search query
+        ip_address = get_client_ip(request)
+        user = request.user if request.user.is_authenticated else None
+        SearchQuery.objects.create(
+            query=q,
+            user=user,
+            results_count=qs.count(),
+            ip_address=ip_address
+        )
+    
+    if min_price:
+        try:
+            qs = qs.filter(price__gte=float(min_price))
+        except ValueError:
+            pass
+    
+    if max_price:
+        try:
+            qs = qs.filter(price__lte=float(max_price))
+        except ValueError:
+            pass
+    
+    if on_sale:
+        qs = qs.filter(sale_price__isnull=False)
+    
+    if new_arrivals:
+        # Products created in the last 30 days
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        qs = qs.filter(created_at__gte=thirty_days_ago)
+    
+    if in_stock:
+        # Filter products that have stock
+        qs = qs.filter(stock__quantity__gt=0)
+    
+    # Sorting
+    if sort_by == 'price_low':
+        qs = qs.order_by('price')
+    elif sort_by == 'price_high':
+        qs = qs.order_by('-price')
+    elif sort_by == 'rating':
+        qs = qs.annotate(avg_rating=Avg('ratings__rating')).order_by('-avg_rating')
+    elif sort_by == 'popular':
+        # Most viewed products
+        qs = qs.annotate(view_count=Count('views')).order_by('-view_count')
+    else:  # newest
+        qs = qs.order_by('-created_at')
 
     categories = Category.objects.all()
     brands = Brand.objects.all()
@@ -67,12 +146,78 @@ def product_list(request):
         'current_brand': brand,
         'current_category_name': current_category_name,
         'current_brand_name': current_brand_name,
+        'sort_by': sort_by,
+        'min_price': min_price,
+        'max_price': max_price,
+        'on_sale': on_sale,
+        'new_arrivals': new_arrivals,
+        'in_stock': in_stock,
     })
 
 
 def product_detail(request, pk):
     p = get_object_or_404(Product, pk=pk, is_active=True)
-    return render(request, 'store/product_detail.html', {'product': p})
+    
+    # Track product view
+    user = request.user if request.user.is_authenticated else None
+    session_key = request.session.session_key or ''
+    ip_address = get_client_ip(request)
+    
+    ProductView.objects.create(
+        product=p,
+        user=user,
+        session_key=session_key,
+        ip_address=ip_address
+    )
+    
+    # Update daily analytics
+    today = timezone.now().date()
+    analytics, created = ProductViewAnalytics.objects.get_or_create(
+        product=p,
+        date=today,
+        defaults={'view_count': 0}
+    )
+    analytics.view_count += 1
+    analytics.save()
+    
+    # Get recommendations (products viewed by users who viewed this product)
+    # Get users who viewed this product
+    viewers = ProductView.objects.filter(product=p).exclude(user__isnull=True).values_list('user', flat=True).distinct()
+    # Get other products viewed by these users
+    recommended_products = Product.objects.filter(
+        views__user__in=viewers,
+        is_active=True
+    ).exclude(pk=p.pk).annotate(
+        view_count=Count('views')
+    ).order_by('-view_count')[:6]
+    
+    # Get products in the same category
+    related_products = Product.objects.filter(
+        category=p.category,
+        is_active=True
+    ).exclude(pk=p.pk)[:6]
+    
+    # Get stock information
+    try:
+        stock = p.stock
+        stock_info = {
+            'available': stock.available_quantity(),
+            'is_low': stock.is_low_stock(),
+            'is_out': stock.is_out_of_stock(),
+        }
+    except StockLevel.DoesNotExist:
+        stock_info = None
+    
+    # Get average rating
+    avg_rating = p.ratings.aggregate(Avg('rating'))['rating__avg']
+    
+    return render(request, 'store/product_detail.html', {
+        'product': p,
+        'recommended_products': recommended_products,
+        'related_products': related_products,
+        'stock_info': stock_info,
+        'avg_rating': avg_rating,
+    })
 
 
 def _get_cart(request):
@@ -390,7 +535,144 @@ def search_suggestions(request):
     q = request.GET.get('q', '')
     results = []
     if q:
-        qs = Product.objects.filter(is_active=True).filter(name__icontains=q)[:8]
+        qs = Product.objects.filter(is_active=True).filter(
+            Q(name__icontains=q) | Q(description__icontains=q)
+        )[:8]
         for p in qs:
-            results.append({'id': p.pk, 'name': p.name})
+            results.append({
+                'id': p.pk,
+                'name': p.name,
+                'price': str(p.get_price()),
+                'image': p.image.url if p.image else None,
+            })
     return JsonResponse({'results': results})
+
+
+@login_required
+def recent_searches(request):
+    """Show user's recent searches"""
+    searches = SearchQuery.objects.filter(user=request.user).order_by('-created_at')[:20]
+    return render(request, 'store/recent_searches.html', {'searches': searches})
+
+
+def popular_searches(request):
+    """Show popular search queries"""
+    # Get top 20 most common search queries
+    popular = SearchQuery.objects.values('query').annotate(
+        count=Count('id'),
+        total_results=Sum('results_count')
+    ).order_by('-count')[:20]
+    return render(request, 'store/popular_searches.html', {'popular': popular})
+
+
+def trending_products(request):
+    """Show trending products based on views and sales"""
+    # Get most viewed products in last 7 days
+    seven_days_ago = timezone.now() - timedelta(days=7)
+    most_viewed = Product.objects.filter(
+        is_active=True,
+        views__viewed_at__gte=seven_days_ago
+    ).annotate(
+        view_count=Count('views')
+    ).order_by('-view_count')[:12]
+    
+    # Get best sellers
+    best_sellers = Product.objects.filter(
+        is_active=True
+    ).annotate(
+        sales_count=Count('orderitem')
+    ).order_by('-sales_count')[:12]
+    
+    return render(request, 'store/trending_products.html', {
+        'most_viewed': most_viewed,
+        'best_sellers': best_sellers,
+    })
+
+
+@login_required
+def admin_dashboard(request):
+    """Enhanced admin dashboard with KPIs and analytics"""
+    from django.contrib.admin.views.decorators import staff_member_required
+    from .models import OrderAnalytics, UserAnalytics, StockAlert
+    
+    # Require staff permission
+    if not request.user.is_staff:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+    
+    today = timezone.now().date()
+    yesterday = today - timedelta(days=1)
+    this_week_start = today - timedelta(days=today.weekday())
+    this_month_start = today.replace(day=1)
+    
+    # Get analytics
+    try:
+        today_analytics = OrderAnalytics.objects.get(date=today)
+    except OrderAnalytics.DoesNotExist:
+        today_analytics = None
+    
+    # This week analytics
+    week_analytics = OrderAnalytics.objects.filter(
+        date__gte=this_week_start
+    ).aggregate(
+        total_revenue=Sum('revenue'),
+        total_orders=Sum('order_count'),
+        total_items=Sum('items_sold')
+    )
+    
+    # This month analytics
+    month_analytics = OrderAnalytics.objects.filter(
+        date__gte=this_month_start
+    ).aggregate(
+        total_revenue=Sum('revenue'),
+        total_orders=Sum('order_count'),
+        total_items=Sum('items_sold')
+    )
+    
+    # Recent orders
+    recent_orders = Order.objects.all().order_by('-created_at')[:10]
+    
+    # Top selling products
+    top_products = Product.objects.filter(
+        is_active=True
+    ).annotate(
+        total_sold=Sum('orderitem__quantity')
+    ).order_by('-total_sold')[:10]
+    
+    # Low stock alerts
+    low_stock_alerts = StockAlert.objects.filter(
+        is_resolved=False
+    ).order_by('-created_at')[:10]
+    
+    # User statistics
+    try:
+        user_analytics = UserAnalytics.objects.get(date=today)
+    except UserAnalytics.DoesNotExist:
+        user_analytics = None
+    
+    # Calculate conversion rate (orders / unique visitors)
+    # For simplicity, we'll use view count as proxy for visitors
+    total_views_today = ProductView.objects.filter(
+        viewed_at__date=today
+    ).count()
+    unique_visitors_today = ProductView.objects.filter(
+        viewed_at__date=today
+    ).values('ip_address').distinct().count()
+    
+    orders_today = Order.objects.filter(created_at__date=today).count()
+    conversion_rate = (orders_today / unique_visitors_today * 100) if unique_visitors_today > 0 else 0
+    
+    context = {
+        'today_analytics': today_analytics,
+        'week_analytics': week_analytics,
+        'month_analytics': month_analytics,
+        'recent_orders': recent_orders,
+        'top_products': top_products,
+        'low_stock_alerts': low_stock_alerts,
+        'user_analytics': user_analytics,
+        'conversion_rate': round(conversion_rate, 2),
+        'total_views_today': total_views_today,
+        'unique_visitors_today': unique_visitors_today,
+    }
+    
+    return render(request, 'store/admin_dashboard.html', context)

@@ -21,4 +21,8 @@ urlpatterns = [
     path('payments/stripe/webhook/', views.stripe_webhook, name='stripe_webhook'),
     path('contact/', views.contact_view, name='contact'),
     path('ajax/search_suggestions/', views.search_suggestions, name='search_suggestions'),
+    path('search/recent/', views.recent_searches, name='recent_searches'),
+    path('search/popular/', views.popular_searches, name='popular_searches'),
+    path('trending/', views.trending_products, name='trending_products'),
+    path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
 ]
