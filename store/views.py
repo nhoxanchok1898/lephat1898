@@ -4,30 +4,76 @@ from django.http import JsonResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db.models import Q, Avg
+from django.core.cache import cache
 
-from .models import Brand, Category, Product, Order, OrderItem
+from .models import (
+    Brand, Category, Product, Order, OrderItem,
+    ProductView, SearchQuery, Review
+)
 import os
 import stripe
 from django.views.decorators.csrf import csrf_exempt
 
 
 def home_view(request):
+    # Use select_related for performance
     brands = Brand.objects.all()[:8]
-    new_products = Product.objects.filter(is_active=True).order_by('-created_at')[:12]
-    return render(request, 'store/home.html', {'brands': brands, 'new_products': new_products})
+    new_products = Product.objects.filter(is_active=True).select_related('brand', 'category').order_by('-created_at')[:12]
+    
+    # Get trending products (most viewed in last 7 days)
+    trending_products = Product.objects.filter(is_active=True).order_by('-view_count')[:8]
+    
+    return render(request, 'store/home.html', {
+        'brands': brands,
+        'new_products': new_products,
+        'trending_products': trending_products,
+    })
 
 
 def product_list(request):
-    qs = Product.objects.filter(is_active=True)
+    # Optimized query with select_related
+    qs = Product.objects.filter(is_active=True).select_related('brand', 'category')
+    
+    # Filters
     category = request.GET.get('category')
     brand = request.GET.get('brand')
     q = request.GET.get('q')
+    on_sale = request.GET.get('on_sale')
+    in_stock = request.GET.get('in_stock')
+    price_min = request.GET.get('price_min')
+    price_max = request.GET.get('price_max')
+    
     if category:
         qs = qs.filter(category__id=category)
     if brand:
         qs = qs.filter(brand__id=brand)
     if q:
-        qs = qs.filter(name__icontains=q) | qs.filter(brand__name__icontains=q)
+        # Track search query
+        SearchQuery.objects.create(
+            query=q,
+            user=request.user if request.user.is_authenticated else None,
+            session_key=request.session.session_key,
+            results_count=qs.count()
+        )
+        qs = qs.filter(
+            Q(name__icontains=q) | 
+            Q(brand__name__icontains=q) |
+            Q(description__icontains=q)
+        )
+    if on_sale:
+        qs = qs.filter(is_on_sale=True)
+    if in_stock:
+        qs = qs.filter(stock_quantity__gt=0)
+    if price_min:
+        qs = qs.filter(price__gte=price_min)
+    if price_max:
+        qs = qs.filter(price__lte=price_max)
+
+    # Sorting
+    sort = request.GET.get('sort', '-created_at')
+    if sort in ['price', '-price', 'rating', '-rating', 'created_at', '-created_at']:
+        qs = qs.order_by(sort)
 
     categories = Category.objects.all()
     brands = Brand.objects.all()
@@ -67,12 +113,49 @@ def product_list(request):
         'current_brand': brand,
         'current_category_name': current_category_name,
         'current_brand_name': current_brand_name,
+        'on_sale': on_sale,
+        'in_stock': in_stock,
+        'price_min': price_min,
+        'price_max': price_max,
+        'sort': sort,
     })
 
 
 def product_detail(request, pk):
-    p = get_object_or_404(Product, pk=pk, is_active=True)
-    return render(request, 'store/product_detail.html', {'product': p})
+    p = get_object_or_404(Product.objects.select_related('brand', 'category'), pk=pk, is_active=True)
+    
+    # Track product view
+    ProductView.objects.create(
+        product=p,
+        user=request.user if request.user.is_authenticated else None,
+        session_key=request.session.session_key
+    )
+    
+    # Increment view count
+    p.view_count += 1
+    p.save(update_fields=['view_count'])
+    
+    # Get reviews with average rating
+    reviews = Review.objects.filter(product=p).select_related('user').order_by('-created_at')
+    avg_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+    
+    # Update product rating
+    if avg_rating != p.rating:
+        p.rating = round(avg_rating, 2)
+        p.save(update_fields=['rating'])
+    
+    # Get recommended products (simple version - same category)
+    recommended = Product.objects.filter(
+        category=p.category,
+        is_active=True
+    ).exclude(pk=p.pk).order_by('-view_count')[:4]
+    
+    return render(request, 'store/product_detail.html', {
+        'product': p,
+        'reviews': reviews[:10],  # Limit to 10 most recent
+        'avg_rating': avg_rating,
+        'recommended_products': recommended,
+    })
 
 
 def _get_cart(request):

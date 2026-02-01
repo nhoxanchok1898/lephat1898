@@ -10,6 +10,7 @@ from .api_views import (
     OrderViewSet, CartViewSet, ReviewViewSet, WishlistViewSet,
     analytics_overview, track_search
 )
+from .api_docs import api_documentation
 
 # Create router for viewsets
 router = DefaultRouter()
@@ -22,6 +23,9 @@ router.register(r'reviews', ReviewViewSet, basename='review')
 router.register(r'wishlist', WishlistViewSet, basename='wishlist')
 
 urlpatterns = [
+    # Documentation
+    path('', api_documentation, name='api_documentation'),
+    
     # Authentication
     path('auth/token/', obtain_auth_token, name='api_token_auth'),
     
