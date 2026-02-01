@@ -307,6 +307,9 @@ def handle_paypal_subscription_cancelled(payload):
 def send_order_confirmation_email(order):
     """Send order confirmation email to customer"""
     try:
+        # Try to get email from order or use a placeholder
+        recipient_email = getattr(order, 'email', None) or f'customer-{order.id}@example.com'
+        
         subject = f'Order Confirmation #{order.id}'
         message = f"""
         Dear {order.full_name},
@@ -326,7 +329,7 @@ def send_order_confirmation_email(order):
             subject,
             message,
             settings.DEFAULT_FROM_EMAIL,
-            [order.full_name],  # Ideally use order.email
+            [recipient_email],
             fail_silently=True,
         )
     except Exception as e:
@@ -336,6 +339,9 @@ def send_order_confirmation_email(order):
 def send_payment_failed_email(order):
     """Send payment failed email to customer"""
     try:
+        # Try to get email from order or use a placeholder
+        recipient_email = getattr(order, 'email', None) or f'customer-{order.id}@example.com'
+        
         subject = f'Payment Failed for Order #{order.id}'
         message = f"""
         Dear {order.full_name},
@@ -351,7 +357,7 @@ def send_payment_failed_email(order):
             subject,
             message,
             settings.DEFAULT_FROM_EMAIL,
-            [order.full_name],
+            [recipient_email],
             fail_silently=True,
         )
     except Exception as e:
@@ -361,6 +367,9 @@ def send_payment_failed_email(order):
 def send_refund_confirmation_email(order):
     """Send refund confirmation email to customer"""
     try:
+        # Try to get email from order or use a placeholder
+        recipient_email = getattr(order, 'email', None) or f'customer-{order.id}@example.com'
+        
         subject = f'Refund Processed for Order #{order.id}'
         message = f"""
         Dear {order.full_name},
@@ -378,7 +387,7 @@ def send_refund_confirmation_email(order):
             subject,
             message,
             settings.DEFAULT_FROM_EMAIL,
-            [order.full_name],
+            [recipient_email],
             fail_silently=True,
         )
     except Exception as e:
