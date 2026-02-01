@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from django.contrib.auth import views as dj_auth_views
 from . import views
 from . import auth_views
+from . import order_views
 from . import recommendation_views
 from . import inventory_views
 from . import analytics_views
@@ -41,7 +42,11 @@ urlpatterns = [
     path('auth/register/', auth_views.register_view, name='register'),
     path('auth/login/', auth_views.login_view, name='auth_login'),
     path('auth/logout/', auth_views.logout_view, name='auth_logout'),
+    path('auth/profile/', auth_views.profile_view, name='profile'),
     path('checkout/success/', views.checkout_success, name='checkout_success'),
+    # Order views
+    path('orders/history/', order_views.order_history, name='order_history'),
+    path('orders/<int:order_id>/', order_views.order_detail, name='order_detail'),
     path('payments/stripe/create/', views.stripe_create_session, name='stripe_create'),
     path('payments/stripe/success/', views.stripe_success, name='stripe_success'),
     path('payments/stripe/webhook/', views.stripe_webhook, name='stripe_webhook'),
