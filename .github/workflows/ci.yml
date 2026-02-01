@@ -11,27 +11,37 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.11]
+        python-version: ['3.11', '3.12']
+    
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
+      
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Cache pip
+      
+      - name: Cache pip dependencies
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+      
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Run migrations and tests
+      
+      - name: Run Django checks
         env:
-          DJANGO_SETTINGS_MODULE: ecommerce.settings_debug
+          DJANGO_SETTINGS_MODULE: ecommerce.settings
         run: |
-          python manage.py migrate --noinput
+          python manage.py check
+      
+      - name: Run tests
+        env:
+          DJANGO_SETTINGS_MODULE: ecommerce.settings
+        run: |
           python manage.py test --noinput
