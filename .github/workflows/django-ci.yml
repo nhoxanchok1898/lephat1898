@@ -1,4 +1,4 @@
-name: Django CI
+name: Django CI Tests
 
 on:
   push:
@@ -10,15 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: [3.11, 3.12]
+        python-version: ['3.11', '3.12']
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python }}
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: |
@@ -26,19 +26,22 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Django system checks
+        env:
+          DJANGO_SETTINGS_MODULE: ecommerce.settings
         run: |
-          set -e
-          python manage.py check || true
+          python manage.py check
 
-      - name: Run Django tests
+      - name: Run tests
+        env:
+          DJANGO_SETTINGS_MODULE: ecommerce.settings
         run: |
-          set -e
-          python manage.py test
+          python manage.py test --noinput
 
-      - name: Upload test artifacts
+      - name: Upload test logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: django-ci-logs-${{ matrix.python }}
+          name: django-ci-logs-${{ matrix.python-version }}
           path: |
-            .pytest_cache
+            .pytest_cache/
             *.log
