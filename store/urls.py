@@ -6,6 +6,9 @@ from . import inventory_views
 from . import analytics_views
 from . import api_views
 from . import coupon_views
+from . import payment_webhooks
+from . import admin_dashboard
+from . import monitoring
 
 app_name = 'store'
 
@@ -33,6 +36,24 @@ urlpatterns = [
     path('payments/stripe/webhook/', views.stripe_webhook, name='stripe_webhook'),
     path('contact/', views.contact_view, name='contact'),
     path('ajax/search_suggestions/', views.search_suggestions, name='search_suggestions'),
+    
+    # Payment Webhooks
+    path('webhooks/stripe/', payment_webhooks.stripe_webhook, name='webhook_stripe'),
+    path('webhooks/paypal/', payment_webhooks.paypal_webhook, name='webhook_paypal'),
+    
+    # Admin Dashboard
+    path('admin-dashboard/', admin_dashboard.admin_dashboard, name='admin_dashboard_new'),
+    path('admin-dashboard/export/sales/', admin_dashboard.export_sales_report, name='export_sales'),
+    path('admin-dashboard/export/products/', admin_dashboard.export_products_report, name='export_products'),
+    path('admin-dashboard/api/metrics/', admin_dashboard.api_dashboard_metrics, name='api_metrics'),
+    path('admin-dashboard/api/sales/', admin_dashboard.api_sales_chart, name='api_sales_chart'),
+    path('admin-dashboard/performance/', admin_dashboard.performance_metrics, name='performance_metrics'),
+    path('admin-dashboard/activity/', admin_dashboard.staff_activity_log, name='activity_log'),
+    
+    # Health Check & Monitoring
+    path('health/', monitoring.health_check, name='health_check'),
+    path('readiness/', monitoring.readiness_check, name='readiness_check'),
+    path('liveness/', monitoring.liveness_check, name='liveness_check'),
     
     # Recommendation URLs
     path('recommendations/<int:product_id>/', recommendation_views.get_recommendations, name='recommendations'),
