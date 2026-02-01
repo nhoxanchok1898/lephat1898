@@ -78,6 +78,7 @@ class Product(models.Model):
         return self.name
 
     def get_absolute_url(self):
+        """Return the canonical URL for this product's detail page."""
         return reverse('store:product_detail', args=[self.pk])
 
 
