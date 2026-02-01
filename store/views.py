@@ -11,7 +11,7 @@ from datetime import timedelta
 
 from .models import (
     Brand, Category, Product, Order, OrderItem,
-    ProductView, StockLevel,
+    SearchQuery, ProductView, StockLevel,
     ProductViewAnalytics
 )
 import os
@@ -45,7 +45,7 @@ def home_view(request):
 
 
 def product_list(request):
-    qs = Product.objects.filter(is_active=True)
+    qs = Product.objects.filter(is_active=True).select_related('brand', 'category')
     
     # Get filter parameters
     category = request.GET.get('category')
@@ -102,24 +102,27 @@ def product_list(request):
         qs = qs.filter(created_at__gte=thirty_days_ago)
     
     if in_stock:
-        # Filter products that have stock
-        qs = qs.filter(stock__quantity__gt=0)
+        # Filter products that have quantity > 0
+        qs = qs.filter(quantity__gt=0)
     
     # Sorting
-    if sort_by == 'price_low':
+    if sort_by == 'price_asc':
         qs = qs.order_by('price')
-    elif sort_by == 'price_high':
+    elif sort_by == 'price_desc':
         qs = qs.order_by('-price')
-    elif sort_by == 'rating':
-        qs = qs.annotate(avg_rating=Avg('ratings__rating')).order_by('-avg_rating')
+    elif sort_by == 'name_asc':
+        qs = qs.order_by('name')
+    elif sort_by == 'name_desc':
+        qs = qs.order_by('-name')
     elif sort_by == 'popular':
         # Most viewed products
-        qs = qs.annotate(view_count=Count('views')).order_by('-view_count')
+        qs = qs.order_by('-view_count')
     else:  # newest
         qs = qs.order_by('-created_at')
 
-    categories = Category.objects.all()
-    brands = Brand.objects.all()
+    # Get categories and brands with product counts
+    categories = Category.objects.annotate(product_count=Count('product')).all()
+    brands = Brand.objects.annotate(product_count=Count('product')).all()
 
     # resolve friendly names for meta
     current_category_name = None
@@ -156,7 +159,7 @@ def product_list(request):
         'current_brand': brand,
         'current_category_name': current_category_name,
         'current_brand_name': current_brand_name,
-        'sort_by': sort_by,
+        'sort': sort_by,  # Changed from sort_by to sort for template consistency
         'min_price': min_price,
         'max_price': max_price,
         'on_sale': on_sale,

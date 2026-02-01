@@ -8,19 +8,20 @@ try:
 except Exception:
     sentry_sdk = None
 
-# Initialize Sentry if a DSN is provided via env (or fallback to the provided DSN)
-SENTRY_DSN = os.environ.get(
-    'SENTRY_DSN',
-    'https://d9474e438ed65845b699ceb9f47659ee0e451080874655740.ingest.us.sentry.io/4510808749309952',
-)
+# Initialize Sentry only if a valid DSN is provided via environment variable
+SENTRY_DSN = os.environ.get('SENTRY_DSN', '')
 
 if sentry_sdk and SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        integrations=[DjangoIntegration()],
-        traces_sample_rate=1.0,
-        send_default_pii=False,
-    )
+    try:
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[DjangoIntegration()],
+            traces_sample_rate=1.0,
+            send_default_pii=False,
+        )
+    except Exception:
+        # Silently ignore Sentry initialization errors (e.g., invalid DSN)
+        pass
 try:
     from dotenv import load_dotenv  # type: ignore[reportMissingImports]
 except Exception:
