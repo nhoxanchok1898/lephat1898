@@ -9,6 +9,7 @@ from . import coupon_views
 from . import payment_webhooks
 from . import admin_dashboard
 from . import monitoring
+from . import search_views
 
 app_name = 'store'
 
@@ -36,6 +37,12 @@ urlpatterns = [
     path('payments/stripe/webhook/', views.stripe_webhook, name='stripe_webhook'),
     path('contact/', views.contact_view, name='contact'),
     path('ajax/search_suggestions/', views.search_suggestions, name='search_suggestions'),
+    
+    # Advanced Search URLs
+    path('search/', search_views.product_search_view, name='product_search'),
+    path('search/autocomplete/', search_views.autocomplete_view, name='search_autocomplete'),
+    path('search/analytics/', search_views.search_analytics_view, name='search_analytics'),
+    path('search/popular/', search_views.popular_searches_view, name='popular_searches'),
     
     # Payment Webhooks
     path('webhooks/stripe/', payment_webhooks.stripe_webhook, name='webhook_stripe'),
