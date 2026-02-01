@@ -22,6 +22,10 @@ class Order(models.Model):
     full_name = models.CharField(max_length=200)
     phone = models.CharField(max_length=30)
     address = models.TextField()
+    # payment fields
+    payment_method = models.CharField(max_length=30, default='offline')
+    payment_status = models.CharField(max_length=30, default='pending')
+    payment_reference = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
