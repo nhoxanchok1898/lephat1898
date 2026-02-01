@@ -19,3 +19,17 @@ build/
 *.egg-info/
 /.vscode/
 /.idea/
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Archive files
+*.zip
+*.tar.gz
+
+# Sitemap errors
+sitemap_error.html
