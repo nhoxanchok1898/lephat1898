@@ -106,7 +106,7 @@ def review_approve(request, pk):
         except Exception:
             pass
     
-    return redirect('admin:store_review_changelist')
+    return redirect('admin:index')
 
 
 @login_required

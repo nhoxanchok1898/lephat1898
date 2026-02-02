@@ -43,9 +43,10 @@ class TwoFactorAuth:
         Get provisioning URI for QR code generation
         """
         totp = pyotp.TOTP(secret)
+        issuer = getattr(settings, 'SITE_NAME', 'Le Phat Store')
         return totp.provisioning_uri(
             name=user.email,
-            issuer_name=settings.SITE_NAME or "Le Phat Store"
+            issuer_name=issuer
         )
     
     @staticmethod

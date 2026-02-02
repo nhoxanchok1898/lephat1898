@@ -89,7 +89,7 @@ class CompleteWorkflowTest(TestCase):
         response = self.client.get('/auth/profile/')
         self.assertEqual(response.status_code, 200)
         
-        print("\n✅ Complete workflow test passed!")
+        print("\nComplete workflow test passed!")
         print("   - User registration")
         print("   - User login")
         print("   - Product browsing")
