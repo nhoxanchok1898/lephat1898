@@ -75,7 +75,11 @@ urlpatterns = [
     path('webhooks/stripe/', payment_webhooks.stripe_webhook, name='webhook_stripe'),
     path('webhooks/paypal/', payment_webhooks.paypal_webhook, name='webhook_paypal'),
     
-    # Admin Dashboard
+    # Admin Dashboard (admin_dashboard.py)
+    # Note: There are two admin dashboard implementations:
+    # 1. admin-dashboard/ (admin_dashboard.py) - newer implementation
+    # 2. dashboard/ (analytics_views.py) - older implementation
+    # Both are kept for backward compatibility and different use cases.
     path('admin-dashboard/', admin_dashboard.admin_dashboard, name='admin_dashboard_new'),
     path('admin-dashboard/export/sales/', admin_dashboard.export_sales_report, name='export_sales'),
     path('admin-dashboard/export/products/', admin_dashboard.export_products_report, name='export_products'),
@@ -111,6 +115,8 @@ urlpatterns = [
     path('wishlist/shared/<str:username>/', wishlist_views.wishlist_shared_view, name='wishlist_shared'),
     
     # Analytics URLs
+    # Note: analytics_views.admin_dashboard is a separate implementation from
+    # admin_dashboard.py - kept for backward compatibility
     path('dashboard/', analytics_views.admin_dashboard, name='admin_dashboard'),
     path('analytics/data/', analytics_views.analytics_data, name='analytics_data'),
     path('analytics/sales/', analytics_views.sales_chart_data, name='sales_chart'),

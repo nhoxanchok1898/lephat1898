@@ -1,3 +1,0 @@
-PATH: /dashboard/
-STATUS: 302
-BODY: 

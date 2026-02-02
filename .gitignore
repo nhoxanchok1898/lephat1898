@@ -33,4 +33,5 @@ logs/
 *.tar.gz
 
 # Sitemap errors
-sitemap_error.html
+sitemap_error.htmltmp_final_response.txt
+tmp_test_response_debug.txt
