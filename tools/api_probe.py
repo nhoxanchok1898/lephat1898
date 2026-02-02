@@ -6,10 +6,12 @@ import sys
 # Ensure project root is on sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ecommerce.settings')
+# Use paint_store.settings as the canonical settings module
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'paint_store.settings')
 django.setup()
 
 from django.test import Client
+from django.conf import settings
 from store.models import Brand, Category, Product
 
 b = Brand.objects.create(name='ProbeBrand')
@@ -30,6 +32,9 @@ p = Product.objects.create(
 )
 
 client = Client()
+# Ensure test client uses an allowed host
+if settings.ALLOWED_HOSTS:
+    client.defaults['HTTP_HOST'] = settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS[0] != '*' else '127.0.0.1'
 resp = client.post(
 	'/api/cart/add/',
 	data=json.dumps({'product_id': p.pk, 'quantity': 2}),

@@ -5,7 +5,8 @@ from pathlib import Path
 # Ensure project root is on sys.path so Django settings module can be imported
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ecommerce.settings')
+# Use paint_store.settings as the canonical settings module
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'paint_store.settings')
 import django
 django.setup()
 
@@ -20,6 +21,10 @@ if not User.objects.filter(username=username).exists():
     print('created superuser')
 
 c = Client()
+# Ensure test client uses an allowed host to prevent 400 errors
+from django.conf import settings
+if settings.ALLOWED_HOSTS:
+    c.defaults['HTTP_HOST'] = settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS[0] != '*' else '127.0.0.1'
 logged = c.login(username=username, password=password)
 print('logged in:', logged)
 try:

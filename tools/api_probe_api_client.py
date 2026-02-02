@@ -3,7 +3,8 @@ import django
 import json
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ecommerce.settings')
+# Use paint_store.settings as the canonical settings module
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'paint_store.settings')
 django.setup()
 
 from rest_framework.test import APIClient

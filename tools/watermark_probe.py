@@ -1,7 +1,8 @@
 import os
 import django
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ecommerce.settings')
+# Use paint_store.settings as the canonical settings module
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'paint_store.settings')
 django.setup()
 
 from store.models import Product

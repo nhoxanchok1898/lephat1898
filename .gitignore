@@ -34,3 +34,7 @@ logs/
 
 # Sitemap errors
 sitemap_error.html
+
+# Temporary response log files
+tmp_final_response.txt
+tmp_test_response_debug.txt
