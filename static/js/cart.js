@@ -108,7 +108,7 @@
   }
 
   function bindUI() {
-    // Add-to-cart buttons
+    // Add-to-cart buttons (data attribute, redesign class, or inline onclick)
     qsa('[data-add-to-cart]').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const pk = btn.getAttribute('data-add-to-cart');
@@ -127,7 +127,60 @@
           btn.innerHTML = original;
         }
       });
-    });
+      });
+
+      // redesign buttons using class or inline onclick
+      qsa('.btn-add-to-cart-redesign').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          // try to extract product id from onclick or surrounding data
+          let pk = btn.getAttribute('data-pk');
+          if (!pk) {
+            const oc = btn.getAttribute('onclick') || '';
+            const m = oc.match(/addToCart\((\d+)\)/);
+            if (m) pk = m[1];
+          }
+          if (!pk) return;
+          btn.disabled = true;
+          const original = btn.innerHTML;
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+          try {
+            await postJSON(API.add(pk), { quantity: 1 });
+            showToast('Đã thêm vào giỏ hàng');
+            await renderMiniCart();
+          } catch (err) {
+            console.error(err);
+            showToast('Không thể thêm vào giỏ hàng', 'danger');
+          } finally {
+            btn.disabled = false;
+            btn.innerHTML = original;
+          }
+        });
+      });
+
+      // buttons with inline onclick addToCart(...) not using redesign class
+      qsa('button[onclick]').forEach(btn => {
+        const oc = btn.getAttribute('onclick') || '';
+        if (!oc.includes('addToCart(')) return;
+        btn.addEventListener('click', async (e) => {
+          const m = oc.match(/addToCart\((\d+)\)/);
+          if (!m) return;
+          const pk = m[1];
+          btn.disabled = true;
+          const original = btn.innerHTML;
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+          try {
+            await postJSON(API.add(pk), { quantity: 1 });
+            showToast('Đã thêm vào giỏ hàng');
+            await renderMiniCart();
+          } catch (err) {
+            console.error(err);
+            showToast('Không thể thêm vào giỏ hàng', 'danger');
+          } finally {
+            btn.disabled = false;
+            btn.innerHTML = original;
+          }
+        });
+      });
 
     // Open mini-cart toggle
     const offcanvasEl = qs('#miniCartOffcanvas');
