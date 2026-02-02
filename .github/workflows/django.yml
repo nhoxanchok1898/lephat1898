@@ -35,19 +35,21 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    
-    - name: Compile Python files
+    - name: Run compileall check
       run: |
-        python -m compileall -q .
-    
-    - name: Run Django system checks
+        python -m compileall .
+    - name: Run Django checks
+      env:
+        DJANGO_SETTINGS_MODULE: paint_store.settings
       run: |
         python manage.py check
-    
     - name: Run migrations
+      env:
+        DJANGO_SETTINGS_MODULE: paint_store.settings
       run: |
         python manage.py migrate --noinput
-    
     - name: Run Tests
+      env:
+        DJANGO_SETTINGS_MODULE: paint_store.settings
       run: |
         python manage.py test --noinput
