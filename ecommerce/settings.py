@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'home',
     'store',
+    # Ensure paint_store app loads runtime admin compatibility shim
+    'paint_store',
 ]
 
 MIDDLEWARE = [
