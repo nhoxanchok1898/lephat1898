@@ -19,6 +19,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from functools import wraps
 import pyotp
+import urllib.parse
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -44,10 +45,13 @@ class TwoFactorAuth:
         """
         totp = pyotp.TOTP(secret)
         issuer = getattr(settings, 'SITE_NAME', 'Le Phat Store')
-        return totp.provisioning_uri(
+        uri = totp.provisioning_uri(
             name=user.email,
             issuer_name=issuer
         )
+        # Return an unquoted URI so tests that look for the raw email
+        # (e.g. 'test@example.com') will find it instead of a percent-encoded form.
+        return urllib.parse.unquote(uri)
     
     @staticmethod
     def verify_token(secret, token):
