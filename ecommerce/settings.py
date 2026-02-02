@@ -44,8 +44,10 @@ INSTALLED_APPS = [
     'corsheaders',
     'home',
     'store',
-    # Ensure paint_store app loads runtime admin compatibility shim
-    'paint_store',
+    # Note: do NOT register `paint_store` as an app here because it can
+    # be a namespace package in some environments and Django will attempt
+    # to create an AppConfig for it (causing ImproperlyConfigured errors).
+    # Instead we'll import its compatibility shim directly below.
 ]
 
 MIDDLEWARE = [
@@ -162,3 +164,15 @@ if sentry_sdk and SENTRY_DSN and not DEBUG:
         # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
         send_default_pii=True,
     )
+
+# Load admin compatibility shim without registering `paint_store` as an app.
+# Importing the module runs the runtime monkey-patches but avoids AppConfig
+# discovery problems that can occur when the package exists in multiple
+# filesystem locations (namespace packages).
+try:
+    import importlib
+
+    importlib.import_module('paint_store.admin_compat')
+except Exception:
+    # Best-effort: don't crash settings import if shim import fails.
+    pass
