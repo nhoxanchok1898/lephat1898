@@ -254,12 +254,39 @@ def _get_cart(request):
 def cart_add(request, pk):
     product = get_object_or_404(Product, pk=pk, is_active=True)
     cart = _get_cart(request)
-    qty = int(request.POST.get('quantity', 1))
+    qty = 1
+    # support JSON body from fetch() as well as form-encoded POST
+    if request.content_type == 'application/json' or request.META.get('HTTP_CONTENT_TYPE', '').startswith('application/json'):
+        try:
+            data = json.loads(request.body.decode('utf-8')) if request.body else {}
+            qty = int(data.get('quantity', 1))
+        except Exception:
+            qty = 1
+    else:
+        try:
+            qty = int(request.POST.get('quantity', 1))
+        except Exception:
+            qty = 1
     if str(pk) in cart:
         cart[str(pk)] += qty
     else:
         cart[str(pk)] = qty
     request.session.modified = True
+    # If JSON request, return JSON summary
+    if request.content_type == 'application/json' or request.META.get('HTTP_CONTENT_TYPE', '').startswith('application/json'):
+        total = 0
+        count = 0
+        items = []
+        for pid, q in cart.items():
+            try:
+                p = Product.objects.get(pk=int(pid))
+            except Product.DoesNotExist:
+                continue
+            subtotal = float(p.price * q)
+            total += subtotal
+            count += q
+            items.append({'pk': p.pk, 'name': p.name, 'quantity': q, 'price': float(p.price), 'subtotal': subtotal, 'image_url': request.build_absolute_uri(p.image.url) if p.image else None})
+        return JsonResponse({'success': True, 'items': items, 'total': float(total), 'count': count})
     return redirect('store:cart_view')
 
 
@@ -305,10 +332,19 @@ def cart_update(request, pk):
 def cart_update_ajax(request, pk):
     """AJAX endpoint: set quantity and return JSON with updated subtotal and total."""
     cart = _get_cart(request)
-    try:
-        qty = int(request.POST.get('quantity', 0))
-    except Exception:
-        return JsonResponse({'error': 'invalid quantity'}, status=400)
+    # support JSON body from fetch() as well as form posts
+    qty = None
+    if request.content_type == 'application/json' or request.META.get('HTTP_CONTENT_TYPE', '').startswith('application/json'):
+        try:
+            data = json.loads(request.body.decode('utf-8')) if request.body else {}
+            qty = int(data.get('quantity', 0))
+        except Exception:
+            return JsonResponse({'error': 'invalid quantity'}, status=400)
+    else:
+        try:
+            qty = int(request.POST.get('quantity', 0))
+        except Exception:
+            return JsonResponse({'error': 'invalid quantity'}, status=400)
 
     if qty <= 0:
         cart.pop(str(pk), None)
