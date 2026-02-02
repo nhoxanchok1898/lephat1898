@@ -69,6 +69,9 @@ class APITests(TestCase):
     
     def test_cart_add_endpoint(self):
         """Test POST /api/cart/add/"""
+        # Authenticate the client to match the requirement
+        self.client.force_authenticate(user=self.user)
+        
         url = reverse('store:api_cart_add')
         response = self.client.post(url, {
             'product_id': self.product1.id,
