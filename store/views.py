@@ -361,10 +361,18 @@ def cart_summary_ajax(request):
 @csrf_exempt
 def api_cart_add_public(request):
     """Simple JSON API endpoint for adding items to the session cart (public)."""
-    # Debug probe: write a file so test runs can confirm whether this view was reached
+    # Debug probe: write request details so test runs can confirm whether this view was reached
     try:
         with open(r"C:\Users\letan\Desktop\lephat1898\tmp_api_called.txt", "w", encoding="utf-8") as f:
             f.write("api_cart_add_public called\n")
+            f.write(f"METHOD: {request.method}\n")
+            try:
+                body = request.body.decode('utf-8')
+            except Exception:
+                body = '<binary>'
+            f.write(f"BODY: {body}\n")
+            f.write(f"META_AUTH: {request.META.get('HTTP_AUTHORIZATION')}\n")
+            f.write(f"SESSION_KEY: {getattr(request.session, 'session_key', None)}\n")
     except Exception:
         pass
     if request.method != 'POST':
