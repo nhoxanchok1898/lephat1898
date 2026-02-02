@@ -7,7 +7,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ecommerce.settings')
+# Use paint_store.settings as the canonical settings module
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'paint_store.settings')
 django.setup()
 
 from store.watermark import watermark_product_image

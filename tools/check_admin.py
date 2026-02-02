@@ -19,6 +19,9 @@ if not User.objects.filter(username=username).exists():
     User.objects.create_superuser(username=username, email='ci@example.com', password=password)
 
 c = Client()
+# Ensure test client uses an allowed host
+if settings.ALLOWED_HOSTS:
+    c.defaults['HTTP_HOST'] = settings.ALLOWED_HOSTS[0] if settings.ALLOWED_HOSTS[0] != '*' else '127.0.0.1'
 logged_in = c.login(username=username, password=password)
 print('Logged in:', logged_in)
 try:
