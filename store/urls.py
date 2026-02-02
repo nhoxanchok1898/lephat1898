@@ -126,6 +126,7 @@ urlpatterns = [
     
     # REST API URLs
     path('api/', include(router.urls)),
+    path('api/v1/', include('store.api_urls')),  # Include authenticated API endpoints with v1 prefix
     path('api/cart/', api_views.cart_view_api, name='api_cart'),
     # Expose a plain Django JSON view for anonymous session-backed cart adds.
     path('api/cart/add/', views.api_cart_add_public, name='api_cart_add'),

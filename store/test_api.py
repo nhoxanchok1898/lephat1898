@@ -69,6 +69,9 @@ class APITests(TestCase):
     
     def test_cart_add_endpoint(self):
         """Test POST /api/cart/add/"""
+        # Authenticate the client to match the requirement
+        self.client.force_authenticate(user=self.user)
+        
         url = reverse('store:api_cart_add')
         response = self.client.post(url, {
             'product_id': self.product1.id,
@@ -174,3 +177,119 @@ class APITests(TestCase):
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_authenticated_cart_add_item(self):
+        """Test authenticated cart add item API"""
+        self.client.force_authenticate(user=self.user)
+        
+        url = reverse('store:cart-add-item')
+        response = self.client.post(url, {
+            'product_id': self.product1.id,
+            'quantity': 2
+        }, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['success'])
+        self.assertEqual(response.data['quantity'], 2)
+    
+    def test_authenticated_cart_update_item(self):
+        """Test authenticated cart update item API"""
+        from store.models import Cart, CartItem
+        
+        self.client.force_authenticate(user=self.user)
+        
+        # First add an item
+        cart = Cart.objects.create(user=self.user)
+        CartItem.objects.create(
+            cart=cart,
+            product=self.product1,
+            quantity=2,
+            price=self.product1.price
+        )
+        
+        # Now update it
+        url = reverse('store:cart-update-item')
+        response = self.client.post(url, {
+            'product_id': self.product1.id,
+            'quantity': 5
+        }, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['success'])
+        self.assertEqual(response.data['quantity'], 5)
+    
+    def test_authenticated_cart_remove_item(self):
+        """Test authenticated cart remove item API"""
+        from store.models import Cart, CartItem
+        
+        self.client.force_authenticate(user=self.user)
+        
+        # First add an item
+        cart = Cart.objects.create(user=self.user)
+        CartItem.objects.create(
+            cart=cart,
+            product=self.product1,
+            quantity=2,
+            price=self.product1.price
+        )
+        
+        # Now remove it
+        url = reverse('store:cart-remove-item')
+        response = self.client.post(url, {
+            'product_id': self.product1.id
+        }, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['success'])
+    
+    def test_authenticated_cart_clear(self):
+        """Test authenticated cart clear API"""
+        from store.models import Cart, CartItem
+        
+        self.client.force_authenticate(user=self.user)
+        
+        # Add some items
+        cart = Cart.objects.create(user=self.user)
+        CartItem.objects.create(cart=cart, product=self.product1, quantity=2, price=self.product1.price)
+        CartItem.objects.create(cart=cart, product=self.product2, quantity=1, price=self.product2.price)
+        
+        # Clear cart
+        url = reverse('store:cart-clear')
+        response = self.client.post(url, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['success'])
+        self.assertEqual(response.data['total_items'], 0)
+    
+    def test_authenticated_cart_apply_coupon(self):
+        """Test authenticated cart apply coupon API"""
+        from store.models import Cart, CartItem, Coupon
+        from datetime import timedelta
+        from django.utils import timezone
+        
+        self.client.force_authenticate(user=self.user)
+        
+        # Create a coupon
+        coupon = Coupon.objects.create(
+            code='TEST10',
+            discount_percentage=10,
+            valid_from=timezone.now() - timedelta(days=1),
+            valid_to=timezone.now() + timedelta(days=30),
+            is_active=True,
+            min_purchase_amount=50
+        )
+        
+        # Add items to cart
+        cart = Cart.objects.create(user=self.user)
+        CartItem.objects.create(cart=cart, product=self.product1, quantity=1, price=self.product1.price)
+        
+        # Apply coupon
+        url = reverse('store:cart-apply-coupon')
+        response = self.client.post(url, {
+            'code': 'TEST10'
+        }, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['success'])
+        self.assertEqual(response.data['code'], 'TEST10')
+        self.assertGreater(response.data['discount_amount'], 0)
