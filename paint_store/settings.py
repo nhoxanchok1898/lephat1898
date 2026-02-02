@@ -187,3 +187,13 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+
+# Load runtime admin compatibility shim to guard against contexts lacking
+# a ``template`` attribute in some dev environments. This is a best-effort
+# development-time fallback and will not raise if the shim fails to import.
+try:
+    import importlib
+    importlib.import_module('paint_store.admin_compat')
+except Exception:
+    # Don't fail settings import on shim errors.
+    pass
