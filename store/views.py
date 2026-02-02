@@ -58,11 +58,17 @@ def product_list(request):
     in_stock = request.GET.get('in_stock')
     sort_by = request.GET.get('sort', 'newest')
     
-    # Apply filters
+    # Apply filters with error handling
     if category:
-        qs = qs.filter(category__id=category)
+        try:
+            qs = qs.filter(category__id=int(category))
+        except (ValueError, TypeError):
+            pass  # Ignore invalid category values
     if brand:
-        qs = qs.filter(brand__id=brand)
+        try:
+            qs = qs.filter(brand__id=int(brand))
+        except (ValueError, TypeError):
+            pass  # Ignore invalid brand values
     if q:
         # Full-text search on name and description
         qs = qs.filter(

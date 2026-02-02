@@ -358,6 +358,10 @@ class Coupon(models.Model):
         if not self.is_valid():
             return Decimal('0')
         
+        # Check minimum purchase requirement
+        if cart_total < self.min_purchase_amount:
+            return Decimal('0')
+        
         # Use discount_value if available (new unified field)
         if self.discount_value:
             if self.discount_type == self.DISCOUNT_PERCENTAGE:
@@ -374,8 +378,9 @@ class Coupon(models.Model):
         return Decimal('0')
     
     def apply_discount(self, cart_total):
-        """Apply discount to cart total (alias for calculate_discount)"""
-        return self.calculate_discount(cart_total)
+        """Apply discount to cart total - returns final price after discount"""
+        discount_amount = self.calculate_discount(cart_total)
+        return cart_total - discount_amount
 
 
 class AppliedCoupon(models.Model):

@@ -3,7 +3,9 @@ from rest_framework.decorators import api_view, action, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
-from .models import Product, Order, ProductView, Brand, Category
+from django.utils import timezone
+from decimal import Decimal
+from .models import Product, Order, ProductView, Brand, Category, Cart, CartItem, Coupon
 from .serializers import (
     ProductSerializer, OrderSerializer, ProductViewSerializer,
     CartSerializer, CouponSerializer, BrandSerializer, CategorySerializer
@@ -197,3 +199,174 @@ def recommendations_api(request):
     return Response({
         'recommendations': ProductSerializer(trending, many=True).data
     })
+
+
+# Cart API endpoints for testing
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def cart_add_item_api(request):
+    """Add item to cart (API for tests)"""
+    product_id = request.data.get('product_id')
+    quantity = int(request.data.get('quantity', 1))
+    
+    if not product_id:
+        return Response({'error': 'product_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        product = Product.objects.get(pk=product_id, is_active=True)
+    except Product.DoesNotExist:
+        return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Get or create cart for user
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    
+    # Get or create cart item
+    cart_item, created = CartItem.objects.get_or_create(
+        cart=cart,
+        product=product,
+        defaults={'quantity': quantity, 'price': product.get_price()}
+    )
+    
+    if not created:
+        cart_item.quantity += quantity
+        cart_item.save()
+    
+    # Calculate totals
+    total_items = sum(item.quantity for item in cart.items.all())
+    subtotal = sum(item.get_total_price() for item in cart.items.all())
+    
+    return Response({
+        'success': True,
+        'product': ProductSerializer(product).data,
+        'quantity': cart_item.quantity,
+        'total_items': total_items,
+        'subtotal': subtotal
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def cart_update_item_api(request):
+    """Update cart item quantity (API for tests)"""
+    product_id = request.data.get('product_id')
+    quantity = int(request.data.get('quantity', 1))
+    
+    if not product_id:
+        return Response({'error': 'product_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        product = Product.objects.get(pk=product_id, is_active=True)
+    except Product.DoesNotExist:
+        return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Get cart
+    try:
+        cart = Cart.objects.get(user=request.user)
+        cart_item = CartItem.objects.get(cart=cart, product=product)
+        cart_item.quantity = quantity
+        cart_item.save()
+    except (Cart.DoesNotExist, CartItem.DoesNotExist):
+        return Response({'error': 'Item not in cart'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Calculate totals
+    total_items = sum(item.quantity for item in cart.items.all())
+    subtotal = sum(item.get_total_price() for item in cart.items.all())
+    
+    return Response({
+        'success': True,
+        'quantity': cart_item.quantity,
+        'total_items': total_items,
+        'subtotal': subtotal
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def cart_remove_item_api(request):
+    """Remove item from cart (API for tests)"""
+    product_id = request.data.get('product_id')
+    
+    if not product_id:
+        return Response({'error': 'product_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        product = Product.objects.get(pk=product_id)
+        cart = Cart.objects.get(user=request.user)
+        cart_item = CartItem.objects.get(cart=cart, product=product)
+        cart_item.delete()
+    except (Product.DoesNotExist, Cart.DoesNotExist, CartItem.DoesNotExist):
+        return Response({'error': 'Item not in cart'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Calculate totals
+    total_items = sum(item.quantity for item in cart.items.all())
+    subtotal = sum(item.get_total_price() for item in cart.items.all())
+    
+    return Response({
+        'success': True,
+        'total_items': total_items,
+        'subtotal': subtotal
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def cart_clear_api(request):
+    """Clear all items from cart (API for tests)"""
+    try:
+        cart = Cart.objects.get(user=request.user)
+        cart.items.all().delete()
+    except Cart.DoesNotExist:
+        pass
+    
+    return Response({
+        'success': True,
+        'total_items': 0,
+        'subtotal': 0
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def cart_apply_coupon_api(request):
+    """Apply coupon to cart (API for tests)"""
+    code = request.data.get('code')
+    
+    if not code:
+        return Response({'error': 'code is required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        coupon = Coupon.objects.get(code=code, is_active=True)
+    except Coupon.DoesNotExist:
+        return Response({'error': 'Invalid coupon code'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Check if coupon is valid
+    if not coupon.is_valid():
+        return Response({'error': 'Coupon has expired or reached maximum uses'}, 
+                       status=status.HTTP_400_BAD_REQUEST)
+    
+    # Get cart
+    try:
+        cart = Cart.objects.get(user=request.user)
+    except Cart.DoesNotExist:
+        return Response({'error': 'Cart is empty'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Calculate totals
+    subtotal = sum(item.get_total_price() for item in cart.items.all())
+    
+    # Check minimum purchase amount
+    if subtotal < coupon.min_purchase_amount:
+        return Response({
+            'error': f'Minimum purchase amount is {coupon.min_purchase_amount}'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Calculate discount
+    discount_amount = coupon.calculate_discount(subtotal)
+    final_total = subtotal - discount_amount
+    
+    return Response({
+        'success': True,
+        'code': code,
+        'discount_amount': discount_amount,
+        'subtotal': subtotal,
+        'final_total': final_total
+    }, status=status.HTTP_200_OK)
