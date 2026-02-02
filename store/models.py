@@ -661,35 +661,3 @@ class SearchQuery(models.Model):
 
     def __str__(self):
         return f"Search: {self.query}"
-
-
-class LoginAttempt(models.Model):
-    """Track login attempts for security"""
-    username = models.CharField(max_length=150)
-    ip_address = models.GenericIPAddressField()
-    success = models.BooleanField(default=False)
-    user_agent = models.TextField(blank=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-timestamp']
-
-    def __str__(self):
-        status = 'successful' if self.success else 'failed'
-        return f"{status} login attempt for {self.username} from {self.ip_address}"
-
-
-class SuspiciousActivity(models.Model):
-    """Track suspicious activity for security monitoring"""
-    activity_type = models.CharField(max_length=100)
-    description = models.TextField()
-    ip_address = models.GenericIPAddressField()
-    user_agent = models.TextField(blank=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name_plural = 'Suspicious Activities'
-        ordering = ['-timestamp']
-
-    def __str__(self):
-        return f"{self.activity_type} from {self.ip_address} at {self.timestamp}"
