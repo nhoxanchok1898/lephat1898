@@ -1,0 +1,224 @@
+{% load static %}
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Paint Store - Sơn chất lượng cao{% endblock %}</title>
+  <meta name="description" content="Paint Store — Sơn chất lượng cho nhà bạn. Tìm kiếm theo thương hiệu, loại và giá. Giao hàng nhanh toàn quốc." />
+  <link rel="icon" href="{% static 'images/favicon.svg' %}" type="image/svg+xml">
+  <meta name="theme-color" content="#6366f1">
+  {% block meta %}{% endblock %}
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheets -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{% static 'css/redesign-2026.css' %}" rel="stylesheet">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  
+  <!-- Enhanced Header -->
+  <header class="header-redesign">
+    <!-- Top Bar -->
+    <div class="header-top">
+      <div class="container">
+        <div>
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
+            <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 0 0 4.168 6.608 17.569 17.569 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.678.678 0 0 0-.58-.122l-2.19.547a1.745 1.745 0 0 1-1.657-.459L5.482 8.062a1.745 1.745 0 0 1-.46-1.657l.548-2.19a.678.678 0 0 0-.122-.58L3.654 1.328zM1.884.511a1.745 1.745 0 0 1 2.612.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.678.678 0 0 0 .178.643l2.457 2.457a.678.678 0 0 0 .644.178l2.189-.547a1.745 1.745 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.634 18.634 0 0 1-7.01-4.42 18.634 18.634 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877L1.885.511z"/>
+          </svg>
+          Hotline: 1900-xxxx
+        </div>
+        <ul class="header-top-links">
+          <li><a href="{% url 'store:contact' %}">Liên hệ</a></li>
+          <li><a href="#">Hướng dẫn mua hàng</a></li>
+          <li><a href="#">FAQs</a></li>
+        </ul>
+      </div>
+    </div>
+    
+    <!-- Main Header -->
+    <div class="header-main">
+      <div class="container">
+        <div class="header-container">
+          <!-- Logo -->
+          <a href="{% url 'store:home' %}" class="logo-redesign">
+            <svg width="40" height="40" viewBox="0 0 100 100" fill="none">
+              <rect width="100" height="100" rx="20" fill="#6366f1"/>
+              <path d="M30 70L50 30L70 70H30Z" fill="white"/>
+              <circle cx="50" cy="45" r="8" fill="#fbbf24"/>
+            </svg>
+            <span class="logo-text">Paint Store</span>
+          </a>
+          
+          <!-- Search Bar -->
+          <div class="search-bar-redesign">
+            <form method="get" action="{% url 'store:product_list' %}">
+              <input type="text" 
+                     name="q" 
+                     placeholder="Tìm kiếm sản phẩm, thương hiệu..." 
+                     aria-label="Tìm kiếm">
+              <button type="submit" aria-label="Tìm kiếm">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                </svg>
+              </button>
+            </form>
+          </div>
+          
+          <!-- Header Actions -->
+          <div class="header-actions">
+            {% if user.is_authenticated %}
+              <a href="{% url 'store:wishlist' %}" class="header-icon-btn" title="Wishlist">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748z"/>
+                </svg>
+              </a>
+              <a href="{% url 'store:profile' %}" class="header-icon-btn" title="Tài khoản">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                </svg>
+              </a>
+              <a href="{% url 'store:logout' %}" class="btn-header-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                Đăng xuất
+              </a>
+            {% else %}
+              <a href="{% url 'store:login' %}" class="btn-header-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem; background: white; color: #6366f1; border: 2px solid #6366f1;">
+                Đăng nhập
+              </a>
+              <a href="{% url 'store:register' %}" class="btn-header-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                Đăng ký
+              </a>
+            {% endif %}
+            
+            <a href="{% url 'store:cart_view' %}" class="header-icon-btn" title="Giỏ hàng">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+              </svg>
+              <span class="badge">0</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Main Navigation -->
+    <nav class="main-nav-redesign">
+      <div class="container">
+        <ul class="nav-menu">
+          <li><a href="{% url 'store:home' %}">Trang chủ</a></li>
+          <li><a href="{% url 'store:product_list' %}">Sản phẩm</a></li>
+          <li><a href="{% url 'store:product_list' %}?category=1">Sơn nước</a></li>
+          <li><a href="{% url 'store:product_list' %}?category=2">Chống thấm</a></li>
+          <li><a href="#">Khuyến mãi</a></li>
+          <li><a href="{% url 'store:contact' %}">Liên hệ</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main id="main-content">
+    {% if messages %}
+      <div class="container" style="margin-top: 1rem;">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer style="background: #1f2937; color: white; padding: 4rem 0 2rem;">
+    <div class="container">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 3rem; margin-bottom: 3rem;">
+        <!-- About -->
+        <div>
+          <h4 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">Paint Store</h4>
+          <p style="color: #9ca3af; margin-bottom: 1rem;">
+            Cung cấp sơn chất lượng cao cho mọi công trình. Uy tín - Chất lượng - Giá tốt.
+          </p>
+          <div style="display: flex; gap: 1rem;">
+            <a href="#" style="width: 40px; height: 40px; background: #374151; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; text-decoration: none;">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"/>
+              </svg>
+            </a>
+            <a href="#" style="width: 40px; height: 40px; background: #374151; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; text-decoration: none;">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+        
+        <!-- Links -->
+        <div>
+          <h4 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Liên kết</h4>
+          <ul style="list-style: none; padding: 0;">
+            <li style="margin-bottom: 0.5rem;"><a href="{% url 'store:home' %}" style="color: #9ca3af; text-decoration: none;">Trang chủ</a></li>
+            <li style="margin-bottom: 0.5rem;"><a href="{% url 'store:product_list' %}" style="color: #9ca3af; text-decoration: none;">Sản phẩm</a></li>
+            <li style="margin-bottom: 0.5rem;"><a href="{% url 'store:contact' %}" style="color: #9ca3af; text-decoration: none;">Liên hệ</a></li>
+            <li style="margin-bottom: 0.5rem;"><a href="#" style="color: #9ca3af; text-decoration: none;">Về chúng tôi</a></li>
+          </ul>
+        </div>
+        
+        <!-- Support -->
+        <div>
+          <h4 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Hỗ trợ</h4>
+          <ul style="list-style: none; padding: 0;">
+            <li style="margin-bottom: 0.5rem;"><a href="#" style="color: #9ca3af; text-decoration: none;">Hướng dẫn mua hàng</a></li>
+            <li style="margin-bottom: 0.5rem;"><a href="#" style="color: #9ca3af; text-decoration: none;">Chính sách đổi trả</a></li>
+            <li style="margin-bottom: 0.5rem;"><a href="#" style="color: #9ca3af; text-decoration: none;">Chính sách bảo mật</a></li>
+            <li style="margin-bottom: 0.5rem;"><a href="#" style="color: #9ca3af; text-decoration: none;">Điều khoản sử dụng</a></li>
+          </ul>
+        </div>
+        
+        <!-- Contact -->
+        <div>
+          <h4 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Liên hệ</h4>
+          <ul style="list-style: none; padding: 0; color: #9ca3af;">
+            <li style="margin-bottom: 0.5rem;">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align: text-bottom; margin-right: 0.5rem;">
+                <path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A31.493 31.493 0 0 1 8 14.58a31.481 31.481 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94zM8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10z"/>
+                <path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+              </svg>
+              123 Đường ABC, Quận 1, TP.HCM
+            </li>
+            <li style="margin-bottom: 0.5rem;">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align: text-bottom; margin-right: 0.5rem;">
+                <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 0 0 4.168 6.608 17.569 17.569 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.678.678 0 0 0-.58-.122l-2.19.547a1.745 1.745 0 0 1-1.657-.459L5.482 8.062a1.745 1.745 0 0 1-.46-1.657l.548-2.19a.678.678 0 0 0-.122-.58L3.654 1.328zM1.884.511a1.745 1.745 0 0 1 2.612.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.678.678 0 0 0 .178.643l2.457 2.457a.678.678 0 0 0 .644.178l2.189-.547a1.745 1.745 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.634 18.634 0 0 1-7.01-4.42 18.634 18.634 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877L1.885.511z"/>
+              </svg>
+              1900-xxxx
+            </li>
+            <li style="margin-bottom: 0.5rem;">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align: text-bottom; margin-right: 0.5rem;">
+                <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z"/>
+              </svg>
+              contact@paintstore.vn
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      <!-- Copyright -->
+      <div style="text-align: center; padding-top: 2rem; border-top: 1px solid #374151; color: #9ca3af;">
+        <p>&copy; 2026 Paint Store. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

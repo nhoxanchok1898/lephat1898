@@ -30,17 +30,24 @@ def get_client_ip(request):
 
 
 def home_view(request):
+    # Check if redesign parameter is present or use redesigned version by default
+    use_redesign = request.GET.get('redesign', 'true').lower() == 'true'
+    
     # Use select_related for performance
     brands = Brand.objects.all()[:8]
     new_products = Product.objects.filter(is_active=True).select_related('brand', 'category').order_by('-created_at')[:12]
     
     # Get trending products (most viewed in last 7 days)
     trending_products = Product.objects.filter(is_active=True).order_by('-view_count')[:8]
+    featured_products = trending_products  # Use same data for featured
     
-    return render(request, 'store/home.html', {
+    template = 'store/home_redesign.html' if use_redesign else 'store/home.html'
+    
+    return render(request, template, {
         'brands': brands,
         'new_products': new_products,
         'trending_products': trending_products,
+        'featured_products': featured_products,
     })
 
 
