@@ -93,18 +93,31 @@ try:
     def _basecopy_with_template(self):
         duplicate = object.__new__(self.__class__)
         duplicate.dicts = self.dicts[:]
-        if hasattr(self, 'template'):
-            duplicate.template = getattr(self, 'template')
-        else:
-            duplicate.template = None
+        # copy common rendering-related attributes so the duplicate behaves
+        # like a normal Context/RequestContext instance.
+        duplicate.autoescape = getattr(self, 'autoescape', True)
+        duplicate.use_l10n = getattr(self, 'use_l10n', None)
+        duplicate.use_tz = getattr(self, 'use_tz', None)
+        duplicate.template_name = getattr(self, 'template_name', 'unknown')
+        duplicate.template = getattr(self, 'template', None)
+        # render_context should be a shallow copy if present, otherwise create one
         if hasattr(self, 'render_context'):
-            duplicate.render_context = getattr(self, 'render_context')
+            try:
+                from copy import copy as _copy
+
+                duplicate.render_context = _copy(self.render_context)
+            except Exception:
+                duplicate.render_context = getattr(self, 'render_context', None)
         else:
             try:
                 from django.template.context import RenderContext
+
                 duplicate.render_context = RenderContext()
             except Exception:
                 duplicate.render_context = None
+        # preserve processor index when present (used by RequestContext)
+        if hasattr(self, '_processors_index'):
+            duplicate._processors_index = getattr(self, '_processors_index')
         return duplicate
 
     template_context.BaseContext.__copy__ = _basecopy_with_template
