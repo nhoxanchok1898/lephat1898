@@ -340,6 +340,7 @@ def cart_summary_ajax(request):
     cart = _get_cart(request)
     items = []
     total = 0
+    count = 0
     for pid, qty in cart.items():
         try:
             p = Product.objects.get(pk=int(pid))
@@ -347,15 +348,18 @@ def cart_summary_ajax(request):
             continue
         subtotal = p.price * qty
         total += subtotal
+        count += qty
         items.append({
             'pk': p.pk,
             'name': p.name,
+            'quantity': qty,
             'qty': qty,
-            'price': p.price,
-            'subtotal': subtotal,
+            'price': float(p.price),
+            'price_display': str(p.price),
+            'subtotal': float(subtotal),
             'image_url': request.build_absolute_uri(p.image.url) if p.image else None,
         })
-    return JsonResponse({'items': items, 'total': total})
+    return JsonResponse({'items': items, 'total': float(total), 'count': count})
 
 
 @csrf_exempt

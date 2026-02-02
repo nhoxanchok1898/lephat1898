@@ -76,11 +76,11 @@
               <a href="{% url 'login' %}" class="btn-nav-secondary">Đăng nhập</a>
               <a href="{% url 'store:register' %}" class="btn-nav-primary">Đăng ký</a>
             {% endif %}
-            <a href="{% url 'store:cart_view' %}" class="nav-cart-btn" title="Giỏ hàng">
+            <a href="{% url 'store:cart_view' %}" class="nav-cart-btn" title="Giỏ hàng" data-bs-toggle="offcanvas" data-bs-target="#miniCartOffcanvas" aria-controls="miniCartOffcanvas">
               <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
               </svg>
-              <span class="cart-badge">0</span>
+              <span class="cart-badge mini-cart-count">0</span>
             </a>
           </div>
         </div>
@@ -164,10 +164,14 @@
       <script src="{% static 'js/lazy.js' %}"></script>
       <script src="{% static 'js/search.js' %}"></script>
       <script src="{% static 'js/ui.js' %}"></script>
-      <script src="{% static 'js/mini-cart.js' %}"></script>
+      <script src="{% static 'js/cart.js' %}"></script>
     {% endblock %}
     <link rel="stylesheet" href="{% static 'css/cart-qty.css' %}">
+    <link rel="stylesheet" href="{% static 'css/cart.css' %}">
     <script src="{% static 'js/cart-qty.js' %}" defer></script>
+
+    {# include mini cart offcanvas partial #}
+    {% include 'store/partials/mini_cart.html' %}
     
     <!-- Mobile menu toggle -->
     <script>
