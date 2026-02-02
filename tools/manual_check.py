@@ -1,3 +1,9 @@
+"""Manual HTTP check script that tests HTTP endpoints without Django.
+
+This script uses urllib to make HTTP requests to a running development server.
+It does NOT import Django or require database access.
+"""
+
 import urllib.request
 import urllib.error
 

@@ -12,12 +12,17 @@ jobs:
     strategy:
       matrix:
         python-version: [3.11]
+    
+    env:
+      DJANGO_SETTINGS_MODULE: paint_store.settings
+    
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+      
       - name: Cache pip
         uses: actions/cache@v4
         with:
@@ -25,6 +30,13 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+      
+      # Commented: Enable if build logs show missing system libraries for Pillow/psycopg2
+      # - name: Install system dependencies
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y libpq-dev python3-dev libjpeg-dev zlib1g-dev
+      
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -42,4 +54,7 @@ jobs:
           DJANGO_SETTINGS_MODULE: paint_store.settings
         run: |
           python manage.py migrate --noinput
+      
+      - name: Run tests
+        run: |
           python manage.py test --noinput
