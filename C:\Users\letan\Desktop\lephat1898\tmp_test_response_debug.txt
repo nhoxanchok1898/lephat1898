@@ -1,2 +1,0 @@
-STATUS: 200
-CONTENT: {"success":true,"product":{"id":1,"name":"Paint 1","brand":{"id":1,"name":"TestBrand","logo":null},"category":{"id":1,"name":"TestCat"},"price":"100.00","unit_type":"LIT","volume":5,"image":null,"is_active":true,"created_at":"2026-02-02T09:50:34.121945Z","updated_at":"2026-02-02T09:50:34.121960Z","stock_quantity":null,"in_stock":true},"quantity":2,"total_items":2,"subtotal":200.0}

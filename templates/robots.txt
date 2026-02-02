@@ -1,5 +1,0 @@
-User-agent: *
-Disallow:
-
-# Use absolute sitemap URL when SITE_URL is configured
-Sitemap: {{ SITE_URL|default:'' }}/sitemap.xml
