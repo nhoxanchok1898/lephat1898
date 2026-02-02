@@ -53,7 +53,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=12, decimal_places=2)
     sale_price = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     unit_type = models.CharField(max_length=3, choices=UNIT_CHOICES, default=UNIT_LIT)
-    volume = models.PositiveIntegerField(help_text='Volume in selected unit, e.g., 5, 18, 20')
+    volume = models.PositiveIntegerField(default=1, help_text='Volume in selected unit, e.g., 5, 18, 20')
     quantity = models.PositiveIntegerField(default=0)
     stock_quantity = models.PositiveIntegerField(default=0)
     image = models.ImageField(upload_to='products/', blank=True, null=True)
@@ -86,6 +86,14 @@ class Product(models.Model):
         else:
             self.is_on_sale = False
         super().save(*args, **kwargs)
+    
+    def get_price(self):
+        """Get the effective price (sale price if available, otherwise regular price)"""
+        return self.sale_price if self.sale_price else self.price
+    
+    def is_in_stock(self):
+        """Check if product is in stock"""
+        return self.stock_quantity > 0
 
 
 class Order(models.Model):
@@ -147,6 +155,13 @@ class ProductViewAnalytics(models.Model):
 
     def __str__(self):
         return f"Analytics for {self.product.name}"
+    
+    def update_view_count(self):
+        """Update view count and last viewed timestamp"""
+        from django.utils import timezone
+        self.total_views += 1
+        self.last_viewed = timezone.now()
+        self.save()
 
 
 class StockLevel(models.Model):
@@ -308,6 +323,64 @@ class Coupon(models.Model):
 
     def __str__(self):
         return self.code
+    
+    def is_valid(self):
+        """Check if coupon is valid and can be used"""
+        from django.utils import timezone
+        now = timezone.now()
+        
+        # Check if active
+        if not self.is_active:
+            return False
+        
+        # Check date range (start_date and end_date)
+        if self.start_date and now < self.start_date:
+            return False
+        if self.end_date and now > self.end_date:
+            return False
+        
+        # Check date range (valid_from and valid_to)
+        if self.valid_from and now < self.valid_from:
+            return False
+        if self.valid_to and now > self.valid_to:
+            return False
+        
+        # Check usage limit
+        if self.max_uses and self.used_count >= self.max_uses:
+            return False
+        
+        return True
+    
+    def calculate_discount(self, cart_total):
+        """Calculate discount amount based on cart total"""
+        from decimal import Decimal
+        
+        if not self.is_valid():
+            return Decimal('0')
+        
+        # Check minimum purchase requirement
+        if cart_total < self.min_purchase_amount:
+            return Decimal('0')
+        
+        # Use discount_value if available (new unified field)
+        if self.discount_value:
+            if self.discount_type == self.DISCOUNT_PERCENTAGE:
+                return (cart_total * self.discount_value / Decimal('100'))
+            elif self.discount_type == self.DISCOUNT_FIXED:
+                return min(self.discount_value, cart_total)
+        
+        # Fallback to legacy fields
+        if self.discount_percentage:
+            return (cart_total * self.discount_percentage / Decimal('100'))
+        elif self.discount_amount:
+            return min(self.discount_amount, cart_total)
+        
+        return Decimal('0')
+    
+    def apply_discount(self, cart_total):
+        """Apply discount to cart total - returns final price after discount"""
+        discount_amount = self.calculate_discount(cart_total)
+        return cart_total - discount_amount
 
 
 class AppliedCoupon(models.Model):
@@ -419,6 +492,10 @@ class CartItem(models.Model):
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
+    
+    def get_total_price(self):
+        """Get total price for this cart item"""
+        return self.product.get_price() * self.quantity
 
 
 class UserProfile(models.Model):

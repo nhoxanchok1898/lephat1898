@@ -99,7 +99,11 @@ class AuthenticationTests(TestCase):
     
     def test_profile_view_authenticated(self):
         user = User.objects.create_user(username='testuser', password='testpass123')
-        UserProfile.objects.create(user=user, phone='123-456-7890')
+        # Use get_or_create since UserProfile is auto-created by signal
+        profile, created = UserProfile.objects.get_or_create(user=user, defaults={'phone': '123-456-7890'})
+        if not created:
+            profile.phone = '123-456-7890'
+            profile.save()
         self.client.login(username='testuser', password='testpass123')
         
         response = self.client.get(self.profile_url)
@@ -108,7 +112,8 @@ class AuthenticationTests(TestCase):
     
     def test_profile_update(self):
         user = User.objects.create_user(username='testuser', password='testpass123')
-        UserProfile.objects.create(user=user)
+        # Use get_or_create since UserProfile is auto-created by signal
+        UserProfile.objects.get_or_create(user=user)
         self.client.login(username='testuser', password='testpass123')
         
         update_url = reverse('store:profile_update')

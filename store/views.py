@@ -30,17 +30,24 @@ def get_client_ip(request):
 
 
 def home_view(request):
+    # Check if redesign parameter is present or use redesigned version by default
+    use_redesign = request.GET.get('redesign', 'true').lower() == 'true'
+    
     # Use select_related for performance
     brands = Brand.objects.all()[:8]
     new_products = Product.objects.filter(is_active=True).select_related('brand', 'category').order_by('-created_at')[:12]
     
     # Get trending products (most viewed in last 7 days)
     trending_products = Product.objects.filter(is_active=True).order_by('-view_count')[:8]
+    featured_products = trending_products  # Use same data for featured
     
-    return render(request, 'store/home.html', {
+    template = 'store/home_redesign.html' if use_redesign else 'store/home.html'
+    
+    return render(request, template, {
         'brands': brands,
         'new_products': new_products,
         'trending_products': trending_products,
+        'featured_products': featured_products,
     })
 
 
@@ -58,11 +65,17 @@ def product_list(request):
     in_stock = request.GET.get('in_stock')
     sort_by = request.GET.get('sort', 'newest')
     
-    # Apply filters
+    # Apply filters with error handling
     if category:
-        qs = qs.filter(category__id=category)
+        try:
+            qs = qs.filter(category__id=int(category))
+        except (ValueError, TypeError):
+            pass  # Ignore invalid category values
     if brand:
-        qs = qs.filter(brand__id=brand)
+        try:
+            qs = qs.filter(brand__id=int(brand))
+        except (ValueError, TypeError):
+            pass  # Ignore invalid brand values
     if q:
         # Full-text search on name and description
         qs = qs.filter(

@@ -46,13 +46,15 @@ urlpatterns = [
     path('checkout/', views.checkout_view, name='checkout'),
     # Auth views inside the `store` namespace so templates using
     # `{% url 'store:login' %}` resolve correctly.
-    path('login/', dj_auth_views.LoginView.as_view(template_name='auth/login.html'), name='login'),
-    path('logout/', dj_auth_views.LogoutView.as_view(), name='logout'),
+    path('login/', auth_views.login_view, name='login'),
+    path('logout/', auth_views.logout_view, name='logout'),
     # App-level auth endpoints (register, custom login/logout handlers)
     path('auth/register/', auth_views.register_view, name='register'),
     path('auth/login/', auth_views.login_view, name='auth_login'),
     path('auth/logout/', auth_views.logout_view, name='auth_logout'),
     path('auth/profile/', auth_views.profile_view, name='profile'),
+    path('auth/profile/update/', auth_views.profile_update_view, name='profile_update'),
+    path('auth/password-reset/', auth_views.password_reset_request_view, name='password_reset_request'),
     path('checkout/success/', views.checkout_success, name='checkout_success'),
     # Order views
     path('orders/history/', order_views.order_history, name='order_history'),

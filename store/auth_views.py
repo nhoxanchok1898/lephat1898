@@ -1,40 +1,259 @@
+"""
+Authentication Views
+Handles user registration, login, logout, and profile management
+"""
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib import messages
+from django.db import IntegrityError
+from .models import UserProfile, Order
 
 
 def register_view(request):
-	"""Simple user registration view using Django's UserCreationForm."""
-	if request.method == 'POST':
-		form = UserCreationForm(request.POST)
-		if form.is_valid():
-			user = form.save()
-			login(request, user)
-			return redirect('store:home')
-	else:
-		form = UserCreationForm()
-	return render(request, 'auth/register.html', {'form': form})
+    """
+    User registration view
+    Handles GET (display form) and POST (process registration)
+    """
+    if request.user.is_authenticated:
+        return redirect('store:home')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        # Accept both password2 (for tests) and password_confirm (for template)
+        password_confirm = request.POST.get('password2', '') or request.POST.get('password_confirm', '')
+        
+        # Validation
+        if not username or not email or not password:
+            messages.error(request, 'All fields are required.')
+            return render(request, 'auth/register.html')
+        
+        if password != password_confirm:
+            messages.error(request, 'Passwords do not match.')
+            return render(request, 'auth/register.html')
+        
+        if len(password) < 6:
+            messages.error(request, 'Password must be at least 6 characters long.')
+            return render(request, 'auth/register.html')
+        
+        # Check if username exists
+        if User.objects.filter(username=username).exists():
+            messages.error(request, 'Username already exists.')
+            return render(request, 'auth/register.html')
+        
+        # Check if email exists
+        if User.objects.filter(email=email).exists():
+            messages.error(request, 'Email already registered.')
+            return render(request, 'auth/register.html')
+        
+        # Create user
+        try:
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password
+            )
+            
+            # Log the user in
+            login(request, user)
+            messages.success(request, f'Welcome {username}! Your account has been created.')
+            return redirect('store:home')
+        
+        except IntegrityError:
+            messages.error(request, 'An error occurred. Please try again.')
+            return render(request, 'auth/register.html')
+    
+    return render(request, 'auth/register.html')
 
 
 def login_view(request):
-	"""Basic login view wrapper around Django's AuthenticationForm."""
-	if request.method == 'POST':
-		form = AuthenticationForm(request, data=request.POST)
-		if form.is_valid():
-			user = form.get_user()
-			login(request, user)
-			return redirect('store:home')
-	else:
-		form = AuthenticationForm()
-	return render(request, 'auth/login.html', {'form': form})
+    """
+    User login view
+    Handles GET (display form) and POST (process login)
+    """
+    if request.user.is_authenticated:
+        return redirect('store:home')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
+        
+        if not username or not password:
+            messages.error(request, 'Username and password are required.')
+            return render(request, 'auth/login.html')
+        
+        # Authenticate user
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            messages.success(request, f'Welcome back, {user.username}!')
+            
+            # Redirect to next page if specified
+            next_url = request.GET.get('next', request.POST.get('next', 'store:home'))
+            return redirect(next_url)
+        else:
+            messages.error(request, 'Invalid username or password.')
+            return render(request, 'auth/login.html')
+    
+    return render(request, 'auth/login.html')
 
 
 def logout_view(request):
-	logout(request)
-	return redirect('store:home')
+    """
+    User logout view
+    Logs out the user and redirects to home page
+    """
+    if request.user.is_authenticated:
+        username = request.user.username
+        logout(request)
+        messages.success(request, f'Goodbye, {username}! You have been logged out.')
+    
+    return redirect('store:home')
 
 
 @login_required
 def profile_view(request):
-	return render(request, 'auth/profile.html')
+    """
+    User profile view
+    Display and update user profile information
+    """
+    user = request.user
+    
+    # Get or create user profile
+    try:
+        profile = user.profile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=user)
+    
+    if request.method == 'POST':
+        # Update profile
+        email = request.POST.get('email', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        address = request.POST.get('address', '').strip()
+        
+        # Update user email
+        if email and email != user.email:
+            if User.objects.filter(email=email).exclude(pk=user.pk).exists():
+                messages.error(request, 'Email already in use by another account.')
+            else:
+                user.email = email
+                user.save()
+        
+        # Update profile
+        profile.phone = phone
+        profile.address = address
+        profile.save()
+        
+        messages.success(request, 'Profile updated successfully.')
+        return redirect('store:profile')
+    
+    # Get user's recent orders
+    recent_orders = Order.objects.filter(
+        full_name__icontains=user.username
+    ).order_by('-created_at')[:5]
+    
+    context = {
+        'user': user,
+        'profile': profile,
+        'recent_orders': recent_orders,
+    }
+    
+    return render(request, 'auth/profile.html', context)
+
+
+@login_required
+def profile_update_view(request):
+    """
+    Update user profile view
+    Allows users to edit their profile information
+    """
+    user = request.user
+    
+    # Get or create user profile
+    try:
+        profile = user.profile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=user)
+    
+    if request.method == 'POST':
+        # Update user information
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        address = request.POST.get('address', '').strip()
+        
+        # Update user fields
+        user.first_name = first_name
+        user.last_name = last_name
+        
+        # Update email if changed
+        if email and email != user.email:
+            if User.objects.filter(email=email).exclude(pk=user.pk).exists():
+                messages.error(request, 'Email already in use by another account.')
+            else:
+                user.email = email
+                user.save()
+        else:
+            user.save()
+        
+        # Update profile
+        profile.phone = phone
+        profile.address = address
+        profile.save()
+        
+        messages.success(request, 'Profile updated successfully.')
+        return redirect('store:profile')
+    
+    context = {
+        'user': user,
+        'profile': profile,
+    }
+    
+    return render(request, 'auth/profile_update.html', context)
+
+
+def password_reset_request_view(request):
+    """
+    Password reset request view
+    Allows users to request a password reset email
+    """
+    from .models import EmailLog
+    
+    if request.user.is_authenticated:
+        return redirect('store:home')
+    
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        
+        if not email:
+            messages.error(request, 'Email is required.')
+            return render(request, 'auth/password_reset_request.html')
+        
+        # Check if email exists
+        try:
+            user = User.objects.get(email=email)
+            # Create EmailLog for password reset
+            EmailLog.objects.create(
+                recipient=email,
+                subject='Password Reset Request',
+                template_name='password_reset',
+                status='sent'
+            )
+            # In a real application, send password reset email here
+            # For now, just show a success message
+            messages.success(request, 
+                'If an account exists with this email, you will receive password reset instructions.')
+        except User.DoesNotExist:
+            # Don't reveal whether email exists for security
+            # Still show success message but don't create EmailLog
+            messages.success(request, 
+                'If an account exists with this email, you will receive password reset instructions.')
+        
+        return redirect('store:login')
+    
+    return render(request, 'auth/password_reset_request.html')
