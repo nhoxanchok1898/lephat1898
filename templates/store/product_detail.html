@@ -48,7 +48,7 @@
         </div>
       {% else %}
         <div class="alert alert-info">
-          <a href="{% url 'store:login' %}?next={{ request.path }}">Login</a> to write a review or add to wishlist.
+          <a href="{% url 'login' %}?next={{ request.path }}">Login</a> to write a review or add to wishlist.
         </div>
       {% endif %}
       

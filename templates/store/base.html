@@ -73,7 +73,7 @@
               </a>
               <a href="{% url 'store:logout' %}" class="btn-nav-secondary">Đăng xuất</a>
             {% else %}
-              <a href="{% url 'store:login' %}" class="btn-nav-secondary">Đăng nhập</a>
+              <a href="{% url 'login' %}" class="btn-nav-secondary">Đăng nhập</a>
               <a href="{% url 'store:register' %}" class="btn-nav-primary">Đăng ký</a>
             {% endif %}
             <a href="{% url 'store:cart_view' %}" class="nav-cart-btn" title="Giỏ hàng">
@@ -98,7 +98,7 @@
             <li><a href="{% url 'store:profile' %}">Profile</a></li>
             <li><a href="{% url 'store:logout' %}">Đăng xuất</a></li>
           {% else %}
-            <li><a href="{% url 'store:login' %}">Đăng nhập</a></li>
+            <li><a href="{% url 'login' %}">Đăng nhập</a></li>
             <li><a href="{% url 'store:register' %}">Đăng ký</a></li>
           {% endif %}
         </ul>

@@ -254,6 +254,6 @@ def password_reset_request_view(request):
             messages.success(request, 
                 'If an account exists with this email, you will receive password reset instructions.')
         
-        return redirect('store:login')
+        return redirect('login')
     
     return render(request, 'auth/password_reset_request.html')

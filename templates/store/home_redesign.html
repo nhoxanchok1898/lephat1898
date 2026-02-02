@@ -168,7 +168,7 @@
         <div class="product-info-redesign">
           <div class="product-brand-redesign">{{ product.brand.name }}</div>
           <h3 class="product-name-redesign">
-            <a href="{% url 'store:product_detail' product.slug %}" style="text-decoration: none; color: inherit;">
+            <a href="{% url 'store:product_detail' product.pk %}" style="text-decoration: none; color: inherit;">
               {{ product.name }}
             </a>
           </h3>

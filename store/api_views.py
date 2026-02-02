@@ -131,6 +131,7 @@ def cart_view_api(request):
 @permission_classes([AllowAny])
 def cart_add_api(request):
     """Add item to cart"""
+    """Add item to cart (session-backed, public)."""
     product_id = request.data.get('product_id')
     quantity = int(request.data.get('quantity', 1))
     
@@ -162,6 +163,7 @@ def cart_add_api(request):
         'product': ProductSerializer(product).data,
         'quantity': cart[product_key]
     })
+    
 
 
 @api_view(['DELETE'])

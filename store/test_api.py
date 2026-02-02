@@ -74,6 +74,16 @@ class APITests(TestCase):
             'product_id': self.product1.id,
             'quantity': 2
         }, format='json')
+        # Debug: write response for inspection
+        try:
+            with open(r'C:\Users\letan\Desktop\lephat1898\tmp_test_response_debug.txt', 'w', encoding='utf-8') as f:
+                f.write(f'STATUS: {response.status_code}\n')
+                try:
+                    f.write(f'CONTENT: {response.content.decode("utf-8")}\n')
+                except Exception:
+                    f.write('CONTENT: <binary>\n')
+        except Exception:
+            pass
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data['success'])

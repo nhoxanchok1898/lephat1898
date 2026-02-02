@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from store import wishlist_views
+from store import views as store_views
 
 
 def trigger_error(request):
@@ -25,6 +27,11 @@ def trigger_error(request):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include(('store.urls', 'store'), namespace='store')),
+    path('', include('home.urls')),
+    path('store/', include(('store.urls', 'store'), namespace='store')),
+    # Root alias for wishlist to avoid NoReverseMatch from legacy templates
+    path('wishlist/', wishlist_views.wishlist_view, name='wishlist'),
+    # Root-level API aliases to support tests and legacy callers
+    path('api/cart/add/', store_views.api_cart_add_public, name='api_cart_add_public'),
     path('sentry-debug/', trigger_error),
 ]

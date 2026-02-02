@@ -18,9 +18,23 @@ try:
 	unit = Product.UNIT_LIT
 except Exception:
 	unit = 0
-p = Product.objects.create(name='Probe', brand=b, category=c, price=10.0, unit_type=unit, volume=1, is_active=True)
+
+p = Product.objects.create(
+	name='Probe',
+	brand=b,
+	category=c,
+	price=10.0,
+	unit_type=unit,
+	volume=1,
+	is_active=True,
+)
 
 client = Client()
-resp = client.post('/api/cart/add/', data=json.dumps({'product_id': p.id, 'quantity': 2}), content_type='application/json')
+resp = client.post(
+	'/api/cart/add/',
+	data=json.dumps({'product_id': p.pk, 'quantity': 2}),
+	content_type='application/json'
+)
+
 print('status:', resp.status_code)
 print('content:', resp.content)
