@@ -99,8 +99,8 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
 @authentication_classes([])
+@permission_classes([AllowAny])
 def cart_view_api(request):
     """Get current cart contents"""
     cart = request.session.get('cart', {})
@@ -127,8 +127,8 @@ def cart_view_api(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
 @authentication_classes([])
+@permission_classes([AllowAny])
 def cart_add_api(request):
     """Add item to cart"""
     product_id = request.data.get('product_id')
@@ -165,8 +165,8 @@ def cart_add_api(request):
 
 
 @api_view(['DELETE'])
-@permission_classes([AllowAny])
 @authentication_classes([])
+@permission_classes([AllowAny])
 def cart_remove_api(request, product_id):
     """Remove item from cart"""
     cart = request.session.get('cart', {})
@@ -182,8 +182,8 @@ def cart_remove_api(request, product_id):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
 @authentication_classes([])
+@permission_classes([AllowAny])
 def recommendations_api(request):
     """Get personalized recommendations"""
     product_id = request.GET.get('product_id')

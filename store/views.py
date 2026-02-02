@@ -17,6 +17,7 @@ from .models import (
 import os
 import stripe
 from django.views.decorators.csrf import csrf_exempt
+import json
 
 
 def get_client_ip(request):
@@ -355,6 +356,54 @@ def cart_summary_ajax(request):
             'image_url': request.build_absolute_uri(p.image.url) if p.image else None,
         })
     return JsonResponse({'items': items, 'total': total})
+
+
+@csrf_exempt
+def api_cart_add_public(request):
+    """Simple JSON API endpoint for adding items to the session cart (public)."""
+    # Debug probe: write a file so test runs can confirm whether this view was reached
+    try:
+        with open(r"C:\Users\letan\Desktop\lephat1898\tmp_api_called.txt", "w", encoding="utf-8") as f:
+            f.write("api_cart_add_public called\n")
+    except Exception:
+        pass
+    if request.method != 'POST':
+        return JsonResponse({'error': 'method not allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except Exception:
+        data = {}
+
+    product_id = data.get('product_id')
+    try:
+        quantity = int(data.get('quantity', 1))
+    except Exception:
+        quantity = 1
+
+    if not product_id:
+        return JsonResponse({'error': 'product_id is required'}, status=400)
+
+    try:
+        product = Product.objects.get(pk=product_id, is_active=True)
+    except Product.DoesNotExist:
+        return JsonResponse({'error': 'Product not found'}, status=404)
+
+    # Ensure session exists
+    if not request.session.session_key:
+        request.session.create()
+
+    cart = request.session.get('cart', {})
+    product_key = str(product_id)
+    cart[product_key] = cart.get(product_key, 0) + quantity
+    request.session['cart'] = cart
+    request.session.modified = True
+
+    return JsonResponse({
+        'success': True,
+        'product': {'id': product.pk, 'name': product.name},
+        'quantity': cart[product_key]
+    }, status=200)
 
 
 @require_POST
