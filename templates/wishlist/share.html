@@ -1,46 +1,41 @@
 {% extends "store/base.html" %}
 {% load static %}
+{% load price_extras %}
 
-{% block title %}Share Wishlist - Paint Store{% endblock %}
+{% block title %}Chia sẻ danh sách yêu thích - Đại lý Sơn Phát Tấn{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center mt-4">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h3 class="mb-0">Share Your Wishlist</h3>
-            </div>
-            <div class="card-body">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
+<section class="page-section narrow">
+  <div class="section-heading">
+    <h2 class="section-title">Chia sẻ danh sách yêu thích</h2>
+    <p class="section-sub">Gửi link cho bạn bè để họ xem các sản phẩm bạn quan tâm</p>
+  </div>
 
-                <p>Share your wishlist with friends and family. They'll be able to see the products you want!</p>
-                
-                <form method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-primary">Generate Share Link</button>
-                </form>
-                
-                <div class="mt-4">
-                    <h5>Your Wishlist Items:</h5>
-                    <ul class="list-group">
-                        {% for item in wishlist_items %}
-                        <li class="list-group-item">
-                            {{ item.product.name }} - ${{ item.product.price }}
-                        </li>
-                        {% empty %}
-                        <li class="list-group-item">No items in wishlist</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        </div>
+  {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+      {% endfor %}
     </div>
-</div>
+  {% endif %}
+
+  <div class="card-flat">
+    <div class="card-flat__body">
+      <form method="post" class="stack">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary w-100">Tạo link chia sẻ</button>
+      </form>
+      <div class="stack mt-3">
+        <div class="text-muted">Sản phẩm trong danh sách:</div>
+        <ul class="list-plain">
+          {% for item in wishlist_items %}
+            <li>{{ item.product.name }} — {{ item.product.price|vnd }}</li>
+          {% empty %}
+            <li>Chưa có sản phẩm nào.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
 {% endblock %}

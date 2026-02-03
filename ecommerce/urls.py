@@ -19,6 +19,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import path, include
 from store import wishlist_views
 from store import views as store_views
+from store import auth_views as store_auth_views
 
 
 def trigger_error(request):
@@ -30,6 +31,8 @@ urlpatterns = [
     # Built-in auth endpoints for templates that use `{% url 'login' %}`.
     path('login/', auth_views.LoginView.as_view(template_name='auth/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+    # Redirect /accounts/profile/ (default Django auth) về hồ sơ người dùng trong store
+    path('accounts/profile/', store_auth_views.profile_view, name='accounts_profile_redirect'),
     path('admin/', admin.site.urls),
     path('', include('home.urls')),
     path('store/', include(('store.urls', 'store'), namespace='store')),

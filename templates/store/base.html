@@ -4,18 +4,18 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Paint Store - Cửa hàng sơn chất lượng cao{% endblock %}</title>
-    <meta name="description" content="Paint Store — Sơn chất lượng cho nhà bạn.">
+    <title>{% block title %}Đại lý Sơn Phát Tấn{% endblock %}</title>
+    <meta name="description" content="Đại lý Sơn Phát Tấn - Phân phối Dulux, Jotun, Kova, Nippon Paint, Maxilite">
     <link rel="icon" href="{% static 'images/favicon.svg' %}" type="image/svg+xml">
-    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}?v=4">
     {% block extra_css %}{% endblock %}
   </head>
   <body>
     <header class="site-header">
       <div class="container header-bar">
         <a class="brand" href="{% url 'store:home' %}">
-          <span class="brand-mark">🖌️</span>
-          <span class="brand-name">Paint Store</span>
+          <span class="brand-mark">🎨</span>
+          <span>Đại lý Sơn Phát Tấn</span>
         </a>
         <nav class="main-nav">
           <a href="{% url 'store:home' %}">Trang chủ</a>
@@ -24,13 +24,13 @@
         </nav>
         <div class="header-actions">
           {% if user.is_authenticated %}
-            <a href="{% url 'store:profile' %}">Tài khoản</a>
-            <a href="{% url 'store:logout' %}">Đăng xuất</a>
+            <a class="btn-ghost" href="{% url 'store:profile' %}">Tài khoản</a>
+            <a class="btn-ghost" href="{% url 'store:logout' %}">Đăng xuất</a>
           {% else %}
-            <a href="{% url 'login' %}">Đăng nhập</a>
-            <a href="{% url 'store:register' %}">Đăng ký</a>
+            <a class="btn-ghost" href="{% url 'login' %}">Đăng nhập</a>
+            <a class="btn btn-accent btn-sm" href="{% url 'store:register' %}">Đăng ký</a>
           {% endif %}
-          <a href="{% url 'store:cart_view' %}" class="cart-link">Giỏ hàng</a>
+          <a class="cart-link" href="{% url 'store:cart_view' %}">Giỏ hàng</a>
         </div>
       </div>
     </header>
@@ -49,20 +49,20 @@
     </main>
 
     <footer>
-      <div class="container d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+      <div class="container footer-grid">
         <div>
-          <h6 class="text-white mb-2">Paint Store</h6>
-          <p class="mb-1 text-secondary">Sơn chất lượng cho mọi công trình.</p>
+          <div class="footer-heading">Đại lý Sơn Phát Tấn</div>
+          <p>Sơn chất lượng cho mọi công trình.</p>
         </div>
         <div>
-          <h6 class="text-white mb-2">Liên kết</h6>
+          <div class="footer-heading">Liên kết</div>
           <div class="footer-links">
             <a href="{% url 'store:product_list' %}">Sản phẩm</a>
             <a href="{% url 'store:contact' %}">Liên hệ</a>
           </div>
         </div>
         <div>
-          <h6 class="text-white mb-2">Hỗ trợ</h6>
+          <div class="footer-heading">Hỗ trợ</div>
           <div class="footer-links">
             <a href="#">FAQ</a>
             <a href="#">Chính sách đổi trả</a>
@@ -70,39 +70,14 @@
           </div>
         </div>
         <div>
-          <h6 class="text-white mb-2">Liên hệ</h6>
-          <p class="mb-1 text-secondary">📞 0123-456-789</p>
-          <p class="mb-1 text-secondary">📧 info@paintstore.vn</p>
-          <p class="mb-0 text-secondary">📍 Hà Nội, Việt Nam</p>
+          <div class="footer-heading">Liên hệ</div>
+          <p>📞 0123-456-789</p>
+          <p>📧 info@paintstore.vn</p>
+          <p>📍 Hà Nội, Việt Nam</p>
         </div>
       </div>
-      <div class="text-center mt-3 text-secondary small">© {{ now|date:"Y" }} Paint Store.</div>
+      <div class="footer-copy">© {{ now|date:"Y" }} Đại lý Sơn Phát Tấn.</div>
     </footer>
-
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    {% block scripts %}
-      <script src="{% static 'js/lazy.js' %}"></script>
-      <script src="{% static 'js/search.js' %}"></script>
-      <script src="{% static 'js/ui.js' %}"></script>
-      <script src="{% static 'js/cart.js' %}"></script>
-    {% endblock %}
-    <link rel="stylesheet" href="{% static 'css/cart-qty.css' %}">
-    <link rel="stylesheet" href="{% static 'css/cart.css' %}">
-    <link rel="stylesheet" href="{% static 'css/layout-fixes.css' %}">
-    <script src="{% static 'js/cart-qty.js' %}" defer></script>
-
-    {# include mini cart offcanvas partial #}
-    {% include 'store/partials/mini_cart.html' %}
-    
-    <!-- Mobile menu toggle -->
-    <script>
-      document.getElementById('nav-toggle')?.addEventListener('click', function() {
-        const mobileNav = document.getElementById('mobile-nav');
-        if (mobileNav) {
-          mobileNav.hidden = !mobileNav.hidden;
-        }
-      });
-    </script>
+    {% block scripts %}{% endblock %}
   </body>
 </html>

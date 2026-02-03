@@ -1,36 +1,42 @@
 {% extends "store/base.html" %}
 {% load static %}
+{% load price_extras %}
 
-{% block title %}{{ owner.username }}'s Wishlist - Paint Store{% endblock %}
+{% block title %}Danh sách yêu thích của {{ owner.username }}{% endblock %}
 
 {% block content %}
-<div class="mt-4">
-    <h2>{{ owner.username }}'s Wishlist</h2>
-    
-    {% if wishlist_items %}
-        <div class="row">
-            {% for item in wishlist_items %}
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    {% if item.product.image %}
-                        <img src="{{ item.product.image.url }}" class="card-img-top" alt="{{ item.product.name }}">
-                    {% endif %}
-                    <div class="card-body">
-                        <h5 class="card-title">{{ item.product.name }}</h5>
-                        <p class="card-text">
-                            <strong>${{ item.product.price }}</strong><br>
-                            <small class="text-muted">{{ item.product.brand.name }}</small>
-                        </p>
-                        <a href="{% url 'store:product_detail' item.product.pk %}" class="btn btn-primary">View Product</a>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
+<section class="page-section">
+  <div class="section-heading">
+    <h2 class="section-title">Danh sách yêu thích của {{ owner.username }}</h2>
+    <p class="section-sub">Được chia sẻ từ Đại lý Sơn Phát Tấn</p>
+  </div>
+
+  {% if wishlist_items %}
+    <div class="product-grid">
+      {% for item in wishlist_items %}
+      <article class="product-card">
+        <a href="{% url 'store:product_detail' item.product.pk %}" class="product-card__thumb">
+          {% if item.product.image %}
+            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+          {% else %}
+            <img src="{% static 'images/product-placeholder.svg' %}" alt="Chưa có ảnh">
+          {% endif %}
+        </a>
+        <div class="product-card__body">
+          {% if item.product.brand %}<div class="product-card__brand">{{ item.product.brand.name }}</div>{% endif %}
+          <h3 class="product-card__title"><a href="{% url 'store:product_detail' item.product.pk %}">{{ item.product.name }}</a></h3>
+          <div class="product-card__price"><span class="price-current">{{ item.product.price|vnd }}</span></div>
         </div>
-    {% else %}
-        <div class="alert alert-info">
-            This wishlist is empty.
+        <div class="product-card__actions">
+          <a class="btn btn-primary w-100" href="{% url 'store:product_detail' item.product.pk %}">Xem sản phẩm</a>
         </div>
-    {% endif %}
-</div>
+      </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>Danh sách này hiện chưa có sản phẩm.</p>
+    </div>
+  {% endif %}
+</section>
 {% endblock %}

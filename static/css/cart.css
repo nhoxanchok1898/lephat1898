@@ -1,8 +1,0 @@
-/* Mini-cart styles */
-#miniCartOffcanvas .offcanvas-body { max-height: 60vh; overflow:auto; }
-.mini-cart-empty { padding: 2rem; text-align: center; }
-.mini-cart-count-badge { position: relative; top: -2px; }
-
-@media (max-width: 576px) {
-  #miniCartOffcanvas .offcanvas-body { max-height: 50vh; }
-}

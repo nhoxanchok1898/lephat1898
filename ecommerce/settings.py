@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sitemaps',
+    'django.contrib.humanize',
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
@@ -109,6 +110,10 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.static',
+            ],
+            # Ensure custom filters/tags are always available, even if templates forget to load them.
+            'builtins': [
+                'store.templatetags.price_extras',
             ],
         },
     },
@@ -181,6 +186,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Auth redirects
 LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'store:profile'
+LOGOUT_REDIRECT_URL = 'login'
 
 LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
 LOG_DIR = Path(os.environ.get('LOG_DIR', BASE_DIR / 'logs'))

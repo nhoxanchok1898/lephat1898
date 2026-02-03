@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum, F
 from django.db.models import Q
+from decimal import Decimal
 from django.views.decorators.http import require_POST
 from .models import Order, OrderItem
 
@@ -67,11 +68,11 @@ def order_detail(request, order_id):
     subtotal = sum(item.price * item.quantity for item in order_items)
     
     # Calculate tax (assume 10% for example)
-    tax_rate = 0.10
+    tax_rate = Decimal('0.10')
     tax = subtotal * tax_rate
     
     # Calculate shipping (free for orders over $100)
-    shipping = 0 if subtotal > 100 else 10
+    shipping = Decimal('0') if subtotal > Decimal('100') else Decimal('10')
     
     # Total
     total = subtotal + tax + shipping

@@ -1,56 +1,69 @@
 {% extends "store/base.html" %}
 {% load static %}
 
-{% block title %}Update Profile - Paint Store{% endblock %}
+{% block title %}Cập nhật hồ sơ - Đại lý Sơn Phát Tấn{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center mt-4">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h3 class="mb-0">Update Profile</h3>
-            </div>
-            <div class="card-body">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
+<section class="page-section">
+  <div class="profile-wrapper">
+    <aside class="card profile-nav">
+      <div class="card-body">
+        <h5 class="card-title">Tài khoản</h5>
+        <ul class="profile-nav__list">
+          <li><a href="{% url 'store:profile' %}">Hồ sơ</a></li>
+          <li><a href="{% url 'store:wishlist' %}">Wishlist</a></li>
+          <li><a href="{% url 'store:order_history' %}">Đơn hàng</a></li>
+          <li><a href="{% url 'store:logout' %}">Đăng xuất</a></li>
+        </ul>
+      </div>
+    </aside>
 
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="first_name" class="form-label">First Name</label>
-                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="last_name" class="form-label">Last Name</label>
-                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="phone" class="form-label">Phone</label>
-                        <input type="text" class="form-control" id="phone" name="phone" value="{{ profile.phone }}">
-                    </div>
-                    <div class="mb-3">
-                        <label for="address" class="form-label">Address</label>
-                        <textarea class="form-control" id="address" name="address" rows="3">{{ profile.address }}</textarea>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                        <a href="{% url 'store:profile' %}" class="btn btn-secondary">Cancel</a>
-                    </div>
-                </form>
-            </div>
+    <div class="card profile-card">
+      <div class="card-body stack">
+        <div>
+          <h3 class="section-title">Cập nhật hồ sơ</h3>
+          <p class="page-subtitle">Thông tin của bạn sẽ được dùng cho đơn hàng và hỗ trợ.</p>
         </div>
+
+        {% if messages %}
+          {% for message in messages %}
+            <div class="message {{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <form method="post" class="stack">
+          {% csrf_token %}
+          <div class="profile-grid">
+            <div class="stack">
+              <label for="first_name" class="form-label">Họ</label>
+              <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" class="form-control">
+            </div>
+            <div class="stack">
+              <label for="last_name" class="form-label">Tên</label>
+              <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" class="form-control">
+            </div>
+            <div class="stack">
+              <label for="email" class="form-label">Email</label>
+              <input type="email" id="email" name="email" value="{{ user.email }}" required class="form-control">
+            </div>
+            <div class="stack">
+              <label for="phone" class="form-label">Điện thoại</label>
+              <input type="text" id="phone" name="phone" value="{{ profile.phone }}" class="form-control">
+            </div>
+          </div>
+
+          <div class="stack">
+            <label for="address" class="form-label">Địa chỉ</label>
+            <textarea id="address" name="address" rows="3" class="form-control">{{ profile.address }}</textarea>
+          </div>
+
+          <div class="hero-actions">
+            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+            <a href="{% url 'store:profile' %}" class="btn btn-outline">Hủy</a>
+          </div>
+        </form>
+      </div>
     </div>
-</div>
+  </div>
+</section>
 {% endblock %}
