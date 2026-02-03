@@ -1,4 +1,4 @@
-PATH: /store/checkout/
+PATH: /
 STATUS: 200
 BODY: 
 <!doctype html>
@@ -6,7 +6,7 @@ BODY:
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Thanh toán - Đại lý Sơn Phát Tấn</title>
+    <title>Trang chủ - Đại lý Sơn Phát Tấn</title>
     <meta name="description" content="Đại lý Sơn Phát Tấn - Phân phối Dulux, Jotun, Kova, Nippon Paint, Maxilite">
     <link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/static/css/main.css?v=4">
@@ -26,8 +26,8 @@ BODY:
         </nav>
         <div class="header-actions">
           
-            <a class="btn-ghost" href="/store/auth/profile/">Tài khoản</a>
-            <a class="btn-ghost" href="/store/logout/">Đăng xuất</a>
+            <a class="btn-ghost" href="/login/">Đăng nhập</a>
+            <a class="btn btn-accent btn-sm" href="/store/auth/register/">Đăng ký</a>
           
           <a class="cart-link" href="/store/cart/">Giỏ hàng</a>
         </div>
@@ -38,55 +38,225 @@ BODY:
       <div class="container">
         
         
+<section class="hero">
+  <div>
+    <p class="eyebrow">ĐẠI LÝ SƠN PHÁT TẤN · Dulux · Jotun · Kova · Nippon Paint · Maxilite</p>
+    <h1>Giải pháp sơn chuyên nghiệp cho mọi công trình</h1>
+    <p>Giao nhanh, tư vấn phối màu miễn phí, giá đại lý chính hãng.</p>
+    <div class="hero-actions">
+      <a class="btn btn-accent btn-lg" href="/store/products/">Xem bảng giá</a>
+      <a class="btn btn-outline btn-lg" href="/store/contact/">Liên hệ tư vấn</a>
+    </div>
+  </div>
+  <div class="hero-card">
+    <h3>Ưu đãi tháng này</h3>
+    <ul class="list-plain">
+      <li>Giảm 5% cho đơn sơn nội thất</li>
+      <li>Tư vấn phối màu miễn phí</li>
+      <li>Giao hàng trong 24h tại TP. Hồ Chí Minh</li>
+    </ul>
+  </div>
+</section>
+
 <section class="page-section">
   <div class="section-heading">
-    <h2 class="section-title">Thanh toán</h2>
-    <p class="section-sub">Điền thông tin để hoàn tất đơn hàng</p>
+    <h2 class="section-title">Thương hiệu đối tác</h2>
+    <p class="section-sub">Dulux · Jotun · Kova · Nippon Paint · Maxilite</p>
   </div>
+  <div class="brand-strip">
+    <span class="brand-chip">Dulux</span>
+    <span class="brand-chip">Jotun</span>
+    <span class="brand-chip">Kova</span>
+    <span class="brand-chip">Nippon Paint</span>
+    <span class="brand-chip">Maxilite</span>
+  </div>
+</section>
 
-  <form method="post" aria-label="Checkout form" class="checkout-grid">
-    <input type="hidden" name="csrfmiddlewaretoken" value="wNBrSNxxYTqjTVYiUmei3T2JNq4D0jXkk9p1dbvnHEgx4XiMgL5BAPXD1jKvxqCy">
-    <div class="checkout-card">
-      <h3>Thông tin nhận hàng</h3>
-      <div class="form-group">
-        <label class="form-label">Họ và tên</label>
-        <input class="form-control" name="name" required aria-label="Họ và tên">
+<section class="page-section">
+  <div class="section-heading">
+    <h2 class="section-title">Danh mục sản phẩm</h2>
+    <p class="section-sub">Sơn nội thất · Sơn ngoại thất · Chống thấm · Bột bả</p>
+  </div>
+  <div class="product-grid category-grid">
+    <article class="product-card">
+      <div class="product-card__body">
+        <div class="product-card__brand">Danh mục</div>
+        <h3 class="product-card__title">Sơn nội thất</h3>
+        <p class="text-muted">Mịn đẹp, bền màu, dễ lau chùi</p>
       </div>
-      <div class="form-group">
-        <label class="form-label">Số điện thoại</label>
-        <input class="form-control" name="phone" required aria-label="Số điện thoại">
+      <div class="product-card__actions">
+        <a class="btn btn-primary w-100" href="/store/products/?q=Sơn nội thất">Xem sản phẩm</a>
       </div>
-      <div class="form-group">
-        <label class="form-label">Địa chỉ</label>
-        <textarea class="form-control" name="address" rows="3" required aria-label="Địa chỉ"></textarea>
+    </article>
+    <article class="product-card">
+      <div class="product-card__body">
+        <div class="product-card__brand">Danh mục</div>
+        <h3 class="product-card__title">Sơn ngoại thất</h3>
+        <p class="text-muted">Chống bám bẩn, chống tia UV</p>
       </div>
-      <div class="form-group">
-        <label class="form-label">Phương thức thanh toán</label>
-        <select class="form-control" name="payment_method" aria-label="Phương thức thanh toán">
-          <option value="cod" selected>Thanh toán khi nhận hàng (COD)</option>
-          <option value="stripe">Stripe (mô phỏng)</option>
-          <option value="paypal">PayPal (mô phỏng)</option>
-        </select>
+      <div class="product-card__actions">
+        <a class="btn btn-primary w-100" href="/store/products/?q=Sơn ngoại thất">Xem sản phẩm</a>
       </div>
-      <div class="form-group">
-        <button class="btn btn-primary" type="submit">Đặt hàng</button>
+    </article>
+    <article class="product-card">
+      <div class="product-card__body">
+        <div class="product-card__brand">Danh mục</div>
+        <h3 class="product-card__title">Chống thấm</h3>
+        <p class="text-muted">Giải pháp mái, sàn, tường</p>
       </div>
-    </div>
+      <div class="product-card__actions">
+        <a class="btn btn-primary w-100" href="/store/products/?q=Chống thấm">Xem sản phẩm</a>
+      </div>
+    </article>
+    <article class="product-card">
+      <div class="product-card__body">
+        <div class="product-card__brand">Danh mục</div>
+        <h3 class="product-card__title">Bột bả</h3>
+        <p class="text-muted">Bề mặt phẳng mịn, bền màu</p>
+      </div>
+      <div class="product-card__actions">
+        <a class="btn btn-primary w-100" href="/store/products/?q=Bột bả">Xem sản phẩm</a>
+      </div>
+    </article>
+  </div>
+</section>
 
-    <aside class="checkout-card order-summary">
-      <h3>Đơn hàng</h3>
-      
-        <ul class="order-items">
+<section class="page-section">
+  <div class="section-heading">
+    <h2 class="section-title">Sản phẩm nổi bật</h2>
+    <a class="btn btn-outline btn-sm" href="/store/products/">Xem tất cả</a>
+  </div>
+  <div class="product-grid">
+    
+      <article class="product-card">
+        <a href="/store/products/1/" class="product-card__thumb">
           
-            <li><span>Probe Product x 3</span><span>370₫</span></li>
+            <img src="/static/images/product-placeholder.svg" alt="Chưa có ảnh">
           
-            <li><span>Dulux EasyClean Nội Thất Bóng x 1</span><span>950.000₫</span></li>
+        </a>
+        <div class="product-card__body">
+          <div class="product-card__brand">Dulux</div>
+          <h3 class="product-card__title"><a href="/store/products/1/">Probe</a></h3>
+          <div class="product-card__price"><span class="price-current">10₫</span></div>
+        </div>
+        <div class="product-card__actions">
+          <a class="btn btn-primary w-100" href="/store/products/1/">Xem chi tiết</a>
+        </div>
+      </article>
+    
+      <article class="product-card">
+        <a href="/store/products/2/" class="product-card__thumb">
           
-        </ul>
-        <p class="price">Tổng: 950.370₫</p>
-      
-    </aside>
-  </form>
+            <img src="/static/images/product-placeholder.svg" alt="Chưa có ảnh">
+          
+        </a>
+        <div class="product-card__body">
+          <div class="product-card__brand">Jotun</div>
+          <h3 class="product-card__title"><a href="/store/products/2/">Probe2</a></h3>
+          <div class="product-card__price"><span class="price-current">10₫</span></div>
+        </div>
+        <div class="product-card__actions">
+          <a class="btn btn-primary w-100" href="/store/products/2/">Xem chi tiết</a>
+        </div>
+      </article>
+    
+      <article class="product-card">
+        <a href="/store/products/3/" class="product-card__thumb">
+          
+            <img src="/static/images/product-placeholder.svg" alt="Chưa có ảnh">
+          
+        </a>
+        <div class="product-card__body">
+          <div class="product-card__brand">Nippon Paint</div>
+          <h3 class="product-card__title"><a href="/store/products/3/">Probe</a></h3>
+          <div class="product-card__price"><span class="price-current">10₫</span></div>
+        </div>
+        <div class="product-card__actions">
+          <a class="btn btn-primary w-100" href="/store/products/3/">Xem chi tiết</a>
+        </div>
+      </article>
+    
+      <article class="product-card">
+        <a href="/store/products/4/" class="product-card__thumb">
+          
+            <img src="/static/images/product-placeholder.svg" alt="Chưa có ảnh">
+          
+        </a>
+        <div class="product-card__body">
+          <div class="product-card__brand">Dulux</div>
+          <h3 class="product-card__title"><a href="/store/products/4/">Probe Product</a></h3>
+          <div class="product-card__price"><span class="price-current">123₫</span></div>
+        </div>
+        <div class="product-card__actions">
+          <a class="btn btn-primary w-100" href="/store/products/4/">Xem chi tiết</a>
+        </div>
+      </article>
+    
+      <article class="product-card">
+        <a href="/store/products/5/" class="product-card__thumb">
+          
+            <img src="/static/images/product-placeholder.svg" alt="Chưa có ảnh">
+          
+        </a>
+        <div class="product-card__body">
+          <div class="product-card__brand">Dulux</div>
+          <h3 class="product-card__title"><a href="/store/products/5/">Probe Product</a></h3>
+          <div class="product-card__price"><span class="price-current">123₫</span></div>
+        </div>
+        <div class="product-card__actions">
+          <a class="btn btn-primary w-100" href="/store/products/5/">Xem chi tiết</a>
+        </div>
+      </article>
+    
+      <article class="product-card">
+        <a href="/store/products/6/" class="product-card__thumb">
+          
+            <img src="/static/images/product-placeholder.svg" alt="Chưa có ảnh">
+          
+        </a>
+        <div class="product-card__body">
+          <div class="product-card__brand">Dulux</div>
+          <h3 class="product-card__title"><a href="/store/products/6/">Probe Product</a></h3>
+          <div class="product-card__price"><span class="price-current">123₫</span></div>
+        </div>
+        <div class="product-card__actions">
+          <a class="btn btn-primary w-100" href="/store/products/6/">Xem chi tiết</a>
+        </div>
+      </article>
+    
+      <article class="product-card">
+        <a href="/store/products/7/" class="product-card__thumb">
+          
+            <img src="/static/images/product-placeholder.svg" alt="Chưa có ảnh">
+          
+        </a>
+        <div class="product-card__body">
+          <div class="product-card__brand">Dulux</div>
+          <h3 class="product-card__title"><a href="/store/products/7/">Probe Product</a></h3>
+          <div class="product-card__price"><span class="price-current">123₫</span></div>
+        </div>
+        <div class="product-card__actions">
+          <a class="btn btn-primary w-100" href="/store/products/7/">Xem chi tiết</a>
+        </div>
+      </article>
+    
+      <article class="product-card">
+        <a href="/store/products/1001/" class="product-card__thumb">
+          
+            <img src="/static/images/product-placeholder.svg" alt="Chưa có ảnh">
+          
+        </a>
+        <div class="product-card__body">
+          <div class="product-card__brand">Dulux</div>
+          <h3 class="product-card__title"><a href="/store/products/1001/">Dulux EasyClean Nội Thất Bóng</a></h3>
+          <div class="product-card__price"><span class="price-current">950.000₫</span></div>
+        </div>
+        <div class="product-card__actions">
+          <a class="btn btn-primary w-100" href="/store/products/1001/">Xem chi tiết</a>
+        </div>
+      </article>
+    
+  </div>
 </section>
 
       </div>
