@@ -1,0 +1,44 @@
+[
+    {
+        "model": "paint_store.brand",
+        "pk": 1,
+        "fields": {
+            "name": "Dulux"
+        }
+    },
+    {
+        "model": "paint_store.brand",
+        "pk": 2,
+        "fields": {
+            "name": "Jotun"
+        }
+    },
+    {
+        "model": "paint_store.brand",
+        "pk": 3,
+        "fields": {
+            "name": "Nippon"
+        }
+    },
+    {
+        "model": "paint_store.brand",
+        "pk": 4,
+        "fields": {
+            "name": "TOA"
+        }
+    },
+    {
+        "model": "paint_store.brand",
+        "pk": 5,
+        "fields": {
+            "name": "Kova"
+        }
+    },
+    {
+        "model": "paint_store.brand",
+        "pk": 6,
+        "fields": {
+            "name": "Expo"
+        }
+    }
+]

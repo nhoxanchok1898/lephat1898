@@ -1,0 +1,36 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+env/
+.venv/
+.env
+venv/
+staticfiles/
+media/
+node_modules/
+.pytest_cache/
+.mypy_cache/
+/.coverage
+.DS_Store
+dist/
+build/
+*.egg-info/
+/.vscode/
+/.idea/
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Archive files
+*.zip
+*.tar.gz
+
+# Sitemap errors
+sitemap_error.html
