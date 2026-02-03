@@ -1,8 +1,11 @@
+from decimal import Decimal, InvalidOperation
 from django.contrib import admin
+from django.contrib.admin import SimpleListFilter
 from django import forms
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from django.utils.formats import number_format
 from .models import (
     Brand, Category, Product, Order, OrderItem,
     ProductView, ProductViewAnalytics,
@@ -11,6 +14,7 @@ from .models import (
     Coupon, AppliedCoupon,
     EmailTemplate, EmailQueue, NewsletterSubscription
 )
+from django.db import models
 
 
 class ProductAdminForm(forms.ModelForm):
@@ -26,6 +30,17 @@ class ProductAdminForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Optionally, adjust form display
         self.fields['unit_type'].widget.attrs.update({'style': 'width:140px'})
+        self.fields['price'].label = 'Giá (VND)'
+        self.fields['sale_price'].label = 'Giá khuyến mãi (VND)'
+        # Hiển thị giá với dấu chấm ngăn cách nghìn và bỏ spinner số thập phân
+        for fname in ('price', 'sale_price'):
+            field = self.fields[fname]
+            field.widget = forms.TextInput(attrs={'class': 'vTextField text-right', 'inputmode': 'numeric', 'pattern': '[0-9\\.]*'})
+            field.localize = True
+        if self.instance and getattr(self.instance, 'price', None) is not None:
+            self.initial['price'] = f"{int(self.instance.price):,}".replace(',', '.')
+        if self.instance and getattr(self.instance, 'sale_price', None):
+            self.initial['sale_price'] = f"{int(self.instance.sale_price):,}".replace(',', '.')
         # Adjust volume label according to unit_type when form is initialized
         unit = None
         if self.instance and getattr(self.instance, 'unit_type', None):
@@ -40,29 +55,100 @@ class ProductAdminForm(forms.ModelForm):
             self.fields['volume'].label = 'Volume (LIT)'
             self.fields['volume_l'].initial = getattr(self.instance, 'volume', None)
 
+    def _parse_money(self, field_name):
+        raw = self.data.get(field_name)
+        if raw in (None, ''):
+            return None
+        normalized = raw.replace('.', '').replace(',', '')
+        try:
+            return Decimal(normalized)
+        except InvalidOperation:
+            raise forms.ValidationError("Vui lòng nhập số tiền hợp lệ, ví dụ: 1.250.000")
+
+    def clean_price(self):
+        value = self._parse_money('price')
+        if value is None:
+            raise forms.ValidationError("Giá không được để trống")
+        return value
+
+    def clean_sale_price(self):
+        value = self._parse_money('sale_price')
+        return value
+
 
 @admin.register(Brand)
 class BrandAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
     search_fields = ('name',)
+    verbose_name = 'Thương hiệu'
+    verbose_name_plural = 'Thương hiệu'
 
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
     search_fields = ('name',)
+    verbose_name = 'Danh mục'
+    verbose_name_plural = 'Danh mục'
+
+
+class ProductTypeFilter(SimpleListFilter):
+    title = 'Nhóm sản phẩm'
+    parameter_name = 'product_group'
+
+    def lookups(self, request, model_admin):
+        return [
+            ('interior', 'Sơn nội thất'),
+            ('exterior', 'Sơn ngoại thất'),
+            ('waterproof', 'Chống thấm'),
+            ('putty', 'Bột/Bả'),
+            ('other', 'Khác'),
+        ]
+
+    def queryset(self, request, queryset):
+        val = self.value()
+        if not val:
+            return queryset
+        key_map = {
+            'interior': ['nội thất'],
+            'exterior': ['ngoại thất'],
+            'waterproof': ['chống thấm'],
+            'putty': ['bột', 'bả'],
+        }
+        keywords = key_map.get(val, [])
+        if keywords:
+            q = models.Q()
+            for kw in keywords:
+                q |= models.Q(category__name__icontains=kw)
+            return queryset.filter(q)
+        return queryset
 
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     form = ProductAdminForm
     # Gọn danh sách: chỉ giữ các cột chính
-    list_display = ('id', 'name', 'brand', 'category', 'price', 'stock_quantity', 'is_active')
-    list_filter = ('brand', 'category', 'unit_type', 'is_active')
+    list_display = ('id', 'name', 'brand', 'category', 'price_vnd', 'sale_price_vnd', 'volume_with_unit', 'stock_quantity', 'is_active')
+    list_filter = ('brand', 'category', ProductTypeFilter, 'unit_type', 'is_active')
     search_fields = ('name', 'brand__name')
     readonly_fields = ('thumbnail', 'view_count', 'rating', 'is_on_sale')
     ordering = ('-id',)
     list_editable = ('is_active',)
+    fieldsets = (
+        ('Thông tin chính', {
+            'fields': ('name', 'slug', 'brand', 'category', 'description')
+        }),
+        ('Giá & khối lượng', {
+            'fields': (('price', 'sale_price'), ('unit_type', 'volume')),
+        }),
+        ('Kho & hiển thị', {
+            'fields': ('quantity', 'stock_quantity', 'is_active', 'is_new', 'is_on_sale', 'image')
+        }),
+        ('Thống kê', {
+            'classes': ('collapse',),
+            'fields': ('view_count', 'rating')
+        })
+    )
 
     def thumbnail(self, obj):
         if obj.image:
@@ -84,6 +170,19 @@ class ProductAdmin(admin.ModelAdmin):
             if v_l:
                 obj.volume = v_l
         super().save_model(request, obj, form, change)
+
+    def volume_with_unit(self, obj):
+        unit = 'L' if obj.unit_type == Product.UNIT_LIT else 'Kg'
+        return f"{obj.volume} {unit}"
+    volume_with_unit.short_description = 'Khối lượng'
+
+    @admin.display(ordering='price', description='Giá (VND)')
+    def price_vnd(self, obj):
+        return f"{number_format(obj.price, decimal_pos=0, force_grouping=True)} ₫"
+
+    @admin.display(ordering='sale_price', description='KM (VND)')
+    def sale_price_vnd(self, obj):
+        return f"{number_format(obj.sale_price, decimal_pos=0, force_grouping=True)} ₫" if obj.sale_price else ''
 
 
 @admin.register(Order)
@@ -255,6 +354,6 @@ class NewsletterSubscriptionAdmin(admin.ModelAdmin):
     search_fields = ('email', 'user__username')
 
 # Tiêu đề admin tiếng Việt, gọn gàng
-admin.site.site_header = _("Quản trị Paint Store")
-admin.site.site_title = _("Quản trị Paint Store")
-admin.site.index_title = _("Bảng điều khiển")
+admin.site.site_header = "Quản trị Đại lý Sơn Phát Tấn"
+admin.site.site_title = "Quản trị"
+admin.site.index_title = "Bảng điều khiển"

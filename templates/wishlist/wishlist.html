@@ -1,85 +1,74 @@
 {% extends "store/base.html" %}
 {% load static %}
+{% load price_extras %}
 
-{% block title %}My Wishlist - Paint Store{% endblock %}
+{% block title %}Danh sách yêu thích - Đại lý Sơn Phát Tấn{% endblock %}
 
 {% block content %}
-<div class="mt-4">
-    <h2>My Wishlist</h2>
-    
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
+<section class="page-section">
+  <div class="section-heading">
+    <h2 class="section-title">Sản phẩm yêu thích</h2>
+    <p class="section-sub">{{ wishlist_items|length }} sản phẩm · Dulux · Jotun · Kova · Nippon Paint · Maxilite</p>
+  </div>
 
-    {% if wishlist_items %}
-        <div class="row">
-            <div class="col-md-9">
-                <div class="card">
-                    <div class="card-body">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Price</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in wishlist_items %}
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            {% if item.product.image %}
-                                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="thumb-sm">
-                                            {% endif %}
-                                            <div>
-                                                <a href="{% url 'store:product_detail' item.product.pk %}">{{ item.product.name }}</a>
-                                                <br>
-                                                <small class="text-muted">{{ item.product.brand.name }}</small>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="align-middle">${{ item.product.price }}</td>
-                                    <td class="align-middle">
-                                        <form method="post" action="{% url 'store:cart_add' item.product.pk %}" class="d-inline">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="quantity" value="1">
-                                            <button type="submit" class="btn btn-sm btn-primary">Add to Cart</button>
-                                        </form>
-                                        <form method="post" action="{% url 'store:wishlist_remove' item.product.pk %}" class="d-inline">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-sm btn-danger">Remove</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-3">
-                <div class="card">
-                    <div class="card-body">
-                        <h5>Wishlist Summary</h5>
-                        <p><strong>Items:</strong> {{ wishlist_items.count }}</p>
-                        <p><strong>Total Value:</strong> ${{ total_value }}</p>
-                        <a href="{% url 'store:wishlist_share' %}" class="btn btn-outline-primary w-100">Share Wishlist</a>
-                    </div>
-                </div>
-            </div>
+  {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if wishlist_items %}
+    <div class="product-grid">
+      {% for item in wishlist_items %}
+      <article class="product-card">
+        <a href="{% url 'store:product_detail' item.product.pk %}" class="product-card__thumb">
+          {% if item.product.image %}
+            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+          {% else %}
+            <img src="{% static 'images/product-placeholder.svg' %}" alt="Chưa có ảnh">
+          {% endif %}
+        </a>
+        <div class="product-card__body">
+          {% if item.product.brand %}<div class="product-card__brand">{{ item.product.brand.name }}</div>{% endif %}
+          <h3 class="product-card__title"><a href="{% url 'store:product_detail' item.product.pk %}">{{ item.product.name }}</a></h3>
+          <div class="product-card__price"><span class="price-current">{{ item.product.price|vnd }}</span></div>
         </div>
-    {% else %}
-        <div class="alert alert-info">
-            <p>Your wishlist is empty.</p>
-            <a href="{% url 'store:product_list' %}" class="btn btn-primary">Browse Products</a>
+        <div class="product-card__actions">
+          <form method="post" action="{% url 'store:cart_add' item.product.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="quantity" value="1">
+            <button type="submit" class="btn btn-primary w-100">Thêm vào giỏ</button>
+          </form>
+          <form method="post" action="{% url 'store:wishlist_remove' item.product.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary w-100">Xóa khỏi yêu thích</button>
+          </form>
         </div>
-    {% endif %}
-</div>
+      </article>
+      {% endfor %}
+    </div>
+    <div class="card-flat">
+      <div class="card-flat__body d-flex">
+        <div>
+          <div class="text-muted">Tổng sản phẩm</div>
+          <div class="h4">{{ wishlist_items.count }}</div>
+        </div>
+        <div>
+          <div class="text-muted">Tổng giá trị tham khảo</div>
+          <div class="h4">{{ total_value|vnd }}</div>
+        </div>
+        <div class="ml-auto">
+          <a class="btn btn-outline" href="{% url 'store:wishlist_share' %}">Chia sẻ danh sách</a>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <p>Danh sách yêu thích đang trống.</p>
+      <a href="{% url 'store:product_list' %}" class="btn btn-primary">Xem sản phẩm</a>
+    </div>
+  {% endif %}
+</section>
 {% endblock %}

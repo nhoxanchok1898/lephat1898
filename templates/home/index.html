@@ -1,34 +1,119 @@
 {% extends 'store/base.html' %}
-
-{% block title %}Paint Store — Home{% endblock %}
-
-{% block meta %}{% endblock %}
-
-{% block extra_css %}{% endblock %}
+{% load static %}
+{% load price_extras %}
+{% block title %}Trang chủ - Đại lý Sơn Phát Tấn{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-  <h1>Welcome to Paint Store</h1>
-  <p>Fast, reliable paint for your home. Browse featured products below.</p>
+<section class="hero">
+  <div>
+    <p class="eyebrow">ĐẠI LÝ SƠN PHÁT TẤN · Dulux · Jotun · Kova · Nippon Paint · Maxilite</p>
+    <h1>Giải pháp sơn chuyên nghiệp cho mọi công trình</h1>
+    <p>Giao nhanh, tư vấn phối màu miễn phí, giá đại lý chính hãng.</p>
+    <div class="hero-actions">
+      <a class="btn btn-accent btn-lg" href="{% url 'store:product_list' %}">Xem bảng giá</a>
+      <a class="btn btn-outline btn-lg" href="{% url 'store:contact' %}">Liên hệ tư vấn</a>
+    </div>
+  </div>
+  <div class="hero-card">
+    <h3>Ưu đãi tháng này</h3>
+    <ul class="list-plain">
+      <li>Giảm 5% cho đơn sơn nội thất</li>
+      <li>Tư vấn phối màu miễn phí</li>
+      <li>Giao hàng trong 24h tại TP. Hồ Chí Minh</li>
+    </ul>
+  </div>
+</section>
 
-  <h2>Featured</h2>
-  <div class="row">
-    {% for p in featured_products %}
-      <div class="col-md-3">
-        <div class="card mb-3">
-          {% if p.image %}
-            <img src="{{ p.image.url }}" class="card-img-top" alt="{{ p.name }}">
-          {% endif %}
-          <div class="card-body">
-            <h5 class="card-title">{{ p.name }}</h5>
-            <p class="card-text">{{ p.price }} VND</p>
-            <a href="{% url 'store:product_detail' p.pk %}" class="btn btn-primary">View</a>
-          </div>
-        </div>
+<section class="page-section">
+  <div class="section-heading">
+    <h2 class="section-title">Thương hiệu đối tác</h2>
+    <p class="section-sub">Dulux · Jotun · Kova · Nippon Paint · Maxilite</p>
+  </div>
+  <div class="brand-strip">
+    <span class="brand-chip">Dulux</span>
+    <span class="brand-chip">Jotun</span>
+    <span class="brand-chip">Kova</span>
+    <span class="brand-chip">Nippon Paint</span>
+    <span class="brand-chip">Maxilite</span>
+  </div>
+</section>
+
+<section class="page-section">
+  <div class="section-heading">
+    <h2 class="section-title">Danh mục sản phẩm</h2>
+    <p class="section-sub">Sơn nội thất · Sơn ngoại thất · Chống thấm · Bột bả</p>
+  </div>
+  <div class="product-grid category-grid">
+    <article class="product-card">
+      <div class="product-card__body">
+        <div class="product-card__brand">Danh mục</div>
+        <h3 class="product-card__title">Sơn nội thất</h3>
+        <p class="text-muted">Mịn đẹp, bền màu, dễ lau chùi</p>
       </div>
+      <div class="product-card__actions">
+        <a class="btn btn-primary w-100" href="{% url 'store:product_list' %}?q=Sơn nội thất">Xem sản phẩm</a>
+      </div>
+    </article>
+    <article class="product-card">
+      <div class="product-card__body">
+        <div class="product-card__brand">Danh mục</div>
+        <h3 class="product-card__title">Sơn ngoại thất</h3>
+        <p class="text-muted">Chống bám bẩn, chống tia UV</p>
+      </div>
+      <div class="product-card__actions">
+        <a class="btn btn-primary w-100" href="{% url 'store:product_list' %}?q=Sơn ngoại thất">Xem sản phẩm</a>
+      </div>
+    </article>
+    <article class="product-card">
+      <div class="product-card__body">
+        <div class="product-card__brand">Danh mục</div>
+        <h3 class="product-card__title">Chống thấm</h3>
+        <p class="text-muted">Giải pháp mái, sàn, tường</p>
+      </div>
+      <div class="product-card__actions">
+        <a class="btn btn-primary w-100" href="{% url 'store:product_list' %}?q=Chống thấm">Xem sản phẩm</a>
+      </div>
+    </article>
+    <article class="product-card">
+      <div class="product-card__body">
+        <div class="product-card__brand">Danh mục</div>
+        <h3 class="product-card__title">Bột bả</h3>
+        <p class="text-muted">Bề mặt phẳng mịn, bền màu</p>
+      </div>
+      <div class="product-card__actions">
+        <a class="btn btn-primary w-100" href="{% url 'store:product_list' %}?q=Bột bả">Xem sản phẩm</a>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="page-section">
+  <div class="section-heading">
+    <h2 class="section-title">Sản phẩm nổi bật</h2>
+    <a class="btn btn-outline btn-sm" href="{% url 'store:product_list' %}">Xem tất cả</a>
+  </div>
+  <div class="product-grid">
+    {% for product in featured_products %}
+      <article class="product-card">
+        <a href="{% url 'store:product_detail' product.pk %}" class="product-card__thumb">
+          {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}">
+          {% else %}
+            <img src="{% static 'images/product-placeholder.svg' %}" alt="Chưa có ảnh">
+          {% endif %}
+        </a>
+        <div class="product-card__body">
+          {% if product.brand %}<div class="product-card__brand">{{ product.brand.name }}</div>{% endif %}
+          <h3 class="product-card__title"><a href="{% url 'store:product_detail' product.pk %}">{{ product.name }}</a></h3>
+          <div class="product-card__price"><span class="price-current">{{ product.price|vnd }}</span></div>
+        </div>
+        <div class="product-card__actions">
+          <a class="btn btn-primary w-100" href="{% url 'store:product_detail' product.pk %}">Xem chi tiết</a>
+        </div>
+      </article>
     {% empty %}
-      <p>No featured products yet.</p>
+      <p class="text-muted">Đang cập nhật sản phẩm...</p>
     {% endfor %}
   </div>
-</div>
+</section>
 {% endblock %}

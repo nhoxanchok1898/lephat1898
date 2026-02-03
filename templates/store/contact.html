@@ -1,16 +1,25 @@
 {% extends 'store/base.html' %}
-{% block title %}Liên hệ - Paint Store{% endblock %}
+{% block title %}Liên hệ - Đại lý Sơn Phát Tấn{% endblock %}
 {% block content %}
-  <h3 class="mb-3">Liên hệ</h3>
-  <p>Địa chỉ: 392 TL10, Bình Trị Đông, Bình Tân, Thành phố Hồ Chí Minh, Việt Nam</p>
-  <p>Điện thoại: 1900-xxxx</p>
-  <div class="page-section">
-    <iframe
-      class="map-embed"
-      src="https://www.google.com/maps?q=10.7569515,106.6221241&z=17&output=embed"
-      allowfullscreen=""
-      loading="lazy"
-    ></iframe>
+<section class="page-section">
+  <div class="section-heading">
+    <h2 class="section-title">Liên hệ</h2>
+    <p class="section-sub">Đại lý Sơn Phát Tấn · Dulux · Jotun · Kova · Nippon Paint · Maxilite</p>
   </div>
-  <p class="mt-2"><a href="https://www.google.com/maps/place/392+TL10,+B%C3%ACnh+Tr%E1%BB%8B+%C4%90%C3%B4ng,+B%C3%ACnh+T%C3%A2n,+Th%C3%A0nh+ph%E1%BB%91+H%E1%BB%93+Ch%C3%AD+Minh,+Vi%E1%BB%87t+Nam/@10.7569568,106.6195492,17z/data=!3m1!4b1!4m6!3m5!1s0x31752c2ec14b688b:0xe43d34f4d14c3f98!8m2!3d10.7569515!4d106.6221241!16s%2Fg%2F11rp3djv_1?entry=ttu&g_ep=EgoyMDI2MDEyOC4wIKXMDSoASAFQAw%3D%3D">Open in Google Maps</a></p>
+  <div class="card-flat">
+    <div class="card-flat__body stack">
+      <p><strong>Địa chỉ:</strong> 392 TL10, Bình Trị Đông, Bình Tân, TP. Hồ Chí Minh</p>
+      <p><strong>Điện thoại:</strong> 1900-xxxx</p>
+      <p><strong>Email:</strong> info@paintstore.vn</p>
+      <iframe
+        class="map-embed"
+        src="https://www.google.com/maps?q=10.7569515,106.6221241&z=17&output=embed"
+        allowfullscreen=""
+        loading="lazy"
+        title="Bản đồ đại lý"
+      ></iframe>
+      <a class="btn btn-outline" href="https://www.google.com/maps/place/392+TL10,+B%C3%ACnh+Tr%E1%BB%8B+%C4%90%C3%B4ng,+B%C3%ACnh+T%C3%A2n,+Th%C3%A0nh+ph%E1%BB%91+H%E1%BB%93+Ch%C3%AD+Minh,+Vi%E1%BB%87t+Nam/@10.7569568,106.6195492,17z/data=!3m1!4b1!4m6!3m5!1s0x31752c2ec14b688b:0xe43d34f4d14c3f98!8m2!3d10.7569515!4d106.6221241!16s%2Fg%2F11rp3djv_1?entry=ttu&g_ep=EgoyMDI2MDEyOC4wIKXMDSoASAFQAw%3D%3D">Xem trên Google Maps</a>
+    </div>
+  </div>
+</section>
 {% endblock %}

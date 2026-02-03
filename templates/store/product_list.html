@@ -1,26 +1,52 @@
 {% extends "store/base.html" %}
 {% load static %}
+{% load humanize %}
 {% load watermark_extras %}
-
-{% block title %}
-  {% if current_category_name %}{{ current_category_name }} - {% endif %}Sản phẩm - Paint Store
-{% endblock %}
-
+{% load price_extras %}
+{% block title %}Sản phẩm - Đại lý Sơn Phát Tấn{% endblock %}
 {% block content %}
-<div class="product-page">
-  <div class="product-page__header">
+<section class="page-section">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
     <div>
       <nav class="breadcrumb-nav" aria-label="breadcrumb">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{% url 'store:home' %}">Trang chủ</a></li>
-          <li class="breadcrumb-item active" aria-current="page">Sản phẩm</li>
+          <li><a href="{% url 'store:home' %}">Trang chủ</a></li>
+          <li>Sản phẩm</li>
+          {% if current_category_name %}<li>{{ current_category_name }}</li>{% endif %}
         </ol>
       </nav>
       <h1 class="page-title">Sản phẩm</h1>
-      <p class="page-subtitle">
-        <strong>{{ page_obj.paginator.count }}</strong> sản phẩm{% if q %} cho "{{ q }}"{% endif %}
+      <p class="page-subtitle mb-0">
+        <strong>{{ page_obj.paginator.count }}</strong> sản phẩm
         {% if current_category_name %} · Danh mục: {{ current_category_name }}{% endif %}
+        {% if q %} · Tìm kiếm: "{{ q }}"{% endif %}
       </p>
+      <div class="filter-bar" style="grid-template-columns: 1fr 1fr;">
+        <div class="chip-group">
+          <span class="chip-label">Thương hiệu:</span>
+          <a class="chip {% if not current_brand %}active{% endif %}" href="?{% if current_category %}category={{ current_category }}&{% endif %}{% if q %}q={{ q }}&{% endif %}sort={{ sort }}">
+            Tất cả
+          </a>
+          {% for b in brands %}
+            <a class="chip{% if current_brand|default:'' == b.id|stringformat:'s' %} active{% endif %}"
+               href="?brand={{ b.id }}{% if current_category %}&category={{ current_category }}{% endif %}{% if q %}&q={{ q }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+              {{ b.name }}
+            </a>
+          {% endfor %}
+        </div>
+        <div class="chip-group">
+          <span class="chip-label">Danh mục:</span>
+          <a class="chip {% if not current_category %}active{% endif %}" href="?{% if current_brand %}brand={{ current_brand }}&{% endif %}{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}{% endif %}">
+            Tất cả
+          </a>
+          {% for c in categories %}
+            <a class="chip{% if current_category|default:'' == c.id|stringformat:'s' %} active{% endif %}"
+               href="?category={{ c.id }}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if q %}&q={{ q }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">
+              {{ c.name }}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
     </div>
     <div class="sort-box">
       <form method="get" class="sort-form">
@@ -45,14 +71,14 @@
       </form>
     </div>
   </div>
+</section>
 
+<section class="page-section">
   <div class="product-grid">
     {% for p in products %}
     <article class="product-card{% if p.quantity <= 0 %} is-out{% endif %}">
       <a href="{% url 'store:product_detail' p.pk %}" class="product-card__thumb">
-        {% if p.quantity <= 0 %}
-          <span class="product-card__badge">Hết hàng</span>
-        {% endif %}
+        {% if p.quantity <= 0 %}<span class="product-card__badge">Hết hàng</span>{% endif %}
         {% if p.image %}
           <img src="{{ p.image|watermarked }}" alt="{{ p.name }}">
         {% else %}
@@ -64,11 +90,15 @@
         <h3 class="product-card__title"><a href="{% url 'store:product_detail' p.pk %}">{{ p.name }}</a></h3>
         <div class="product-card__price">
           {% if p.sale_price %}
-            <span class="price-current">{{ p.sale_price|floatformat:0 }}₫</span>
-            <span class="price-old">{{ p.price|floatformat:0 }}₫</span>
+            <span class="price-current">{{ p.sale_price|vnd }}</span>
+            <span class="price-old">{{ p.price|vnd }}</span>
           {% else %}
-            <span class="price-current">{{ p.price|floatformat:0 }}₫</span>
+            <span class="price-current">{{ p.price|vnd }}</span>
           {% endif %}
+        </div>
+        <div class="detail-meta" style="font-size:13px;">
+          {% if p.volume %}Khối lượng: {{ p.volume }} {% if p.unit_type == 'KG' %}Kg{% else %}L{% endif %}{% endif %}
+          {% if p.category %} · {{ p.category.name }}{% endif %}
         </div>
         <div class="product-card__actions">
           {% if p.quantity > 0 %}
@@ -96,14 +126,18 @@
   <nav aria-label="Phân trang" class="pagination-wrapper">
     <ul class="pagination justify-content-center">
       {% if page_obj.has_previous %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if on_sale %}&on_sale=1{% endif %}{% if new_arrivals %}&new_arrivals=1{% endif %}{% if in_stock %}&in_stock=1{% endif %}">Trước</a></li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if on_sale %}&on_sale=1{% endif %}{% if new_arrivals %}&new_arrivals=1{% endif %}{% if in_stock %}&in_stock=1{% endif %}">Trước</a>
+        </li>
       {% endif %}
       <li class="page-item active"><span class="page-link">Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
       {% if page_obj.has_next %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if on_sale %}&on_sale=1{% endif %}{% if new_arrivals %}&new_arrivals=1{% endif %}{% if in_stock %}&in_stock=1{% endif %}">Sau</a></li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if on_sale %}&on_sale=1{% endif %}{% if new_arrivals %}&new_arrivals=1{% endif %}{% if in_stock %}&in_stock=1{% endif %}">Sau</a>
+        </li>
       {% endif %}
     </ul>
   </nav>
   {% endif %}
-</div>
+</section>
 {% endblock %}

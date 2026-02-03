@@ -12,6 +12,10 @@ class Brand(models.Model):
     logo = models.ImageField(upload_to='brands/', blank=True, null=True)
     slug = models.SlugField(max_length=120, blank=True, null=True)
 
+    class Meta:
+        verbose_name = 'Thương hiệu'
+        verbose_name_plural = 'Thương hiệu'
+
     def __str__(self):
         return self.name
 
@@ -27,7 +31,8 @@ class Category(models.Model):
     slug = models.SlugField(max_length=120, blank=True, null=True)
 
     class Meta:
-        verbose_name_plural = 'Categories'
+        verbose_name = 'Danh mục'
+        verbose_name_plural = 'Danh mục'
 
     def __str__(self):
         return self.name
@@ -69,6 +74,8 @@ class Product(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        verbose_name = 'Sản phẩm'
+        verbose_name_plural = 'Sản phẩm'
         indexes = [
             models.Index(fields=['name', 'brand']),
             models.Index(fields=['is_active', 'created_at']),
@@ -144,6 +151,10 @@ class Order(models.Model):
     def __str__(self):
         return f"Order #{self.id} - {self.full_name}"
 
+    class Meta:
+        verbose_name = 'Đơn hàng'
+        verbose_name_plural = 'Đơn hàng'
+
     def save(self, *args, **kwargs):
         # Keep payment flags consistent
         if self.payment_status == self.PAYMENT_STATUS_PAID and not self.is_paid:
@@ -168,6 +179,10 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
 
+    class Meta:
+        verbose_name = 'Mục đơn hàng'
+        verbose_name_plural = 'Mục đơn hàng'
+
 
 class ProductView(models.Model):
     """Track product views for analytics"""
@@ -179,6 +194,8 @@ class ProductView(models.Model):
 
     class Meta:
         ordering = ['-viewed_at']
+        verbose_name = 'Lượt xem sản phẩm'
+        verbose_name_plural = 'Lượt xem sản phẩm'
         indexes = [
             models.Index(fields=['product', '-viewed_at']),
             models.Index(fields=['user', '-viewed_at']),
@@ -198,7 +215,8 @@ class ProductViewAnalytics(models.Model):
     last_purchased = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        verbose_name_plural = 'Product View Analytics'
+        verbose_name = 'Thống kê lượt xem'
+        verbose_name_plural = 'Thống kê lượt xem'
 
     def __str__(self):
         return f"Analytics for {self.product.name}"

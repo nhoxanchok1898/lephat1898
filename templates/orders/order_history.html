@@ -1,58 +1,61 @@
 {% extends "store/base.html" %}
 {% load static %}
 
-{% block title %}Order History - Paint Store{% endblock %}
+{% block title %}Đơn hàng của tôi - Đại lý Sơn Phát Tấn{% endblock %}
 
 {% block content %}
-<div class="mt-4">
-    <h2>My Orders</h2>
-    
-    {% if orders %}
-        <div class="table-responsive mt-4">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Order #</th>
-                        <th>Date</th>
-                        <th>Items</th>
-                        <th>Payment Method</th>
-                        <th>Status</th>
-                        <th>Paid</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in orders %}
-                    <tr>
-                        <td>#{{ order.pk }}</td>
-                        <td>{{ order.created_at|date:"M d, Y" }}</td>
-                        <td>{{ order.items.count }} item{{ order.items.count|pluralize }}</td>
-                        <td>{{ order.get_payment_method_display|default:order.payment_method|title }}</td>
-                        <td>
-                            <span class="badge bg-{% if order.payment_status == 'paid' %}success{% elif order.payment_status == 'pending' %}warning{% else %}secondary{% endif %}">
-                                {{ order.payment_status|title }}
-                            </span>
-                        </td>
-                        <td>
-                            {% if order.is_paid %}
-                                <span class="badge bg-success">Đã thanh toán{% if order.paid_at %} ({{ order.paid_at|date:"Y-m-d" }}){% endif %}</span>
-                            {% else %}
-                                <span class="badge bg-secondary">Chưa thanh toán</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <a href="{% url 'store:order_detail' order.pk %}" class="btn btn-sm btn-primary">View Details</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <div class="alert alert-info">
-            <p>You don't have any orders yet.</p>
-            <a href="{% url 'store:product_list' %}" class="btn btn-primary">Start Shopping</a>
-        </div>
-    {% endif %}
-</div>
+<section class="page-section">
+  <div class="section-heading">
+    <h2 class="section-title">Đơn hàng của tôi</h2>
+    <p class="section-sub">Theo dõi trạng thái, thanh toán và chi tiết đơn</p>
+  </div>
+
+  {% if orders %}
+    <div class="table-responsive page-section" style="padding:0;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Mã</th>
+            <th>Ngày</th>
+            <th>Số lượng</th>
+            <th>Thanh toán</th>
+            <th>Trạng thái</th>
+            <th>Đã trả</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+          <tr>
+            <td>#{{ order.pk }}</td>
+            <td>{{ order.created_at|date:"d/m/Y" }}</td>
+            <td>{{ order.items.count }} sản phẩm</td>
+            <td>{{ order.get_payment_method_display|default:order.payment_method|title }}</td>
+            <td>
+              <span class="badge {% if order.status == 'shipped' %}badge-success{% elif order.status == 'processing' %}badge-secondary{% else %}badge-secondary{% endif %}">
+                {{ order.status|default:order.payment_status|title }}
+              </span>
+            </td>
+            <td>
+              {% if order.is_paid %}
+                <span class="badge badge-success">Đã thanh toán{% if order.paid_at %} ({{ order.paid_at|date:"d/m/Y" }}){% endif %}</span>
+              {% else %}
+                <span class="badge badge-secondary">Chưa thanh toán</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'store:order_detail' order.pk %}" class="btn btn-outline btn-sm">Xem</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info">
+      <p>Bạn chưa có đơn hàng nào.</p>
+      <a href="{% url 'store:product_list' %}" class="btn btn-primary">Mua sắm ngay</a>
+    </div>
+  {% endif %}
+</section>
 {% endblock %}

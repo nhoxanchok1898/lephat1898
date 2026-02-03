@@ -1,0 +1,383 @@
+[
+  {
+    "model": "store.brand",
+    "pk": 1,
+    "fields": { "name": "Dulux", "slug": "dulux" }
+  },
+  {
+    "model": "store.brand",
+    "pk": 2,
+    "fields": { "name": "Jotun", "slug": "jotun" }
+  },
+  {
+    "model": "store.brand",
+    "pk": 3,
+    "fields": { "name": "Nippon Paint", "slug": "nippon-paint" }
+  },
+  {
+    "model": "store.brand",
+    "pk": 4,
+    "fields": { "name": "Kova", "slug": "kova" }
+  },
+  {
+    "model": "store.brand",
+    "pk": 5,
+    "fields": { "name": "Maxilite", "slug": "maxilite" }
+  },
+
+  {
+    "model": "store.category",
+    "pk": 1,
+    "fields": { "name": "Sơn nội thất", "slug": "son-noi-that" }
+  },
+  {
+    "model": "store.category",
+    "pk": 2,
+    "fields": { "name": "Sơn ngoại thất", "slug": "son-ngoai-that" }
+  },
+  {
+    "model": "store.category",
+    "pk": 3,
+    "fields": { "name": "Chống thấm", "slug": "chong-tham" }
+  },
+  {
+    "model": "store.category",
+    "pk": 4,
+    "fields": { "name": "Bột bả", "slug": "bot-ba" }
+  },
+
+  {
+    "model": "store.product",
+    "pk": 1001,
+    "fields": {
+      "name": "Dulux EasyClean Nội Thất Bóng",
+      "description": "Sơn nội thất bóng, lau chùi hiệu quả, phù hợp phòng khách và phòng ngủ.",
+      "brand": 1,
+      "category": 1,
+      "price": "950000.00",
+      "sale_price": "890000.00",
+      "unit_type": "LIT",
+      "volume": 5,
+      "quantity": 30,
+      "stock_quantity": 30,
+      "slug": "dulux-easyclean-noi-that-bong-5l",
+      "is_active": true,
+      "is_new": true,
+      "is_on_sale": true,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "store.product",
+    "pk": 1002,
+    "fields": {
+      "name": "Dulux Weathershield Ngoại Thất",
+      "description": "Chống thấm, chống bám bẩn, bảo vệ màu bền lâu cho mặt tiền.",
+      "brand": 1,
+      "category": 2,
+      "price": "1250000.00",
+      "sale_price": null,
+      "unit_type": "LIT",
+      "volume": 5,
+      "quantity": 25,
+      "stock_quantity": 25,
+      "slug": "dulux-weathershield-5l",
+      "is_active": true,
+      "is_new": false,
+      "is_on_sale": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "store.product",
+    "pk": 1003,
+    "fields": {
+      "name": "Dulux A300 Chống Thấm Xi Măng",
+      "description": "Phủ chống thấm cho sàn và tường đứng, gốc xi măng hai thành phần.",
+      "brand": 1,
+      "category": 3,
+      "price": "650000.00",
+      "sale_price": null,
+      "unit_type": "KG",
+      "volume": 20,
+      "quantity": 40,
+      "stock_quantity": 40,
+      "slug": "dulux-a300-chong-tham-20kg",
+      "is_active": true,
+      "is_new": false,
+      "is_on_sale": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+
+  {
+    "model": "store.product",
+    "pk": 1011,
+    "fields": {
+      "name": "Jotun Majestic Primer Nội Thất",
+      "description": "Sơn lót nội thất tăng độ bám dính, bề mặt mịn.",
+      "brand": 2,
+      "category": 1,
+      "price": "520000.00",
+      "sale_price": null,
+      "unit_type": "LIT",
+      "volume": 5,
+      "quantity": 50,
+      "stock_quantity": 50,
+      "slug": "jotun-majestic-primer-5l",
+      "is_active": true,
+      "is_new": true,
+      "is_on_sale": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "store.product",
+    "pk": 1012,
+    "fields": {
+      "name": "Jotashield Ngoại Thất Bền Màu",
+      "description": "Ngoại thất chống phai màu, chống bụi bẩn và rêu mốc.",
+      "brand": 2,
+      "category": 2,
+      "price": "1380000.00",
+      "sale_price": "1290000.00",
+      "unit_type": "LIT",
+      "volume": 5,
+      "quantity": 18,
+      "stock_quantity": 18,
+      "slug": "jotashield-ben-mau-5l",
+      "is_active": true,
+      "is_new": false,
+      "is_on_sale": true,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "store.product",
+    "pk": 1013,
+    "fields": {
+      "name": "Jotun Chống Thấm WaterGuard",
+      "description": "Sơn chống thấm hệ nước dùng cho mái và tường ngoài trời.",
+      "brand": 2,
+      "category": 3,
+      "price": "780000.00",
+      "sale_price": null,
+      "unit_type": "LIT",
+      "volume": 4,
+      "quantity": 22,
+      "stock_quantity": 22,
+      "slug": "jotun-waterguard-4l",
+      "is_active": true,
+      "is_new": false,
+      "is_on_sale": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+
+  {
+    "model": "store.product",
+    "pk": 1021,
+    "fields": {
+      "name": "Nippon Odour-less Nội Thất",
+      "description": "Sơn nội thất không mùi, thân thiện sức khỏe, dễ lau chùi.",
+      "brand": 3,
+      "category": 1,
+      "price": "890000.00",
+      "sale_price": null,
+      "unit_type": "LIT",
+      "volume": 5,
+      "quantity": 28,
+      "stock_quantity": 28,
+      "slug": "nippon-odourless-5l",
+      "is_active": true,
+      "is_new": true,
+      "is_on_sale": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "store.product",
+    "pk": 1022,
+    "fields": {
+      "name": "Nippon Weatherbond Ngoại Thất",
+      "description": "Chống thấm, chống bám bẩn, chịu thời tiết khắc nghiệt.",
+      "brand": 3,
+      "category": 2,
+      "price": "1180000.00",
+      "sale_price": null,
+      "unit_type": "LIT",
+      "volume": 5,
+      "quantity": 15,
+      "stock_quantity": 15,
+      "slug": "nippon-weatherbond-5l",
+      "is_active": true,
+      "is_new": false,
+      "is_on_sale": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "store.product",
+    "pk": 1023,
+    "fields": {
+      "name": "Nippon Skim Coat Bột Trét",
+      "description": "Bột bả mịn, tăng độ phẳng và độ bám cho lớp sơn phủ.",
+      "brand": 3,
+      "category": 4,
+      "price": "240000.00",
+      "sale_price": null,
+      "unit_type": "KG",
+      "volume": 40,
+      "quantity": 60,
+      "stock_quantity": 60,
+      "slug": "nippon-skim-coat-40kg",
+      "is_active": true,
+      "is_new": false,
+      "is_on_sale": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+
+  {
+    "model": "store.product",
+    "pk": 1031,
+    "fields": {
+      "name": "Kova K-209 Chống Thấm",
+      "description": "Sơn chống thấm hệ nước đa dụng cho tường đứng và mái.",
+      "brand": 4,
+      "category": 3,
+      "price": "560000.00",
+      "sale_price": null,
+      "unit_type": "KG",
+      "volume": 20,
+      "quantity": 35,
+      "stock_quantity": 35,
+      "slug": "kova-k209-20kg",
+      "is_active": true,
+      "is_new": false,
+      "is_on_sale": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "store.product",
+    "pk": 1032,
+    "fields": {
+      "name": "Kova CT-11A Plus Ngoại Thất",
+      "description": "Chống thấm chuyên dụng cho ngoại thất, bền màu và bám dính cao.",
+      "brand": 4,
+      "category": 2,
+      "price": "990000.00",
+      "sale_price": null,
+      "unit_type": "LIT",
+      "volume": 5,
+      "quantity": 18,
+      "stock_quantity": 18,
+      "slug": "kova-ct11a-plus-5l",
+      "is_active": true,
+      "is_new": false,
+      "is_on_sale": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "store.product",
+    "pk": 1033,
+    "fields": {
+      "name": "Kova Bột Trét Nội Thất",
+      "description": "Bột bả nội thất, bề mặt mịn, tăng độ bám cho sơn phủ.",
+      "brand": 4,
+      "category": 4,
+      "price": "210000.00",
+      "sale_price": null,
+      "unit_type": "KG",
+      "volume": 40,
+      "quantity": 45,
+      "stock_quantity": 45,
+      "slug": "kova-bot-tret-noi-that-40kg",
+      "is_active": true,
+      "is_new": false,
+      "is_on_sale": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+
+  {
+    "model": "store.product",
+    "pk": 1041,
+    "fields": {
+      "name": "Maxilite Total Nội Thất",
+      "description": "Sơn nội thất kinh tế, độ phủ cao, màu sắc bền.",
+      "brand": 5,
+      "category": 1,
+      "price": "520000.00",
+      "sale_price": null,
+      "unit_type": "LIT",
+      "volume": 5,
+      "quantity": 55,
+      "stock_quantity": 55,
+      "slug": "maxilite-total-noi-that-5l",
+      "is_active": true,
+      "is_new": false,
+      "is_on_sale": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "store.product",
+    "pk": 1042,
+    "fields": {
+      "name": "Maxilite Ngoại Thất Bền Đẹp",
+      "description": "Sơn ngoại thất kinh tế, bảo vệ tốt trong điều kiện mưa nắng.",
+      "brand": 5,
+      "category": 2,
+      "price": "690000.00",
+      "sale_price": null,
+      "unit_type": "LIT",
+      "volume": 5,
+      "quantity": 30,
+      "stock_quantity": 30,
+      "slug": "maxilite-ngoai-that-5l",
+      "is_active": true,
+      "is_new": false,
+      "is_on_sale": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "store.product",
+    "pk": 1043,
+    "fields": {
+      "name": "Maxilite Chống Thấm Plus",
+      "description": "Chống thấm gốc nước cho sân thượng, ban công, tường đứng.",
+      "brand": 5,
+      "category": 3,
+      "price": "480000.00",
+      "sale_price": null,
+      "unit_type": "LIT",
+      "volume": 4,
+      "quantity": 26,
+      "stock_quantity": 26,
+      "slug": "maxilite-chong-tham-4l",
+      "is_active": true,
+      "is_new": false,
+      "is_on_sale": false,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  }
+]

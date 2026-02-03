@@ -1,48 +1,55 @@
 {% extends 'store/base.html' %}
-{% block title %}Thanh toán - Paint Store{% endblock %}
+{% load price_extras %}
+{% block title %}Thanh toán - Đại lý Sơn Phát Tấn{% endblock %}
 {% block content %}
-  <section class="checkout container">
-    <h2 class="mb-3">Thanh toán</h2>
-    <form method="post" aria-label="Checkout form" class="checkout-grid">
-      {% csrf_token %}
-      <div class="checkout-form card">
-        <div class="form-group">
-          <label class="form-label">Họ và tên</label>
-          <input class="form-control" name="name" required aria-label="Họ và tên">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Số điện thoại</label>
-          <input class="form-control" name="phone" required aria-label="Số điện thoại">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Địa chỉ</label>
-          <textarea class="form-control" name="address" required aria-label="Địa chỉ"></textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Phương thức thanh toán</label>
-          <select class="form-control" name="payment_method" aria-label="Phương thức thanh toán">
-            <option value="cod" selected>Thanh toán khi nhận hàng (COD)</option>
-            <option value="stripe">Stripe (mô phỏng)</option>
-            <option value="paypal">PayPal (mô phỏng)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <button class="btn" type="submit">Đặt hàng</button>
-        </div>
+<section class="page-section">
+  <div class="section-heading">
+    <h2 class="section-title">Thanh toán</h2>
+    <p class="section-sub">Điền thông tin để hoàn tất đơn hàng</p>
+  </div>
+
+  <form method="post" aria-label="Checkout form" class="checkout-grid">
+    {% csrf_token %}
+    <div class="checkout-card">
+      <h3>Thông tin nhận hàng</h3>
+      <div class="form-group">
+        <label class="form-label">Họ và tên</label>
+        <input class="form-control" name="name" required aria-label="Họ và tên">
       </div>
-      <aside class="order-summary card">
-        <h4>Đơn hàng</h4>
-        {% if items %}
-          <ul class="order-items">
+      <div class="form-group">
+        <label class="form-label">Số điện thoại</label>
+        <input class="form-control" name="phone" required aria-label="Số điện thoại">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Địa chỉ</label>
+        <textarea class="form-control" name="address" rows="3" required aria-label="Địa chỉ"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phương thức thanh toán</label>
+        <select class="form-control" name="payment_method" aria-label="Phương thức thanh toán">
+          <option value="cod" selected>Thanh toán khi nhận hàng (COD)</option>
+          <option value="stripe">Stripe (mô phỏng)</option>
+          <option value="paypal">PayPal (mô phỏng)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <button class="btn btn-primary" type="submit">Đặt hàng</button>
+      </div>
+    </div>
+
+    <aside class="checkout-card order-summary">
+      <h3>Đơn hàng</h3>
+      {% if items %}
+        <ul class="order-items">
           {% for it in items %}
-            <li>{{ it.product.name }} x {{ it.qty }} — {{ it.subtotal }}</li>
+            <li><span>{{ it.product.name }} x {{ it.qty }}</span><span>{{ it.subtotal|vnd }}</span></li>
           {% endfor %}
-          </ul>
-          <p class="price"><strong>Tổng: {{ total }}</strong></p>
-        {% else %}
-          <p>Không có sản phẩm trong giỏ.</p>
-        {% endif %}
-      </aside>
-    </form>
-  </section>
+        </ul>
+        <p class="price">Tổng: {{ total|vnd }}</p>
+      {% else %}
+        <p>Không có sản phẩm trong giỏ.</p>
+      {% endif %}
+    </aside>
+  </form>
+</section>
 {% endblock %}
