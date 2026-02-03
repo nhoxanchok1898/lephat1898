@@ -1,79 +1,27 @@
-version: '3.9'
+version: "3.9"
 
 services:
-  db:
-    image: postgres:15-alpine
-    container_name: lephat_db
-    environment:
-      POSTGRES_DB: paintstore
-      POSTGRES_USER: paintuser
-      POSTGRES_PASSWORD: changeme
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U paintuser"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    container_name: lephat_redis
-    command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   web:
     build: .
-    container_name: lephat_web
-    command: gunicorn paint_store.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120
-    volumes:
-      - .:/app
-      - static_volume:/app/staticfiles
-      - media_volume:/app/media
+    command: gunicorn paint_store.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    env_file:
+      - .env
     ports:
       - "8000:8000"
-    environment:
-      - DATABASE_URL=postgres://paintuser:changeme@db:5432/paintstore
-      - REDIS_URL=redis://redis:6379/0
-      - SITE_URL=https://www.your-domain.com
-      - DJANGO_SECRET_KEY=replace-in-production
-      - DEBUG=False
-      - ALLOWED_HOSTS=your-domain.com,www.your-domain.com,localhost
     depends_on:
-      - db
-      - redis
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-  nginx:
-    image: nginx:alpine
-    container_name: lephat_nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - static_volume:/app/staticfiles:ro
-      - media_volume:/app/media:ro
-    depends_on:
-      - web
+      # Uncomment if using Postgres
+      # - db
     restart: unless-stopped
 
-volumes:
-  postgres_data:
-  redis_data:
-  static_volume:
-  media_volume:
+  # db:
+  #   image: postgres:15
+  #   environment:
+  #     POSTGRES_DB: lephat
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: change-me
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data/
+  #   restart: unless-stopped
+
+# volumes:
+#   postgres_data:

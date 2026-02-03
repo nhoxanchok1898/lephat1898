@@ -59,6 +59,7 @@ urlpatterns = [
     # Order views
     path('orders/history/', order_views.order_history, name='order_history'),
     path('orders/<int:order_id>/', order_views.order_detail, name='order_detail'),
+    path('orders/<int:order_id>/cancel/', order_views.order_cancel, name='order_cancel'),
     path('payments/stripe/create/', views.stripe_create_session, name='stripe_create'),
     path('payments/stripe/success/', views.stripe_success, name='stripe_success'),
     path('payments/stripe/webhook/', views.stripe_webhook, name='stripe_webhook'),
@@ -83,9 +84,13 @@ urlpatterns = [
     path('admin-dashboard/api/sales/', admin_dashboard.api_sales_chart, name='api_sales_chart'),
     path('admin-dashboard/performance/', admin_dashboard.performance_metrics, name='performance_metrics'),
     path('admin-dashboard/activity/', admin_dashboard.staff_activity_log, name='activity_log'),
+    path('admin-dashboard/revenue/', admin_dashboard.revenue_report, name='revenue_report'),
+    path('admin-dashboard/revenue/email/', admin_dashboard.email_revenue_report, name='email_revenue_report'),
+    path('admin-dashboard/revenue/export/csv/', admin_dashboard.export_revenue_csv, name='export_revenue_csv'),
+    path('admin-dashboard/revenue/export/xlsx/', admin_dashboard.export_revenue_xlsx, name='export_revenue_xlsx'),
     
     # Health Check & Monitoring
-    path('health/', monitoring.health_check, name='health_check'),
+    path('health/', monitoring.health_ping, name='health_ping'),
     path('readiness/', monitoring.readiness_check, name='readiness_check'),
     path('liveness/', monitoring.liveness_check, name='liveness_check'),
     

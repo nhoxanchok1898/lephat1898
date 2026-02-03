@@ -66,7 +66,7 @@ class CompleteWorkflowTest(TestCase):
             'name': 'Test User',
             'phone': '555-1234',
             'address': '123 Test St',
-            'payment_method': 'offline'
+            'payment_method': 'cod'
         })
         self.assertIn(response.status_code, [200, 302])
         

@@ -70,16 +70,16 @@ class CartCheckoutTests(TestCase):
         self.assertEqual(order.payment_status, 'paid')
         self.assertTrue(order.payment_reference and 'PAYPAL' in order.payment_reference.upper())
 
-    def test_checkout_offline_remains_pending(self):
+    def test_checkout_cod_remains_pending(self):
         session = self.client.session
         session['cart'] = {str(self.product.pk): 1}
         session.save()
 
         url = reverse('store:checkout')
         resp = self.client.post(url, {
-            'name': 'Dave', 'phone': '222', 'address': 'Addr3', 'payment_method': 'offline'
+            'name': 'Dave', 'phone': '222', 'address': 'Addr3', 'payment_method': 'cod'
         }, follow=False)
         self.assertIn(resp.status_code, (302, 303, 301))
         order = Order.objects.latest('id')
-        self.assertEqual(order.payment_method, 'offline')
+        self.assertEqual(order.payment_method, 'cod')
         self.assertEqual(order.payment_status, 'pending')

@@ -1,21 +1,29 @@
-{% extends 'base.html' %}
+{% extends 'store/base.html' %}
 
-{% block title %}Home{% endblock %}
+{% block title %}Trang chủ{% endblock %}
 
 {% block content %}
-<h2>Featured Brands</h2>
-<ul>
+<section class="page-section">
+  <h2>Thương hiệu nổi bật</h2>
+  <ul class="list-unstyled">
     {% for brand in brands %}
-    <li>{{ brand.name }}</li>
+      <li>{{ brand.name }}</li>
+    {% empty %}
+      <li class="text-muted">Chưa có thương hiệu.</li>
     {% endfor %}
-</ul>
+  </ul>
+</section>
 
-<h2>New Products</h2>
-<ul>
+<section class="page-section">
+  <h2>Sản phẩm mới</h2>
+  <ul class="list-unstyled">
     {% for product in products %}
-    <li>
-        <a href="/products/{{ product.id }}/">{{ product.name }}</a> - {{ product.price }} {{ product.unit }}
-    </li>
+      <li>
+        <a href="/products/{{ product.id }}/">{{ product.name }}</a> — {{ product.price }} {{ product.unit }}
+      </li>
+    {% empty %}
+      <li class="text-muted">Chưa có sản phẩm.</li>
     {% endfor %}
-</ul>
+  </ul>
+</section>
 {% endblock %}

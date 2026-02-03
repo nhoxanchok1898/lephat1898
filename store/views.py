@@ -468,14 +468,27 @@ def checkout_view(request):
         name = request.POST.get('name')
         phone = request.POST.get('phone')
         address = request.POST.get('address')
-        payment_method = request.POST.get('payment_method', 'offline')
-        order = Order.objects.create(full_name=name, phone=phone, address=address)
+        payment_method = request.POST.get('payment_method', Order.PAYMENT_METHOD_COD)
+        # Map legacy value to new COD identifier so existing clients continue to work
+        if payment_method == Order.PAYMENT_METHOD_OFFLINE:
+            payment_method = Order.PAYMENT_METHOD_COD
+        order = Order.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            full_name=name,
+            phone=phone,
+            address=address,
+        )
         for pid, qty in cart.items():
             try:
                 p = Product.objects.get(pk=int(pid))
             except Product.DoesNotExist:
                 continue
-            OrderItem.objects.create(order=order, product=p, quantity=qty, price=p.price)
+            OrderItem.objects.create(
+                order=order,
+                product=p,
+                quantity=qty,
+                price=p.get_price(),
+            )
         request.session.pop('cart', None)
         request.session.modified = True
         # record payment details (stubbed). In a real integration you would

@@ -6,17 +6,55 @@ import csv
 import io
 from datetime import datetime, timedelta
 from decimal import Decimal
+from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, Count, Avg, F, Q
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.core.mail import EmailMessage
+from django.db.models import Sum, Count, Avg, F, Q, DecimalField, DateField
+from django.db.models.functions import TruncDate, TruncMonth, Coalesce
+from django.utils.dateparse import parse_date
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
+from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from .models import (
     Order, OrderItem, Product, User,
     ProductView, OrderAnalytics, UserAnalytics, ProductPerformance
 )
+
+
+def _paid_orders_queryset(request, params=None):
+    """Base queryset for paid orders with optional date filtering."""
+    params = params or request.GET
+    paid_orders = Order.objects.filter(is_paid=True).prefetch_related('items')
+
+    from_param = params.get('from_date')
+    to_param = params.get('to_date')
+    preset = params.get('preset')
+    today = timezone.now().date()
+
+    if preset == 'last_7':
+        from_param = (today - timedelta(days=7)).isoformat()
+        to_param = today.isoformat()
+    elif preset == 'last_30':
+        from_param = (today - timedelta(days=30)).isoformat()
+        to_param = today.isoformat()
+    elif preset == 'this_month':
+        from_param = today.replace(day=1).isoformat()
+        to_param = today.isoformat()
+
+    from_date = parse_date(from_param) if from_param else None
+    to_date = parse_date(to_param) if to_param else None
+
+    if from_date:
+        paid_orders = paid_orders.filter(
+            Q(paid_at__date__gte=from_date) | Q(paid_at__isnull=True, created_at__date__gte=from_date)
+        )
+    if to_date:
+        paid_orders = paid_orders.filter(
+            Q(paid_at__date__lte=to_date) | Q(paid_at__isnull=True, created_at__date__lte=to_date)
+        )
+    return paid_orders, from_param, to_param, preset
 
 
 @staff_member_required
@@ -58,6 +96,297 @@ def admin_dashboard(request):
     }
     
     return render(request, 'admin/dashboard.html', context)
+
+
+@staff_member_required
+@require_http_methods(["GET"])
+def revenue_report(request):
+    """Read-only revenue report for paid orders (staff only)."""
+    paid_orders, from_param, to_param, preset = _paid_orders_queryset(request)
+
+    # Daily totals (prefer paid_at; fallback to created_at when paid_at is null)
+    daily_totals = (
+        paid_orders
+        .annotate(day=Coalesce(TruncDate('paid_at'), TruncDate('created_at'), output_field=DateField()))
+        .values('day')
+        .annotate(
+            total=Sum(F('items__price') * F('items__quantity'), output_field=DecimalField()),
+            orders=Count('id'),
+        )
+        .order_by('-day')
+    )
+
+    # Month totals
+    monthly_totals = (
+        paid_orders
+        .annotate(month=Coalesce(TruncMonth('paid_at'), TruncMonth('created_at')))
+        .values('month')
+        .annotate(
+            total=Sum(F('items__price') * F('items__quantity'), output_field=DecimalField()),
+            orders=Count('id'),
+        )
+        .order_by('-month')
+    )
+
+    aggregates = paid_orders.aggregate(
+        total_revenue=Sum(F('items__price') * F('items__quantity'), output_field=DecimalField()),
+        order_count=Count('id'),
+    )
+    total_revenue = aggregates.get('total_revenue') or Decimal('0')
+    order_count = aggregates.get('order_count') or 0
+    avg_order_value = (total_revenue / order_count) if order_count else Decimal('0')
+
+    # Previous period comparison (only when both from/to provided)
+    period_change = None
+    from_date = parse_date(from_param) if from_param else None
+    to_date = parse_date(to_param) if to_param else None
+    if from_date and to_date:
+        duration = (to_date - from_date).days + 1
+        prev_end = from_date - timedelta(days=1)
+        prev_start = prev_end - timedelta(days=duration - 1)
+        prev_qs = Order.objects.filter(is_paid=True).prefetch_related('items')
+        prev_qs = prev_qs.filter(
+            Q(paid_at__date__gte=prev_start) | Q(paid_at__isnull=True, created_at__date__gte=prev_start)
+        ).filter(
+            Q(paid_at__date__lte=prev_end) | Q(paid_at__isnull=True, created_at__date__lte=prev_end)
+        )
+        prev_agg = prev_qs.aggregate(
+            total_revenue=Sum(F('items__price') * F('items__quantity'), output_field=DecimalField()),
+            order_count=Count('id'),
+        )
+        prev_total = prev_agg.get('total_revenue') or Decimal('0')
+        prev_orders = prev_agg.get('order_count') or 0
+        prev_aov = (prev_total / prev_orders) if prev_orders else Decimal('0')
+
+        def pct_change(current, previous):
+            if previous == 0:
+                return None if current == 0 else 100
+            return float((current - previous) / previous * 100)
+
+        period_change = {
+            'prev_start': prev_start,
+            'prev_end': prev_end,
+            'revenue_pct': pct_change(total_revenue, prev_total),
+            'orders_pct': pct_change(order_count, prev_orders),
+            'aov_pct': pct_change(avg_order_value, prev_aov),
+            'prev_revenue': prev_total,
+            'prev_orders': prev_orders,
+            'prev_aov': prev_aov,
+        }
+
+    # Top products by revenue and quantity (read-only)
+    top_products = (
+        OrderItem.objects
+        .filter(order__in=paid_orders)
+        .values('product__id', 'product__name')
+        .annotate(
+            total_revenue=Sum(F('price') * F('quantity'), output_field=DecimalField()),
+            total_qty=Sum('quantity'),
+        )
+        .order_by('-total_revenue')[:10]
+    )
+
+    # Top customers by total spend (orders with user)
+    top_customers = (
+        paid_orders
+        .filter(user__isnull=False)
+        .values('user__id', 'user__username', 'user__email')
+        .annotate(
+            total_spend=Sum(F('items__price') * F('items__quantity'), output_field=DecimalField()),
+            orders=Count('id'),
+        )
+        .order_by('-total_spend')[:10]
+    )
+
+    # Revenue breakdown by payment method
+    payment_breakdown = (
+        paid_orders
+        .values('payment_method')
+        .annotate(
+            total=Sum(F('items__price') * F('items__quantity'), output_field=DecimalField()),
+            orders=Count('id'),
+        )
+        .order_by('-total')
+    )
+
+    context = {
+        'daily_totals': daily_totals,
+        'monthly_totals': monthly_totals,
+        'total_revenue': total_revenue,
+        'order_count': order_count,
+        'avg_order_value': avg_order_value,
+        'from_date': from_param,
+        'to_date': to_param,
+        'preset': preset,
+        'period_change': period_change,
+        'top_products': top_products,
+        'top_customers': top_customers,
+        'payment_breakdown': payment_breakdown,
+    }
+    return render(request, 'admin/revenue_report.html', context)
+
+
+@staff_member_required
+@require_http_methods(["GET"])
+def export_revenue_csv(request):
+    """Export paid orders revenue as CSV."""
+    paid_orders, from_param, to_param, preset = _paid_orders_queryset(request)
+    paid_orders = paid_orders.annotate(
+        order_total=Sum(F('items__price') * F('items__quantity'), output_field=DecimalField())
+    ).order_by('-paid_at', '-created_at')
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename=revenue_paid_orders.csv'
+    writer = csv.writer(response)
+    writer.writerow([
+        'Order ID', 'Paid At', 'Created At', 'Customer', 'Payment Method', 'Status', 'Total'
+    ])
+    for o in paid_orders:
+        writer.writerow([
+            o.id,
+            o.paid_at.isoformat() if o.paid_at else '',
+            o.created_at.isoformat() if o.created_at else '',
+            o.full_name,
+            o.get_payment_method_display(),
+            o.get_status_display(),
+            f"{o.order_total or Decimal('0')}",
+        ])
+    return response
+
+
+@staff_member_required
+@require_http_methods(["GET"])
+def export_revenue_xlsx(request):
+    """
+    Optional XLSX export for paid orders.
+    If openpyxl is not installed, return 501.
+    """
+    try:
+        import openpyxl
+        from openpyxl.utils import get_column_letter
+    except ImportError:
+        return HttpResponse("XLSX export requires openpyxl to be installed.", status=501)
+
+    paid_orders, from_param, to_param, preset = _paid_orders_queryset(request)
+    paid_orders = paid_orders.annotate(
+        order_total=Sum(F('items__price') * F('items__quantity'), output_field=DecimalField())
+    ).order_by('-paid_at', '-created_at')
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Paid Orders"
+    headers = ['Order ID', 'Paid At', 'Created At', 'Customer', 'Payment Method', 'Status', 'Total']
+    ws.append(headers)
+    for o in paid_orders:
+        ws.append([
+            o.id,
+            o.paid_at.isoformat() if o.paid_at else '',
+            o.created_at.isoformat() if o.created_at else '',
+            o.full_name,
+            o.get_payment_method_display(),
+            o.get_status_display(),
+            float(o.order_total or Decimal('0')),
+        ])
+    # Autosize columns (basic)
+    for idx, _ in enumerate(headers, start=1):
+        ws.column_dimensions[get_column_letter(idx)].width = 18
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=revenue_paid_orders.xlsx'
+    wb.save(response)
+    return response
+
+
+def _build_revenue_csv(qs):
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(['Order ID', 'Paid At', 'Created At', 'Customer', 'Payment Method', 'Status', 'Total'])
+    for o in qs:
+        writer.writerow([
+            o.id,
+            o.paid_at.isoformat() if o.paid_at else '',
+            o.created_at.isoformat() if o.created_at else '',
+            o.full_name,
+            o.get_payment_method_display(),
+            o.get_status_display(),
+            f"{o.order_total or Decimal('0')}",
+        ])
+    return buffer.getvalue().encode('utf-8')
+
+
+def _build_revenue_xlsx(qs):
+    import openpyxl
+    from openpyxl.utils import get_column_letter
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Paid Orders"
+    headers = ['Order ID', 'Paid At', 'Created At', 'Customer', 'Payment Method', 'Status', 'Total']
+    ws.append(headers)
+    for o in qs:
+        ws.append([
+            o.id,
+            o.paid_at.isoformat() if o.paid_at else '',
+            o.created_at.isoformat() if o.created_at else '',
+            o.full_name,
+            o.get_payment_method_display(),
+            o.get_status_display(),
+            float(o.order_total or Decimal('0')),
+        ])
+    for idx, _ in enumerate(headers, start=1):
+        ws.column_dimensions[get_column_letter(idx)].width = 18
+    bio = io.BytesIO()
+    wb.save(bio)
+    return bio.getvalue()
+
+
+@staff_member_required
+@require_http_methods(["POST"])
+def email_revenue_report(request):
+    """Send the filtered revenue report via email (CSV or XLSX)."""
+    paid_orders, from_param, to_param, preset = _paid_orders_queryset(request, params=request.POST)
+    paid_orders = paid_orders.annotate(
+        order_total=Sum(F('items__price') * F('items__quantity'), output_field=DecimalField())
+    ).order_by('-paid_at', '-created_at')
+
+    recipient = request.POST.get('recipient')
+    fmt = request.POST.get('format', 'csv')
+    if not recipient:
+        messages.error(request, "Vui lòng nhập email nhận báo cáo.")
+        return redirect(f"{request.META.get('HTTP_REFERER', '/store/admin-dashboard/revenue/')}")
+
+    subject = "Revenue report (paid orders)"
+    body = "Đính kèm báo cáo doanh thu theo bộ lọc hiện tại."
+    email = EmailMessage(subject, body, to=[recipient])
+
+    try:
+        if fmt == 'xlsx':
+            try:
+                attachment = _build_revenue_xlsx(paid_orders)
+            except ImportError:
+                messages.error(request, "Không có openpyxl, không thể xuất XLSX.")
+                return redirect(f"{request.META.get('HTTP_REFERER', '/store/admin-dashboard/revenue/')}")
+            email.attach('revenue_paid_orders.xlsx',
+                         attachment,
+                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        else:
+            attachment = _build_revenue_csv(paid_orders)
+            email.attach('revenue_paid_orders.csv', attachment, 'text/csv')
+        email.send(fail_silently=True)
+        messages.success(request, "Đã gửi báo cáo doanh thu qua email.")
+    except Exception:
+        messages.error(request, "Gửi email thất bại.")
+
+    # Redirect back to revenue report with current filters in query string
+    qs = []
+    if from_param:
+        qs.append(f"from_date={from_param}")
+    if to_param:
+        qs.append(f"to_date={to_param}")
+    if preset:
+        qs.append(f"preset={preset}")
+    query = "&".join(qs)
+    return redirect(f"/store/admin-dashboard/revenue/{'?' + query if query else ''}")
 
 
 def get_kpi_metrics(start_date):

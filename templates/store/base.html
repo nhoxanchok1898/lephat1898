@@ -5,154 +5,78 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Paint Store - Cửa hàng sơn chất lượng cao{% endblock %}</title>
-    <meta name="description" content="Paint Store — Sơn chất lượng cho nhà bạn. Tìm kiếm theo thương hiệu, loại và giá. Giao hàng nhanh toàn quốc." />
+    <meta name="description" content="Paint Store — Sơn chất lượng cho nhà bạn.">
     <link rel="icon" href="{% static 'images/favicon.svg' %}" type="image/svg+xml">
-    <link rel="apple-touch-icon" sizes="192x192" href="{% static 'images/favicon-192.png' %}">
-    <meta name="theme-color" content="#6366f1">
-    <meta property="og:site_name" content="Paint Store" />
-    <meta name="twitter:card" content="summary_large_image" />
-    {% block meta %}{% endblock %}
-    
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- Stylesheets -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{% static 'css/style.css' %}" rel="stylesheet">
-    <link href="{% static 'css/site.css' %}" rel="stylesheet">
-    <link href="{% static 'css/modern.css' %}" rel="stylesheet">
-    <link href="{% static 'css/mini-cart.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
     {% block extra_css %}{% endblock %}
   </head>
   <body>
-    <a class="visually-hidden-focusable" href="#main-content">Skip to content</a>
-    
-    <!-- Enhanced Header -->
-    <header class="site-header-modern">
-      <nav class="container site-nav-modern" role="navigation" aria-label="Main navigation">
-        <div class="nav-left">
-          <button id="nav-toggle" class="nav-toggle" aria-label="Open menu">
-            <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-              <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-            </svg>
-          </button>
-          <div class="brand-modern">
-            <a href="{% url 'store:home' %}">
-              {# Replace the inline SVG with the site logo image. Place your logo file at static/images/site-logo.png #}
-              <img src="{% static 'images/site-logo.png' %}" alt="Paint Store" class="site-logo" width="48" height="48">
-              <span class="brand-text">Paint Store</span>
-            </a>
-          </div>
-        </div>
-        
-        <div class="nav-center">
-          <div class="nav-links-modern" role="menubar">
-            <a role="menuitem" href="{% url 'store:home' %}" class="nav-link-item">Trang chủ</a>
-            <a role="menuitem" href="{% url 'store:product_list' %}" class="nav-link-item">Sản phẩm</a>
-            <a role="menuitem" href="{% url 'store:contact' %}" class="nav-link-item">Liên hệ</a>
-          </div>
-        </div>
-        
-        <div class="nav-right">
-          <div class="nav-actions">
-            {% if user.is_authenticated %}
-              <a href="{% url 'store:wishlist' %}" class="nav-icon-btn" title="Wishlist">
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"/>
-                </svg>
-              </a>
-              <a href="{% url 'store:profile' %}" class="nav-icon-btn" title="Profile">
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
-                </svg>
-              </a>
-              <a href="{% url 'store:logout' %}" class="btn-nav-secondary">Đăng xuất</a>
-            {% else %}
-              <a href="{% url 'login' %}" class="btn-nav-secondary">Đăng nhập</a>
-              <a href="{% url 'store:register' %}" class="btn-nav-primary">Đăng ký</a>
-            {% endif %}
-            <a href="{% url 'store:cart_view' %}" class="nav-cart-btn" title="Giỏ hàng" data-bs-toggle="offcanvas" data-bs-target="#miniCartOffcanvas" aria-controls="miniCartOffcanvas">
-              <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
-              </svg>
-              <span class="cart-badge mini-cart-count">0</span>
-            </a>
-          </div>
-        </div>
-      </nav>
-      
-      <!-- Mobile Navigation -->
-      <div id="mobile-nav" class="mobile-nav-modern" hidden>
-        <ul>
-          <li><a href="{% url 'store:home' %}">Trang chủ</a></li>
-          <li><a href="{% url 'store:product_list' %}">Sản phẩm</a></li>
-          <li><a href="{% url 'store:cart_view' %}">Giỏ hàng</a></li>
-          <li><a href="{% url 'store:contact' %}">Liên hệ</a></li>
+    <header class="site-header">
+      <div class="container header-bar">
+        <a class="brand" href="{% url 'store:home' %}">
+          <span class="brand-mark">🖌️</span>
+          <span class="brand-name">Paint Store</span>
+        </a>
+        <nav class="main-nav">
+          <a href="{% url 'store:home' %}">Trang chủ</a>
+          <a href="{% url 'store:product_list' %}">Sản phẩm</a>
+          <a href="{% url 'store:contact' %}">Liên hệ</a>
+        </nav>
+        <div class="header-actions">
           {% if user.is_authenticated %}
-            <li><a href="{% url 'store:wishlist' %}">Wishlist</a></li>
-            <li><a href="{% url 'store:profile' %}">Profile</a></li>
-            <li><a href="{% url 'store:logout' %}">Đăng xuất</a></li>
+            <a href="{% url 'store:profile' %}">Tài khoản</a>
+            <a href="{% url 'store:logout' %}">Đăng xuất</a>
           {% else %}
-            <li><a href="{% url 'login' %}">Đăng nhập</a></li>
-            <li><a href="{% url 'store:register' %}">Đăng ký</a></li>
+            <a href="{% url 'login' %}">Đăng nhập</a>
+            <a href="{% url 'store:register' %}">Đăng ký</a>
           {% endif %}
-        </ul>
+          <a href="{% url 'store:cart_view' %}" class="cart-link">Giỏ hàng</a>
+        </div>
       </div>
     </header>
 
-    <!-- Main Content -->
     <main id="main-content">
-      {% if messages %}
-        <div class="container mt-3">
-          {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-              {{ message }}
-              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-      
-      {% block content %}{% endblock %}
+      <div class="container">
+        {% if messages %}
+          <div class="messages">
+            {% for message in messages %}
+              <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </div>
     </main>
 
-    <!-- Enhanced Footer -->
-    <footer class="site-footer-modern">
-      <div class="container">
-        <div class="footer-content">
-          <div class="footer-section">
-            <h4>Paint Store</h4>
-            <p>Cung cấp sơn chất lượng cao cho mọi công trình. Uy tín - Chất lượng - Giá tốt.</p>
-          </div>
-          <div class="footer-section">
-            <h4>Liên kết</h4>
-            <ul>
-              <li><a href="{% url 'store:product_list' %}">Sản phẩm</a></li>
-              <li><a href="{% url 'store:contact' %}">Liên hệ</a></li>
-              <li><a href="#">Về chúng tôi</a></li>
-            </ul>
-          </div>
-          <div class="footer-section">
-            <h4>Hỗ trợ</h4>
-            <ul>
-              <li><a href="#">Câu hỏi thường gặp</a></li>
-              <li><a href="#">Chính sách đổi trả</a></li>
-              <li><a href="#">Hướng dẫn mua hàng</a></li>
-            </ul>
-          </div>
-          <div class="footer-section">
-            <h4>Liên hệ</h4>
-            <p>📞 0123-456-789</p>
-            <p>📧 info@paintstore.vn</p>
-            <p>📍 Hà Nội, Việt Nam</p>
+    <footer>
+      <div class="container d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+        <div>
+          <h6 class="text-white mb-2">Paint Store</h6>
+          <p class="mb-1 text-secondary">Sơn chất lượng cho mọi công trình.</p>
+        </div>
+        <div>
+          <h6 class="text-white mb-2">Liên kết</h6>
+          <div class="footer-links">
+            <a href="{% url 'store:product_list' %}">Sản phẩm</a>
+            <a href="{% url 'store:contact' %}">Liên hệ</a>
           </div>
         </div>
-        <div class="footer-bottom">
-          <p>&copy; {{ now|date:"Y" }} Paint Store. All rights reserved.</p>
+        <div>
+          <h6 class="text-white mb-2">Hỗ trợ</h6>
+          <div class="footer-links">
+            <a href="#">FAQ</a>
+            <a href="#">Chính sách đổi trả</a>
+            <a href="#">Hướng dẫn mua hàng</a>
+          </div>
+        </div>
+        <div>
+          <h6 class="text-white mb-2">Liên hệ</h6>
+          <p class="mb-1 text-secondary">📞 0123-456-789</p>
+          <p class="mb-1 text-secondary">📧 info@paintstore.vn</p>
+          <p class="mb-0 text-secondary">📍 Hà Nội, Việt Nam</p>
         </div>
       </div>
+      <div class="text-center mt-3 text-secondary small">© {{ now|date:"Y" }} Paint Store.</div>
     </footer>
 
     <!-- Scripts -->

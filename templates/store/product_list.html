@@ -1,4 +1,4 @@
-{% extends 'store/base.html' %}
+{% extends "store/base.html" %}
 {% load static %}
 {% load watermark_extras %}
 
@@ -6,987 +6,104 @@
   {% if current_category_name %}{{ current_category_name }} - {% endif %}Sản phẩm - Paint Store
 {% endblock %}
 
-{% block meta %}
-  {% if current_category_name %}
-    <meta name="description" content="Sản phẩm {{ current_category_name }} chất lượng cao - Paint Store. Giá tốt, giao hàng nhanh." />
-    <meta property="og:title" content="{{ current_category_name }} - Paint Store" />
-  {% else %}
-    <meta name="description" content="Danh sách sản phẩm sơn, chống thấm, bột trét chất lượng cao. Tìm kiếm theo danh mục, thương hiệu và giá." />
-    <meta property="og:title" content="Sản phẩm - Paint Store" />
-  {% endif %}
-{% endblock %}
-
-{% block extra_css %}
-<style>
-  /* Modern Product Listing Styles */
-  .breadcrumb-nav {
-    background: #f8f9fa;
-    padding: 12px 20px;
-    border-radius: 8px;
-    margin-bottom: 24px;
-  }
-  
-  .breadcrumb {
-    margin-bottom: 0;
-  }
-  
-  .product-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-  
-  .product-count {
-    font-size: 1.1rem;
-    color: #495057;
-  }
-  
-  .view-toggle {
-    display: flex;
-    gap: 8px;
-  }
-  
-  .view-toggle button {
-    border: 1px solid #dee2e6;
-    background: white;
-    padding: 8px 12px;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: all 0.2s;
-  }
-  
-  .view-toggle button.active {
-    background: #0d6efd;
-    color: white;
-    border-color: #0d6efd;
-  }
-  
-  .filter-sidebar {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    position: sticky;
-    top: 20px;
-  }
-  
-  .filter-section {
-    margin-bottom: 24px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid #e9ecef;
-  }
-  
-  .filter-section:last-child {
-    border-bottom: none;
-  }
-  
-  .filter-title {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-  }
-  
-  .filter-title i {
-    transition: transform 0.2s;
-  }
-  
-  .filter-title.collapsed i {
-    transform: rotate(-90deg);
-  }
-  
-  .filter-content {
-    max-height: 300px;
-    overflow-y: auto;
-  }
-  
-  .filter-content.collapsed {
-    display: none;
-  }
-  
-  .filter-item {
-    display: flex;
-    align-items: center;
-    padding: 6px 0;
-  }
-  
-  .filter-item input[type="checkbox"],
-  .filter-item input[type="radio"] {
-    margin-right: 8px;
-  }
-  
-  .filter-item label {
-    margin: 0;
-    cursor: pointer;
-    flex: 1;
-  }
-  
-  .filter-item .count {
-    color: #6c757d;
-    font-size: 0.85rem;
-  }
-  
-  .active-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-  
-  .filter-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #e7f3ff;
-    color: #0d6efd;
-    padding: 4px 12px;
-    border-radius: 16px;
-    font-size: 0.85rem;
-  }
-  
-  .filter-chip button {
-    background: none;
-    border: none;
-    color: #0d6efd;
-    cursor: pointer;
-    padding: 0;
-    font-size: 1.2rem;
-    line-height: 1;
-  }
-  
-  .clear-filters {
-    color: #dc3545;
-    font-size: 0.9rem;
-    cursor: pointer;
-    text-decoration: none;
-  }
-  
-  .clear-filters:hover {
-    text-decoration: underline;
-  }
-  
-  .product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 20px;
-    transition: all 0.3s;
-  }
-  
-  .product-grid.list-view {
-    grid-template-columns: 1fr;
-  }
-  
-  .product-card {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    overflow: hidden;
-    transition: all 0.3s;
-    position: relative;
-  }
-  
-  .product-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transform: translateY(-2px);
-  }
-  
-  .product-image-wrapper {
-    position: relative;
-    padding-top: 100%;
-    overflow: hidden;
-    background: #f8f9fa;
-  }
-  
-  .product-image-wrapper img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  
-  .product-badges {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    z-index: 1;
-  }
-  
-  .badge-sale {
-    background: #dc3545;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-  }
-  
-  .badge-new {
-    background: #28a745;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-  }
-  
-  .badge-out-of-stock {
-    background: #6c757d;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-  }
-  
-  .product-actions {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-  
-  .product-card:hover .product-actions {
-    opacity: 1;
-  }
-  
-  .action-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: white;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    transition: all 0.2s;
-  }
-  
-  .action-btn:hover {
-    background: #0d6efd;
-    color: white;
-  }
-  
-  .product-info {
-    padding: 16px;
-  }
-  
-  .product-brand {
-    font-size: 0.8rem;
-    color: #6c757d;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-  }
-  
-  .product-name {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: #212529;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  
-  .product-rating {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-bottom: 8px;
-    font-size: 0.85rem;
-  }
-  
-  .stars {
-    color: #ffc107;
-  }
-  
-  .rating-count {
-    color: #6c757d;
-  }
-  
-  .product-price {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  
-  .current-price {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #0d6efd;
-  }
-  
-  .original-price {
-    font-size: 1rem;
-    color: #6c757d;
-    text-decoration: line-through;
-  }
-  
-  .discount-percent {
-    background: #dc3545;
-    color: white;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-  }
-  
-  .product-card-footer {
-    display: flex;
-    gap: 8px;
-    padding: 0 16px 16px;
-  }
-  
-  .btn-add-cart {
-    flex: 1;
-    padding: 10px;
-    background: #0d6efd;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .btn-add-cart:hover {
-    background: #0b5ed7;
-  }
-  
-  .btn-add-cart:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
-  }
-  
-  .btn-quick-view {
-    padding: 10px 16px;
-    background: white;
-    color: #0d6efd;
-    border: 1px solid #0d6efd;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .btn-quick-view:hover {
-    background: #0d6efd;
-    color: white;
-  }
-  
-  /* List View Styles */
-  .product-grid.list-view .product-card {
-    display: flex;
-    flex-direction: row;
-  }
-  
-  .product-grid.list-view .product-image-wrapper {
-    width: 200px;
-    padding-top: 0;
-    height: 200px;
-  }
-  
-  .product-grid.list-view .product-image-wrapper img {
-    position: static;
-  }
-  
-  .product-grid.list-view .product-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .product-grid.list-view .product-description {
-    display: block;
-    margin-bottom: 12px;
-    color: #6c757d;
-    font-size: 0.9rem;
-  }
-  
-  /* Loading State */
-  .loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-  }
-  
-  .spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #0d6efd;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-  }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-  
-  /* Responsive */
-  @media (max-width: 768px) {
-    .filter-sidebar {
-      margin-bottom: 20px;
-    }
-    
-    .product-grid {
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 12px;
-    }
-    
-    .product-grid.list-view {
-      grid-template-columns: 1fr;
-    }
-    
-    .product-grid.list-view .product-image-wrapper {
-      width: 120px;
-      height: 120px;
-    }
-  }
-  
-  .no-products {
-    text-align: center;
-    padding: 60px 20px;
-    background: white;
-    border-radius: 8px;
-  }
-  
-  .no-products i {
-    font-size: 4rem;
-    color: #dee2e6;
-    margin-bottom: 20px;
-  }
-  
-  .no-products h3 {
-    color: #6c757d;
-    margin-bottom: 12px;
-  }
-  
-  .no-products p {
-    color: #adb5bd;
-  }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container-fluid">
-  <!-- Breadcrumb -->
-  <nav class="breadcrumb-nav" aria-label="breadcrumb">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{% url 'store:home' %}">Trang chủ</a></li>
-      <li class="breadcrumb-item"><a href="{% url 'store:product_list' %}">Sản phẩm</a></li>
-      {% if current_category_name %}
-        <li class="breadcrumb-item active" aria-current="page">{{ current_category_name }}</li>
-      {% endif %}
-    </ol>
-  </nav>
-  
-  <div class="row">
-    <!-- Sidebar Filters -->
-    <aside class="col-lg-3 col-md-4">
-      <div class="filter-sidebar">
-        <h5 class="mb-3">Bộ lọc</h5>
-        
-        <!-- Active Filters -->
-        {% if current_category or current_brand or min_price or max_price or q %}
-        <div class="active-filters">
-          {% if current_category_name %}
-            <span class="filter-chip">
-              {{ current_category_name }}
-              <button onclick="removeFilter('category')">&times;</button>
-            </span>
-          {% endif %}
-          {% if current_brand_name %}
-            <span class="filter-chip">
-              {{ current_brand_name }}
-              <button onclick="removeFilter('brand')">&times;</button>
-            </span>
-          {% endif %}
-          {% if min_price %}
-            <span class="filter-chip">
-              Tối thiểu: {{ min_price|floatformat:0 }}₫
-              <button onclick="removeFilter('min_price')">&times;</button>
-            </span>
-          {% endif %}
-          {% if max_price %}
-            <span class="filter-chip">
-              Tối đa: {{ max_price|floatformat:0 }}₫
-              <button onclick="removeFilter('max_price')">&times;</button>
-            </span>
-          {% endif %}
-          {% if q %}
-            <span class="filter-chip">
-              Tìm kiếm: "{{ q }}"
-              <button onclick="removeFilter('q')">&times;</button>
-            </span>
-          {% endif %}
-          <a href="{% url 'store:product_list' %}" class="clear-filters">Xóa tất cả</a>
-        </div>
-        {% endif %}
-        
-        <form id="filter-form" method="get" action="{% url 'store:product_list' %}">
-          <!-- Categories -->
-          <div class="filter-section">
-            <div class="filter-title" onclick="toggleFilter(this)">
-              <span>Danh mục</span>
-              <i>▼</i>
-            </div>
-            <div class="filter-content">
-              {% for c in categories %}
-                <div class="filter-item">
-                  <input type="radio" name="category" value="{{ c.id }}" id="cat-{{ c.id }}" 
-                         {% if current_category|stringformat:"s" == c.id|stringformat:"s" %}checked{% endif %}
-                         onchange="this.form.submit()">
-                  <label for="cat-{{ c.id }}">{{ c.name }}</label>
-                  <span class="count">({{ c.product_count|default:0 }})</span>
-                </div>
-              {% endfor %}
-              {% if current_category %}
-                <div class="filter-item">
-                  <a href="?{% if q %}q={{ q }}&{% endif %}{% if current_brand %}brand={{ current_brand }}&{% endif %}{% if sort %}sort={{ sort }}{% endif %}" class="text-danger small">Xóa lọc danh mục</a>
-                </div>
-              {% endif %}
-            </div>
-          </div>
-          
-          <!-- Brands -->
-          <div class="filter-section">
-            <div class="filter-title" onclick="toggleFilter(this)">
-              <span>Thương hiệu</span>
-              <i>▼</i>
-            </div>
-            <div class="filter-content">
-              {% for b in brands %}
-                <div class="filter-item">
-                  <input type="radio" name="brand" value="{{ b.id }}" id="brand-{{ b.id }}"
-                         {% if current_brand|stringformat:"s" == b.id|stringformat:"s" %}checked{% endif %}
-                         onchange="this.form.submit()">
-                  <label for="brand-{{ b.id }}">{{ b.name }}</label>
-                  <span class="count">({{ b.product_count|default:0 }})</span>
-                </div>
-              {% endfor %}
-              {% if current_brand %}
-                <div class="filter-item">
-                  <a href="?{% if q %}q={{ q }}&{% endif %}{% if current_category %}category={{ current_category }}&{% endif %}{% if sort %}sort={{ sort }}{% endif %}" class="text-danger small">Xóa lọc thương hiệu</a>
-                </div>
-              {% endif %}
-            </div>
-          </div>
-          
-          <!-- Price Range -->
-          <div class="filter-section">
-            <div class="filter-title" onclick="toggleFilter(this)">
-              <span>Khoảng giá</span>
-              <i>▼</i>
-            </div>
-            <div class="filter-content">
-              <div class="mb-2">
-                <input type="number" name="min_price" class="form-control form-control-sm" 
-                       placeholder="Giá tối thiểu" value="{{ min_price|default:'' }}">
-              </div>
-              <div class="mb-2">
-                <input type="number" name="max_price" class="form-control form-control-sm" 
-                       placeholder="Giá tối đa" value="{{ max_price|default:'' }}">
-              </div>
-              <button type="submit" class="btn btn-sm btn-primary w-100">Áp dụng</button>
-            </div>
-          </div>
-          
-          <!-- Quick Filters -->
-          <div class="filter-section">
-            <div class="filter-title" onclick="toggleFilter(this)">
-              <span>Lọc nhanh</span>
-              <i>▼</i>
-            </div>
-            <div class="filter-content">
-              <div class="filter-item">
-                <input type="checkbox" name="on_sale" id="on_sale" value="1" 
-                       {% if on_sale %}checked{% endif %} onchange="this.form.submit()">
-                <label for="on_sale">Đang giảm giá</label>
-              </div>
-              <div class="filter-item">
-                <input type="checkbox" name="new_arrivals" id="new_arrivals" value="1" 
-                       {% if new_arrivals %}checked{% endif %} onchange="this.form.submit()">
-                <label for="new_arrivals">Hàng mới về</label>
-              </div>
-              <div class="filter-item">
-                <input type="checkbox" name="in_stock" id="in_stock" value="1" 
-                       {% if in_stock %}checked{% endif %} onchange="this.form.submit()">
-                <label for="in_stock">Còn hàng</label>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Hidden fields to preserve search and sort -->
-          {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
-          {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
-        </form>
-      </div>
-    </aside>
-    
-    <!-- Main Content -->
-    <main class="col-lg-9 col-md-8">
-      <!-- Product Header -->
-      <div class="product-header">
-        <div class="product-count">
-          <strong>{{ page_obj.paginator.count }}</strong> sản phẩm
-          {% if q %}cho "{{ q }}"{% endif %}
-        </div>
-        
-        <div class="d-flex gap-2 align-items-center flex-wrap">
-          <!-- View Toggle -->
-          <div class="view-toggle">
-            <button id="grid-view-btn" class="active" onclick="setView('grid')" title="Lưới">
-              <i class="bi bi-grid-3x3-gap"></i> ☷
-            </button>
-            <button id="list-view-btn" onclick="setView('list')" title="Danh sách">
-              <i class="bi bi-list"></i> ☰
-            </button>
-          </div>
-          
-          <!-- Sort -->
-          <form method="get" class="d-flex gap-2" style="margin: 0;">
-            {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
-            {% if current_brand %}<input type="hidden" name="brand" value="{{ current_brand }}">{% endif %}
-            {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
-            {% if min_price %}<input type="hidden" name="min_price" value="{{ min_price }}">{% endif %}
-            {% if max_price %}<input type="hidden" name="max_price" value="{{ max_price }}">{% endif %}
-            {% if on_sale %}<input type="hidden" name="on_sale" value="1">{% endif %}
-            {% if new_arrivals %}<input type="hidden" name="new_arrivals" value="1">{% endif %}
-            {% if in_stock %}<input type="hidden" name="in_stock" value="1">{% endif %}
-            
-            <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()" style="width: 180px;">
-              <option value="">Sắp xếp</option>
-              <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Mới nhất</option>
-              <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Giá: Thấp → Cao</option>
-              <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Giá: Cao → Thấp</option>
-              <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Tên: A → Z</option>
-              <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Tên: Z → A</option>
-              <option value="popular" {% if sort == 'popular' %}selected{% endif %}>Phổ biến nhất</option>
-            </select>
-          </form>
-        </div>
-      </div>
-      
-      <!-- Product Grid -->
-      <div id="product-grid" class="product-grid">
-        {% for p in products %}
-          <div class="product-card">
-            <!-- Badges -->
-            <div class="product-badges">
-              {% if p.sale_price %}
-                <span class="badge-sale">-{{ p.discount_percent|floatformat:0 }}%</span>
-              {% endif %}
-              {% if p.is_new %}
-                <span class="badge-new">MỚI</span>
-              {% endif %}
-              {% if p.quantity <= 0 %}
-                <span class="badge-out-of-stock">HẾT HÀNG</span>
-              {% endif %}
-            </div>
-            
-            <!-- Quick Actions -->
-            <div class="product-actions">
-              <button class="action-btn" onclick="toggleWishlist({{ p.id }})" title="Yêu thích">
-                ♡
-              </button>
-              <button class="action-btn" onclick="quickView({{ p.id }})" title="Xem nhanh">
-                👁
-              </button>
-            </div>
-            
-            <!-- Product Image -->
-            <a href="{% url 'store:product_detail' p.pk %}" class="product-image-wrapper">
-              {% if p.image %}
-                <img src="{{ p.image|watermarked }}" class="lazy-img" loading="lazy" alt="{{ p.name }}">
-              {% else %}
-                <img src="{% static 'images/product-placeholder.svg' %}" class="lazy-img" loading="lazy" alt="Chưa có ảnh">
-              {% endif %}
-            </a>
-            
-            <!-- Product Info -->
-            <div class="product-info">
-              {% if p.brand %}
-                <div class="product-brand">{{ p.brand.name }}</div>
-              {% endif %}
-              
-              <a href="{% url 'store:product_detail' p.pk %}" class="text-decoration-none">
-                <h6 class="product-name">{{ p.name }}</h6>
-              </a>
-              
-              {% if p.average_rating %}
-              <div class="product-rating">
-                <span class="stars">★★★★★</span>
-                <span class="rating-count">({{ p.review_count|default:0 }})</span>
-              </div>
-              {% endif %}
-              
-              <div class="product-price">
-                {% if p.sale_price %}
-                  <span class="current-price">{{ p.sale_price|floatformat:0 }}₫</span>
-                  <span class="original-price">{{ p.price|floatformat:0 }}₫</span>
-                {% else %}
-                  <span class="current-price">{{ p.price|floatformat:0 }}₫</span>
-                {% endif %}
-              </div>
-              
-              <div class="product-description d-none">
-                {{ p.description|truncatewords:20 }}
-              </div>
-            </div>
-            
-            <!-- Product Footer -->
-            <div class="product-card-footer">
-              {% if p.quantity > 0 %}
-                <button class="btn-add-cart" onclick="addToCart({{ p.id }})">
-                  <i class="bi bi-cart-plus"></i> Thêm vào giỏ
-                </button>
-              {% else %}
-                <button class="btn-add-cart" disabled>
-                  Hết hàng
-                </button>
-              {% endif %}
-              <button class="btn-quick-view" onclick="quickView({{ p.id }})">
-                Xem
-              </button>
-            </div>
-          </div>
-        {% empty %}
-          <div class="col-12">
-            <div class="no-products">
-              <i class="bi bi-search">🔍</i>
-              <h3>Không tìm thấy sản phẩm</h3>
-              <p>Không có sản phẩm nào phù hợp với tiêu chí tìm kiếm của bạn.</p>
-              <a href="{% url 'store:product_list' %}" class="btn btn-primary mt-3">Xem tất cả sản phẩm</a>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-      
-      <!-- Pagination -->
-      {% if page_obj.paginator.num_pages > 1 %}
-      <nav aria-label="Phân trang" class="mt-4">
-        <ul class="pagination justify-content-center">
-          {% if page_obj.has_previous %}
-            <li class="page-item">
-              <a class="page-link" href="?page=1{% if q %}&q={{ q }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if on_sale %}&on_sale=1{% endif %}{% if new_arrivals %}&new_arrivals=1{% endif %}{% if in_stock %}&in_stock=1{% endif %}">Đầu</a>
-            </li>
-            <li class="page-item">
-              <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if on_sale %}&on_sale=1{% endif %}{% if new_arrivals %}&new_arrivals=1{% endif %}{% if in_stock %}&in_stock=1{% endif %}">Trước</a>
-            </li>
-          {% endif %}
-          
-          <li class="page-item active">
-            <span class="page-link">Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-          </li>
-          
-          {% if page_obj.has_next %}
-            <li class="page-item">
-              <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if on_sale %}&on_sale=1{% endif %}{% if new_arrivals %}&new_arrivals=1{% endif %}{% if in_stock %}&in_stock=1{% endif %}">Sau</a>
-            </li>
-            <li class="page-item">
-              <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if on_sale %}&on_sale=1{% endif %}{% if new_arrivals %}&new_arrivals=1{% endif %}{% if in_stock %}&in_stock=1{% endif %}">Cuối</a>
-            </li>
-          {% endif %}
-        </ul>
+<div class="product-page">
+  <div class="product-page__header">
+    <div>
+      <nav class="breadcrumb-nav" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'store:home' %}">Trang chủ</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Sản phẩm</li>
+        </ol>
       </nav>
-      {% endif %}
-    </main>
-  </div>
-</div>
-
-<!-- Quick View Modal (placeholder) -->
-<div id="quick-view-modal" class="modal fade" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Xem nhanh sản phẩm</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body" id="quick-view-content">
-        <div class="text-center py-5">
-          <div class="spinner"></div>
-        </div>
-      </div>
+      <h1 class="page-title">Sản phẩm</h1>
+      <p class="page-subtitle">
+        <strong>{{ page_obj.paginator.count }}</strong> sản phẩm{% if q %} cho "{{ q }}"{% endif %}
+        {% if current_category_name %} · Danh mục: {{ current_category_name }}{% endif %}
+      </p>
+    </div>
+    <div class="sort-box">
+      <form method="get" class="sort-form">
+        {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+        {% if current_brand %}<input type="hidden" name="brand" value="{{ current_brand }}">{% endif %}
+        {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+        {% if min_price %}<input type="hidden" name="min_price" value="{{ min_price }}">{% endif %}
+        {% if max_price %}<input type="hidden" name="max_price" value="{{ max_price }}">{% endif %}
+        {% if on_sale %}<input type="hidden" name="on_sale" value="1">{% endif %}
+        {% if new_arrivals %}<input type="hidden" name="new_arrivals" value="1">{% endif %}
+        {% if in_stock %}<input type="hidden" name="in_stock" value="1">{% endif %}
+        <label for="sort" class="visually-hidden">Sắp xếp</label>
+        <select id="sort" name="sort" class="sort-select" onchange="this.form.submit()">
+          <option value="">Sắp xếp</option>
+          <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Mới nhất</option>
+          <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Giá: Thấp → Cao</option>
+          <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Giá: Cao → Thấp</option>
+          <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Tên: A → Z</option>
+          <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Tên: Z → A</option>
+          <option value="popular" {% if sort == 'popular' %}selected{% endif %}>Phổ biến</option>
+        </select>
+      </form>
     </div>
   </div>
+
+  <div class="product-grid">
+    {% for p in products %}
+    <article class="product-card{% if p.quantity <= 0 %} is-out{% endif %}">
+      <a href="{% url 'store:product_detail' p.pk %}" class="product-card__thumb">
+        {% if p.quantity <= 0 %}
+          <span class="product-card__badge">Hết hàng</span>
+        {% endif %}
+        {% if p.image %}
+          <img src="{{ p.image|watermarked }}" alt="{{ p.name }}">
+        {% else %}
+          <img src="{% static 'images/product-placeholder.svg' %}" alt="Chưa có ảnh">
+        {% endif %}
+      </a>
+      <div class="product-card__body">
+        {% if p.brand %}<div class="product-card__brand">{{ p.brand.name }}</div>{% endif %}
+        <h3 class="product-card__title"><a href="{% url 'store:product_detail' p.pk %}">{{ p.name }}</a></h3>
+        <div class="product-card__price">
+          {% if p.sale_price %}
+            <span class="price-current">{{ p.sale_price|floatformat:0 }}₫</span>
+            <span class="price-old">{{ p.price|floatformat:0 }}₫</span>
+          {% else %}
+            <span class="price-current">{{ p.price|floatformat:0 }}₫</span>
+          {% endif %}
+        </div>
+        <div class="product-card__actions">
+          {% if p.quantity > 0 %}
+            <form method="post" action="{% url 'store:cart_add' p.id %}">
+              {% csrf_token %}
+              <input type="hidden" name="quantity" value="1">
+              <button type="submit" class="btn btn-primary w-100">Thêm vào giỏ</button>
+            </form>
+          {% else %}
+            <button class="btn btn-primary w-100" disabled>Hết hàng</button>
+          {% endif %}
+          <a class="btn btn-outline-secondary w-100" href="{% url 'store:product_detail' p.pk %}">Xem chi tiết</a>
+        </div>
+      </div>
+    </article>
+    {% empty %}
+      <div class="no-products">
+        <p>Không tìm thấy sản phẩm phù hợp.</p>
+        <a href="{% url 'store:product_list' %}" class="btn btn-primary">Xem tất cả sản phẩm</a>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if page_obj.paginator.num_pages > 1 %}
+  <nav aria-label="Phân trang" class="pagination-wrapper">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if on_sale %}&on_sale=1{% endif %}{% if new_arrivals %}&new_arrivals=1{% endif %}{% if in_stock %}&in_stock=1{% endif %}">Trước</a></li>
+      {% endif %}
+      <li class="page-item active"><span class="page-link">Trang {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+      {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}{% if on_sale %}&on_sale=1{% endif %}{% if new_arrivals %}&new_arrivals=1{% endif %}{% if in_stock %}&in_stock=1{% endif %}">Sau</a></li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-// View Toggle
-function setView(view) {
-  const grid = document.getElementById('product-grid');
-  const gridBtn = document.getElementById('grid-view-btn');
-  const listBtn = document.getElementById('list-view-btn');
-  
-  if (view === 'list') {
-    grid.classList.add('list-view');
-    gridBtn.classList.remove('active');
-    listBtn.classList.add('active');
-    // Show descriptions in list view
-    document.querySelectorAll('.product-description').forEach(el => {
-      el.classList.remove('d-none');
-    });
-  } else {
-    grid.classList.remove('list-view');
-    listBtn.classList.remove('active');
-    gridBtn.classList.add('active');
-    // Hide descriptions in grid view
-    document.querySelectorAll('.product-description').forEach(el => {
-      el.classList.add('d-none');
-    });
-  }
-  
-  // Save preference
-  localStorage.setItem('productViewMode', view);
-}
-
-// Load saved view preference
-document.addEventListener('DOMContentLoaded', function() {
-  const savedView = localStorage.getItem('productViewMode');
-  if (savedView) {
-    setView(savedView);
-  }
-});
-
-// Filter Toggle
-function toggleFilter(element) {
-  const content = element.nextElementSibling;
-  const icon = element.querySelector('i');
-  
-  if (content.classList.contains('collapsed')) {
-    content.classList.remove('collapsed');
-    element.classList.remove('collapsed');
-  } else {
-    content.classList.add('collapsed');
-    element.classList.add('collapsed');
-  }
-}
-
-// Remove Individual Filter
-function removeFilter(param) {
-  const url = new URL(window.location.href);
-  url.searchParams.delete(param);
-  window.location.href = url.toString();
-}
-
-// Add to Cart (AJAX)
-function addToCart(productId) {
-  const btn = event.target;
-  const originalText = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang thêm...';
-  
-  fetch(`/cart/add/${productId}/`, {
-    method: 'POST',
-    headers: {
-      'X-CSRFToken': getCookie('csrftoken'),
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ quantity: 1 })
-  })
-  .then(response => response.json())
-  .then(data => {
-    btn.innerHTML = '✓ Đã thêm';
-    setTimeout(() => {
-      btn.innerHTML = originalText;
-      btn.disabled = false;
-    }, 2000);
-    
-    // Update cart count if exists
-    updateCartCount();
-  })
-  .catch(error => {
-    btn.innerHTML = originalText;
-    btn.disabled = false;
-    alert('Có lỗi xảy ra. Vui lòng thử lại.');
-  });
-}
-
-// Toggle Wishlist
-function toggleWishlist(productId) {
-  // Implement wishlist toggle
-  console.log('Toggle wishlist for product:', productId);
-  alert('Tính năng danh sách yêu thích sẽ sớm ra mắt!');
-}
-
-// Quick View
-function quickView(productId) {
-  // Implement quick view modal
-  console.log('Quick view for product:', productId);
-  alert('Tính năng xem nhanh sẽ sớm ra mắt!');
-}
-
-// Update Cart Count
-function updateCartCount() {
-  fetch('/cart/ajax/summary/')
-    .then(response => response.json())
-    .then(data => {
-      const cartCount = document.getElementById('cart-count');
-      if (cartCount && data.item_count) {
-        cartCount.textContent = data.item_count;
-      }
-    });
-}
-
-// Get CSRF Token
-function getCookie(name) {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === (name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
-      }
-    }
-  }
-  return cookieValue;
-}
-
-// Lazy Loading Images
-document.addEventListener('DOMContentLoaded', function() {
-  const images = document.querySelectorAll('.lazy-img');
-  
-  const imageObserver = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const img = entry.target;
-        img.classList.add('loaded');
-        observer.unobserve(img);
-      }
-    });
-  });
-  
-  images.forEach(img => imageObserver.observe(img));
-});
-</script>
 {% endblock %}

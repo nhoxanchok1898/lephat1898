@@ -160,3 +160,17 @@ Troubleshooting tips:
 - If server hangs, check running `runserver` instances and stop duplicates; see how to find and kill by PID on Windows using `netstat -ano` and `taskkill`.
 
 Contact: repository maintainer (project owner) for additional configuration.
+
+## Health Checks
+- Lightweight ping: `GET /health/` → returns `{"status": "ok"}` with no database writes.
+- Deeper checks remain available at `/readiness/` and `/liveness/` (may touch DB/cache).
+
+## Logs & Rotation
+- Log directory: `LOG_DIR` env (default `./logs`). Files: `app.log`, `error.log`.
+- Rotation: 5MB per file, 5 backups to prevent disk bloat.
+- Console logging stays enabled for Docker/Kubernetes.
+- Inspect quickly: `tail -f logs/app.log` or `tail -f logs/error.log`.
+
+## Error Monitoring Hooks
+- Set `SENTRY_DSN` (optional `SENTRY_ENV`) to enable Sentry; otherwise disabled by default.
+- Hook point lives in settings; no code changes required once DSN is provided.

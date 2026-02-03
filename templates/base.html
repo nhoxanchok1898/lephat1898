@@ -1,18 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{% block title %}Paint Store{% endblock %}</title>
-</head>
-<body>
-    <header>
-        <h1>Paint Store</h1>
-        <nav>
-            <a href="/">Home</a>
-            <a href="/products/">Products</a>
-        </nav>
-    </header>
-    <main>
-        {% block content %}{% endblock %}
-    </main>
-</body>
-</html>
+{% extends 'store/base.html' %}
+{% block title %}Paint Store{% endblock %}
+{# This shim keeps legacy templates working while using the unified layout. #}

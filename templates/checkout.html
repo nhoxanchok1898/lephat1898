@@ -1,29 +1,42 @@
-{% extends 'base.html' %}
+{% extends 'store/base.html' %}
 
-{% block title %}Checkout{% endblock %}
+{% block title %}Thanh toán{% endblock %}
 
 {% block content %}
-<h2>Checkout</h2>
-<form method="post">
+<section class="page-section">
+  <h2 class="mb-3">Thanh toán</h2>
+  <form method="post" class="card card-body">
     {% csrf_token %}
-    <label>Name:</label>
-    <input type="text" name="name" required><br>
-    <label>Address:</label>
-    <textarea name="address" required></textarea><br>
-    <label>Phone:</label>
-    <input type="text" name="phone" required><br>
-    <label>Payment method:</label>
-    <select name="payment_method">
-        <option value="offline">Pay on delivery</option>
+    <div class="section">
+      <label class="form-label">Họ tên</label>
+      <input type="text" name="name" required class="form-control">
+    </div>
+    <div class="section">
+      <label class="form-label">Địa chỉ</label>
+      <textarea name="address" required class="form-control" rows="3"></textarea>
+    </div>
+    <div class="section">
+      <label class="form-label">Số điện thoại</label>
+      <input type="text" name="phone" required class="form-control">
+    </div>
+    <div class="section">
+      <label class="form-label">Phương thức thanh toán</label>
+      <select name="payment_method" class="form-control">
+        <option value="cod">Cash on Delivery (COD)</option>
         <option value="stripe">Stripe (simulated)</option>
         <option value="paypal">PayPal (simulated)</option>
-    </select>
-    <br>
-    <button type="submit">Place Order</button>
-    <hr>
-    <form action="/store/payments/stripe/create/" method="post">
-        {% csrf_token %}
-        <button type="submit">Pay with Stripe</button>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Đặt hàng</button>
+    </div>
+  </form>
+
+  <div class="section">
+    <form action="/store/payments/stripe/create/" method="post" class="inline-actions">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-secondary">Thanh toán bằng Stripe (demo)</button>
     </form>
-</form>
+  </div>
+</section>
 {% endblock %}

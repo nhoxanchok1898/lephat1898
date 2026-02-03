@@ -12,6 +12,27 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+import logging
+from logging import handlers
+import copy as _copy
+from django.template import context as _ctx
+
+# Patch Django template context copy to avoid Python 3.14 incompatibility
+def _safe_basecontext_copy(self):
+    dup = _ctx.BaseContext.__new__(_ctx.BaseContext)
+    dup.__class__ = self.__class__
+    dup.__dict__ = _copy.copy(getattr(self, '__dict__', {}))
+    dup.dicts = list(getattr(self, 'dicts', []))
+    return dup
+
+def _safe_context_copy(self):
+    dup = _safe_basecontext_copy(self)
+    dup.render_context = _copy.copy(getattr(self, 'render_context', {}))
+    return dup
+
+_ctx.BaseContext.__copy__ = _safe_basecontext_copy
+_ctx.Context.__copy__ = _safe_context_copy
+_ctx.RequestContext.__copy__ = _safe_context_copy
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,12 +42,26 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-&pqqh1+_-=p06j)-*50e8afj^$$vr^-hx^5&(n3rg^@r&myzok'
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-&pqqh1+_-=p06j)-*50e8afj^$$vr^-hx^5&(n3rg^@r&myzok',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Controlled by environment variable for safe deployment; defaults to True for dev.
+DEBUG = os.environ.get("DEBUG", "True").lower() in ("1", "true", "yes", "on")
 
-ALLOWED_HOSTS = ['*']
+# Allow local loopback hosts for development; can be overridden via ALLOWED_HOSTS env.
+_env_hosts = os.environ.get("ALLOWED_HOSTS")
+if _env_hosts:
+    ALLOWED_HOSTS = [h.strip() for h in _env_hosts.split(",") if h.strip()]
+else:
+    ALLOWED_HOSTS = [
+        '127.0.0.1',
+        'localhost',
+        'dailysonphattan',
+        'testserver',
+    ]
 
 
 # Application definition
@@ -115,9 +150,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'vi'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Ho_Chi_Minh'
 
 USE_I18N = True
 
@@ -128,6 +163,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Canonical site URL used for absolute links (sitemaps, JSON-LD). Update for production.
 SITE_URL = 'http://127.0.0.1:8888'
@@ -143,36 +179,69 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Sentry configuration: initialize when a DSN is available and not in DEBUG.
+# Auth redirects
+LOGIN_URL = 'login'
+
+LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
+LOG_DIR = Path(os.environ.get('LOG_DIR', BASE_DIR / 'logs'))
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+# Structured logging with rotation; console retained for Docker/stdout
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'structured': {
+            'format': '%(asctime)s %(levelname)s %(name)s %(pathname)s:%(lineno)d %(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'structured',
+        },
+        'app_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOG_DIR / 'app.log',
+            'maxBytes': 5 * 1024 * 1024,  # 5MB
+            'backupCount': 5,
+            'level': 'INFO',
+            'formatter': 'structured',
+        },
+        'error_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOG_DIR / 'error.log',
+            'maxBytes': 5 * 1024 * 1024,
+            'backupCount': 5,
+            'level': 'WARNING',
+            'formatter': 'structured',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'app_file', 'error_file'],
+        'level': LOG_LEVEL,
+    },
+}
+
+# Optional error monitoring (e.g., Sentry). Enable by setting SENTRY_DSN in env.
 try:
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
 except Exception:
     sentry_sdk = None
 
-# Prefer environment variable `SENTRY_DSN`; fallback to hardcoded DSN if provided.
-SENTRY_DSN = os.environ.get(
-    'SENTRY_DSN',
-    'https://d9474e438ed65845b699c0eb9f47659e@o4510808746557440.ingest.us.sentry.io/4510808749309952',
-)
+SENTRY_DSN = os.environ.get('SENTRY_DSN', '')
+SENTRY_ENV = os.environ.get('SENTRY_ENV', 'production')
 
-if sentry_sdk and SENTRY_DSN and not DEBUG:
+if sentry_sdk and SENTRY_DSN:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration()],
-        # Add data like request headers and IP for users
-        # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
-        send_default_pii=True,
+        send_default_pii=False,
+        environment=SENTRY_ENV,
     )
 
-# Load admin compatibility shim without registering `paint_store` as an app.
-# Importing the module runs the runtime monkey-patches but avoids AppConfig
-# discovery problems that can occur when the package exists in multiple
-# filesystem locations (namespace packages).
-try:
-    import importlib
-
-    importlib.import_module('paint_store.admin_compat')
-except Exception:
-    # Best-effort: don't crash settings import if shim import fails.
-    pass
+# NOTE: Avoid importing runtime shims during settings import. Doing so can
+# create side-effects before Django finishes app setup (e.g., template engine
+# registration). If admin compatibility patches are needed, apply them later
+# in app-ready hooks or middleware.

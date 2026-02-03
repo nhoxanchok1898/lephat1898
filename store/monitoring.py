@@ -94,6 +94,16 @@ def capture_message(message, level='info', context=None):
 
 @require_GET
 @never_cache
+def health_ping(request):
+    """Lightweight health endpoint with no DB/cache writes."""
+    return JsonResponse({
+        'status': 'ok',
+        'timestamp': datetime.utcnow().isoformat() + 'Z',
+    })
+
+
+@require_GET
+@never_cache
 def health_check(request):
     """
     Comprehensive health check endpoint

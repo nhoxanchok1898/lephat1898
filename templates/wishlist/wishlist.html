@@ -35,7 +35,7 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             {% if item.product.image %}
-                                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" style="width: 60px; height: 60px; object-fit: cover; margin-right: 10px;">
+                                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="thumb-sm">
                                             {% endif %}
                                             <div>
                                                 <a href="{% url 'store:product_detail' item.product.pk %}">{{ item.product.name }}</a>

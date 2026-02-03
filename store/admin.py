@@ -2,6 +2,7 @@ from django.contrib import admin
 from django import forms
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 from .models import (
     Brand, Category, Product, Order, OrderItem,
     ProductView, ProductViewAnalytics,
@@ -55,7 +56,8 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     form = ProductAdminForm
-    list_display = ('id', 'thumbnail', 'name', 'brand', 'category', 'price', 'sale_price', 'stock_quantity', 'unit_type', 'volume', 'is_active', 'is_on_sale')
+    # Gọn danh sách: chỉ giữ các cột chính
+    list_display = ('id', 'name', 'brand', 'category', 'price', 'stock_quantity', 'is_active')
     list_filter = ('brand', 'category', 'unit_type', 'is_active')
     search_fields = ('name', 'brand__name')
     readonly_fields = ('thumbnail', 'view_count', 'rating', 'is_on_sale')
@@ -86,11 +88,12 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'full_name', 'phone', 'payment_status', 'created_at')
-    readonly_fields = ('created_at',)
-    list_filter = ('payment_status', 'payment_method')
+    list_display = ('id', 'full_name', 'phone', 'status', 'payment_method', 'payment_status', 'is_paid', 'paid_at', 'created_at')
+    readonly_fields = ('created_at', 'paid_at')
+    list_filter = ('status', 'payment_status', 'payment_method', 'is_paid')
     search_fields = ('full_name', 'phone', 'payment_reference')
-    actions = ['export_orders_csv']
+    list_editable = ('status', 'is_paid')
+    actions = ['export_orders_csv', 'mark_as_paid', 'cancel_orders']
 
     def export_orders_csv(self, request, queryset):
         import csv
@@ -110,6 +113,36 @@ class OrderAdmin(admin.ModelAdmin):
             writer.writerow([getattr(obj, f) for f in field_names] + ["; ".join(items)])
         return response
     export_orders_csv.short_description = 'Export selected orders to CSV'
+
+    def save_model(self, request, obj, form, change):
+        # If staff marks is_paid true, set payment_status to paid
+        if 'is_paid' in form.changed_data and obj.is_paid:
+            obj.payment_status = Order.PAYMENT_STATUS_PAID
+        super().save_model(request, obj, form, change)
+
+    def mark_as_paid(self, request, queryset):
+        updated = 0
+        for order in queryset:
+            if not order.is_paid:
+                order.is_paid = True
+                order.payment_status = Order.PAYMENT_STATUS_PAID
+                order.save()
+                updated += 1
+        self.message_user(request, f"Marked {updated} order(s) as paid.")
+    mark_as_paid.short_description = 'Mark selected orders as paid'
+
+    @admin.action(description="Cancel selected orders")
+    def cancel_orders(self, request, queryset):
+        canceled = 0
+        for order in queryset:
+            if order.status != Order.STATUS_CANCELED:
+                order.status = Order.STATUS_CANCELED
+                order.save()
+                canceled += 1
+        if canceled:
+            self.message_user(request, f"Canceled {canceled} order(s).")
+        else:
+            self.message_user(request, "No orders were canceled (already canceled).")
 
 
 @admin.register(OrderItem)
@@ -220,3 +253,8 @@ class NewsletterSubscriptionAdmin(admin.ModelAdmin):
     list_display = ('email', 'user', 'is_active', 'subscribed_at', 'unsubscribed_at')
     list_filter = ('is_active', 'subscribed_at')
     search_fields = ('email', 'user__username')
+
+# Tiêu đề admin tiếng Việt, gọn gàng
+admin.site.site_header = _("Quản trị Paint Store")
+admin.site.site_title = _("Quản trị Paint Store")
+admin.site.index_title = _("Bảng điều khiển")

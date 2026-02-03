@@ -74,9 +74,11 @@ python manage.py migrate --noinput 2>&1 | Tee-Object migrate.log
 if ($LASTEXITCODE -ne 0) { Write-Host 'Migration reported non-zero exit code. Check migrate.log' -ForegroundColor Yellow }
 
 if ($Background) {
-    Write-Host "Starting dev server in background (logs -> runserver.log)"
-    Start-Process -FilePath python -ArgumentList 'manage.py','runserver','0.0.0.0:8000' -RedirectStandardOutput (Join-Path $projectRoot 'runserver.log') -RedirectStandardError (Join-Path $projectRoot 'runserver.log')
-    Write-Host "Background server started. Tail logs with: Get-Content runserver.log -Wait"
+    $stdoutLog = Join-Path $projectRoot 'runserver.out.log'
+    $stderrLog = Join-Path $projectRoot 'runserver.err.log'
+    Write-Host "Starting dev server in background (logs -> $stdoutLog / $stderrLog)"
+    Start-Process -FilePath python -ArgumentList 'manage.py','runserver','0.0.0.0:8000' -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog
+    Write-Host "Background server started. Tail logs with: Get-Content $stdoutLog -Wait"
 } else {
     Write-Host "Starting dev server (foreground). Press Ctrl+C to stop. Logs are also written to runserver.log"
     python manage.py runserver 0.0.0.0:8000 2>&1 | Tee-Object runserver.log

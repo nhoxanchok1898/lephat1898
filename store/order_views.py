@@ -6,6 +6,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum, F
+from django.db.models import Q
+from django.views.decorators.http import require_POST
 from .models import Order, OrderItem
 
 
@@ -15,10 +17,8 @@ def order_history(request):
     Display user's order history
     Lists all orders associated with the user
     """
-    # Get orders that match the user's username in full_name field
-    # (Orders are not directly linked to User model in the current implementation)
     orders = Order.objects.filter(
-        full_name__icontains=request.user.username
+        Q(user=request.user) | Q(full_name__icontains=request.user.username)
     ).prefetch_related('items__product').order_by('-created_at')
     
     # Alternative: if you want to show all orders for testing
@@ -52,10 +52,11 @@ def order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     
     # Security check: verify the order belongs to the current user
-    # Since orders aren't directly linked to User, we check by username in full_name
-    if not order.full_name.lower().startswith(request.user.username.lower()):
-        # For staff members, allow viewing any order
-        if not request.user.is_staff:
+    if order.user and order.user != request.user and not request.user.is_staff:
+        messages.error(request, 'You do not have permission to view this order.')
+        return redirect('store:order_history')
+    elif not order.user:
+        if not order.full_name.lower().startswith(request.user.username.lower()) and not request.user.is_staff:
             messages.error(request, 'You do not have permission to view this order.')
             return redirect('store:order_history')
     
@@ -86,3 +87,29 @@ def order_detail(request, order_id):
     }
     
     return render(request, 'orders/order_detail.html', context)
+
+
+@login_required
+@require_POST
+def order_cancel(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+
+    # Access control: owner or staff
+    if not (request.user.is_staff or (order.user and order.user == request.user)):
+        messages.error(request, 'Bạn không có quyền hủy đơn này.')
+        return redirect('store:order_detail', order_id=order_id)
+
+    # Only allow cancel in pending or processing
+    if order.status not in (Order.STATUS_PENDING, Order.STATUS_PROCESSING):
+        messages.info(request, 'Đơn hàng không thể hủy ở trạng thái hiện tại.')
+        return redirect('store:order_detail', order_id=order_id)
+
+    # Idempotent: if already canceled, no change
+    if order.status == Order.STATUS_CANCELED:
+        messages.info(request, 'Đơn hàng đã được hủy trước đó.')
+        return redirect('store:order_detail', order_id=order_id)
+
+    order.status = Order.STATUS_CANCELED
+    order.save()
+    messages.success(request, 'Đơn hàng đã được hủy.')
+    return redirect('store:order_detail', order_id=order_id)
