@@ -1,0 +1,26 @@
+name: Runner Sanity Check
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  sanity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Hello runner
+        run: |
+          echo "RUNNER_OK" > runner_ok.txt
+          echo "EVENT=$GITHUB_EVENT_NAME" >> runner_ok.txt
+          echo "ACTOR=$GITHUB_ACTOR" >> runner_ok.txt
+          env | sort > env_dump.txt
+
+      - name: Upload sanity artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: runner-sanity
+          path: |
+            runner_ok.txt
+            env_dump.txt

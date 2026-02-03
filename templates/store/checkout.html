@@ -1,0 +1,40 @@
+{% extends 'store/base.html' %}
+{% block title %}Thanh toán - Paint Store{% endblock %}
+{% block content %}
+  <section class="checkout container">
+    <h2 class="mb-3">Thanh toán</h2>
+    <form method="post" aria-label="Checkout form" class="checkout-grid">
+      {% csrf_token %}
+      <div class="checkout-form card">
+        <div class="form-group">
+          <label class="form-label">Họ và tên</label>
+          <input class="form-control" name="name" required aria-label="Họ và tên">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Số điện thoại</label>
+          <input class="form-control" name="phone" required aria-label="Số điện thoại">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Địa chỉ</label>
+          <textarea class="form-control" name="address" required aria-label="Địa chỉ"></textarea>
+        </div>
+        <div class="form-group">
+          <button class="btn" type="submit">Đặt hàng</button>
+        </div>
+      </div>
+      <aside class="order-summary card">
+        <h4>Đơn hàng</h4>
+        {% if items %}
+          <ul class="order-items">
+          {% for it in items %}
+            <li>{{ it.product.name }} x {{ it.qty }} — {{ it.subtotal }}</li>
+          {% endfor %}
+          </ul>
+          <p class="price"><strong>Tổng: {{ total }}</strong></p>
+        {% else %}
+          <p>Không có sản phẩm trong giỏ.</p>
+        {% endif %}
+      </aside>
+    </form>
+  </section>
+{% endblock %}

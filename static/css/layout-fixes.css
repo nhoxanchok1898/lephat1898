@@ -1,0 +1,68 @@
+/* Layout fixes: product card aspect ratios, hero spacing, header/footer sizing, responsive tweaks */
+
+/* Product cards - enforce consistent image aspect ratio and card height */
+.product-image-wrapper-redesign,
+.product-image-wrapper {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+}
+.product-image-redesign,
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.product-card-redesign,
+.product-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 360px;
+}
+
+/* Hero adjustments */
+.hero-visual-redesign .hero-image-main,
+.hero-image-main {
+  width: 100%;
+  height: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+.hero-redesign .hero-content-redesign {
+  gap: 1.5rem;
+  align-items: center;
+}
+
+/* Header sizing */
+.header-main,
+.site-nav-modern {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.logo-redesign .logo-text,
+.brand-text {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+/* Offcanvas mini cart tweak */
+#miniCartOffcanvas .offcanvas-body { max-height: 65vh; }
+
+/* Footer spacing */
+.site-footer-modern .footer-content { gap: 1.5rem; }
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .product-card-redesign,
+  .product-card { min-height: auto; }
+  .hero-visual-redesign .hero-image-main { max-height: 260px; }
+}
+
+@media (max-width: 480px) {
+  .product-image-wrapper-redesign { aspect-ratio: 1 / 1; }
+  .hero-visual-redesign .hero-image-main { max-height: 220px; }
+}

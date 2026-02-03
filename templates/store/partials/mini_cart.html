@@ -1,0 +1,16 @@
+{# Mini Cart Offcanvas Partial #}
+<div class="offcanvas offcanvas-end" tabindex="-1" id="miniCartOffcanvas" aria-labelledby="miniCartLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="miniCartLabel">Giỏ hàng</h5>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body" id="mini-cart-body">
+    <div class="p-4 text-center">Đang tải...</div>
+  </div>
+  <div class="offcanvas-footer p-3 border-top">
+    <div class="d-flex justify-content-between align-items-center">
+      <a href="{% url 'store:product_list' %}" class="btn btn-link">Tiếp tục mua sắm</a>
+      <a href="{% url 'store:checkout' %}" class="btn btn-primary">Thanh toán</a>
+    </div>
+  </div>
+</div>
