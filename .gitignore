@@ -34,3 +34,8 @@ logs/
 
 # Sitemap errors
 sitemap_error.html
+
+# Local HTTPS dev certs
+certs/
+*.pem
+mkcert-rootCA.pem

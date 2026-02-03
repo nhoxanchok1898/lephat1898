@@ -25,3 +25,15 @@ pip install -r requirements.txt
 5. Sau khi làm xong, mở lại cửa sổ VS Code hoặc reload để Pylance nhận packages và cảnh báo sẽ biến mất.
 
 Ghi chú: nếu dùng CMD thay PowerShell, dùng `.venv\\Scripts\\activate.bat` để kích hoạt.
+
+## Chạy server dev qua HTTPS (khắc phục cảnh báo 'kết nối không an toàn')
+
+```powershell
+.\run_dev.ps1 -InstallPackages -Https
+```
+
+Script sẽ:
+- Kiểm tra/ghi nhận chứng chỉ tin cậy bằng `mkcert` (tạo `local-dev.pem` & `local-dev-key.pem` tại thư mục project, đã nằm trong `.gitignore`).
+- Khởi động `runserver_plus` trên `https://127.0.0.1:8000`.
+
+Nếu cần quay lại HTTP: chạy `.\run_dev.ps1` bình thường.

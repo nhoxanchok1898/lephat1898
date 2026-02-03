@@ -15,6 +15,7 @@ import os
 import logging
 from logging import handlers
 import copy as _copy
+import ipaddress
 from django.template import context as _ctx
 
 # Patch Django template context copy to avoid Python 3.14 incompatibility
@@ -63,6 +64,44 @@ else:
         'testserver',
     ]
 
+# When DEBUG, allow local LAN IP to avoid DisallowedHost when testing over Wi-Fi/LAN.
+if DEBUG:
+    try:
+        import socket
+
+        def _detect_private_ipv4():
+            candidates = set()
+            try:
+                # Primary outbound interface
+                _s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                _s.connect(("8.8.8.8", 80))
+                candidates.add(_s.getsockname()[0])
+                _s.close()
+            except Exception:
+                pass
+            try:
+                for info in socket.getaddrinfo(socket.gethostname(), None):
+                    addr = info[4][0]
+                    candidates.add(addr)
+            except Exception:
+                pass
+            for addr in candidates:
+                try:
+                    ip_obj = ipaddress.ip_address(addr)
+                    if ip_obj.version == 4 and ip_obj.is_private and not ip_obj.is_loopback:
+                        return addr
+                except ValueError:
+                    continue
+            return None
+
+        _lan_ip = _detect_private_ipv4()
+        for _host in ('127.0.0.1', 'localhost', _lan_ip):
+            if _host and _host not in ALLOWED_HOSTS:
+                ALLOWED_HOSTS.append(_host)
+    except Exception:
+        # Fallback: ignore if cannot detect; keeps production unaffected
+        pass
+
 
 # Application definition
 
@@ -85,6 +124,10 @@ INSTALLED_APPS = [
     # to create an AppConfig for it (causing ImproperlyConfigured errors).
     # Instead we'll import its compatibility shim directly below.
 ]
+
+# Dev-only helpers (HTTPS runserver_plus, shell_plus, etc.)
+if DEBUG:
+    INSTALLED_APPS.append('django_extensions')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
