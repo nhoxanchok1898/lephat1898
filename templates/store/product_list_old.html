@@ -39,9 +39,9 @@
             <input type="hidden" name="category" value="{{ current_category }}">
             <input type="hidden" name="brand" value="{{ current_brand }}">
             <input type="hidden" name="q" value="{{ q }}">
-            <input class="form-control form-control-sm me-2" type="number" name="min_price" placeholder="Min" value="{{ min_price|default:'' }}" style="width:100px">
-            <input class="form-control form-control-sm me-2" type="number" name="max_price" placeholder="Max" value="{{ max_price|default:'' }}" style="width:100px">
-            <select name="sort" class="form-select form-select-sm me-2" style="width:160px">
+            <input class="form-control form-control-sm me-2 input-compact" type="number" name="min_price" placeholder="Min" value="{{ min_price|default:'' }}">
+            <input class="form-control form-control-sm me-2 input-compact" type="number" name="max_price" placeholder="Max" value="{{ max_price|default:'' }}">
+            <select name="sort" class="form-select form-select-sm me-2 select-compact">
               <option value="">Sắp xếp</option>
               <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Giá: tăng dần</option>
               <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Giá: giảm dần</option>

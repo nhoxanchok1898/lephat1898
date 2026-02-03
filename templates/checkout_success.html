@@ -1,9 +1,11 @@
-{% extends 'base.html' %}
+{% extends 'store/base.html' %}
 
-{% block title %}Checkout Success{% endblock %}
+{% block title %}Đặt hàng thành công{% endblock %}
 
 {% block content %}
-<h2>Thank you for your order!</h2>
-<p>Your order has been placed successfully. We will contact you soon.</p>
-<a href="/">Back to Home</a>
+<section class="page-section">
+  <h2>Cảm ơn bạn đã đặt hàng!</h2>
+  <p>Đơn hàng của bạn đã được ghi nhận. Chúng tôi sẽ liên hệ sớm.</p>
+  <a class="btn btn-primary mt-2" href="/">Về trang chủ</a>
+</section>
 {% endblock %}

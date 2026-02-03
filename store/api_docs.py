@@ -128,7 +128,7 @@ def api_documentation(request):
                         "full_name": "string",
                         "phone": "string",
                         "address": "string",
-                        "payment_method": "string (offline/stripe/paypal)"
+                        "payment_method": "string (cod/stripe/paypal)"
                     }
                 },
                 "tracking": {

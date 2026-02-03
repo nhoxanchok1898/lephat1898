@@ -50,7 +50,7 @@
                 {% if review.images.all %}
                 <div class="review-images mt-2">
                     {% for image in review.images.all %}
-                        <img src="{{ image.image.url }}" alt="Review image" style="width: 100px; height: 100px; object-fit: cover; margin-right: 10px;">
+                        <img src="{{ image.image.url }}" alt="Review image" class="review-thumb">
                     {% endfor %}
                 </div>
                 {% endif %}

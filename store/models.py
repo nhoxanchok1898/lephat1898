@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
+from django.utils import timezone
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 
@@ -98,17 +99,63 @@ class Product(models.Model):
 
 class Order(models.Model):
     """Order model for customer orders"""
+    STATUS_PENDING = 'pending'
+    STATUS_PROCESSING = 'processing'
+    STATUS_SHIPPED = 'shipped'
+    STATUS_CANCELED = 'canceled'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_PROCESSING, 'Processing'),
+        (STATUS_SHIPPED, 'Shipped'),
+        (STATUS_CANCELED, 'Canceled'),
+    ]
+
+    PAYMENT_STATUS_PENDING = 'pending'
+    PAYMENT_STATUS_PAID = 'paid'
+    PAYMENT_STATUS_CHOICES = [
+        (PAYMENT_STATUS_PENDING, 'Pending'),
+        (PAYMENT_STATUS_PAID, 'Paid'),
+    ]
+
+    PAYMENT_METHOD_COD = 'cod'
+    PAYMENT_METHOD_OFFLINE = 'offline'  # legacy alias for COD
+    PAYMENT_METHOD_STRIPE = 'stripe'
+    PAYMENT_METHOD_PAYPAL = 'paypal'
+    PAYMENT_METHOD_CHOICES = [
+        (PAYMENT_METHOD_COD, 'Cash on Delivery (COD)'),
+        (PAYMENT_METHOD_OFFLINE, 'Offline (legacy)'),
+        (PAYMENT_METHOD_STRIPE, 'Stripe'),
+        (PAYMENT_METHOD_PAYPAL, 'PayPal'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
     full_name = models.CharField(max_length=200)
     phone = models.CharField(max_length=30)
     address = models.TextField()
-    payment_method = models.CharField(max_length=30, default='offline')
-    payment_status = models.CharField(max_length=30, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    payment_method = models.CharField(max_length=30, default=PAYMENT_METHOD_COD, choices=PAYMENT_METHOD_CHOICES)
+    payment_status = models.CharField(max_length=30, choices=PAYMENT_STATUS_CHOICES, default=PAYMENT_STATUS_PENDING)
     payment_reference = models.CharField(max_length=255, blank=True, null=True)
+    is_paid = models.BooleanField(default=False)
+    paid_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Order #{self.id} - {self.full_name}"
+
+    def save(self, *args, **kwargs):
+        # Keep payment flags consistent
+        if self.payment_status == self.PAYMENT_STATUS_PAID and not self.is_paid:
+            self.is_paid = True
+        if self.is_paid and not self.paid_at:
+            self.paid_at = timezone.now()
+        if not self.is_paid:
+            # Ensure paid_at cleared when marking unpaid
+            self.paid_at = None
+            if self.payment_status == self.PAYMENT_STATUS_PAID:
+                self.payment_status = self.PAYMENT_STATUS_PENDING
+        super().save(*args, **kwargs)
 
 
 class OrderItem(models.Model):
@@ -663,33 +710,3 @@ class SearchQuery(models.Model):
         return f"Search: {self.query}"
 
 
-class LoginAttempt(models.Model):
-    """Track login attempts for security"""
-    username = models.CharField(max_length=150)
-    ip_address = models.GenericIPAddressField()
-    success = models.BooleanField(default=False)
-    user_agent = models.TextField(blank=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-timestamp']
-
-    def __str__(self):
-        status = 'successful' if self.success else 'failed'
-        return f"{status} login attempt for {self.username} from {self.ip_address}"
-
-
-class SuspiciousActivity(models.Model):
-    """Track suspicious activity for security monitoring"""
-    activity_type = models.CharField(max_length=100)
-    description = models.TextField()
-    ip_address = models.GenericIPAddressField()
-    user_agent = models.TextField(blank=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name_plural = 'Suspicious Activities'
-        ordering = ['-timestamp']
-
-    def __str__(self):
-        return f"{self.activity_type} from {self.ip_address} at {self.timestamp}"

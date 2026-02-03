@@ -54,11 +54,17 @@ python manage.py runserver
 
 ## 🧪 Testing
 
+### Quick smoke tests (chạy trước khi commit)
 ```bash
-# Run all tests
-python manage.py test
+python manage.py test tests.smoke
+# hoặc
+./run_tests.sh   # Linux/macOS
+run_tests.bat    # Windows
+```
 
-# Test coverage: ~80%+ (195+ tests)
+### Toàn bộ test
+```bash
+python manage.py test
 ```
 
 ## 🏗️ Tech Stack
