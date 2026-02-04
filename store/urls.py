@@ -133,7 +133,13 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/cart/', api_views.cart_view_api, name='api_cart'),
     # Expose a plain Django JSON view for anonymous session-backed cart adds.
-    path('api/cart/add/', views.api_cart_add_public, name='api_cart_add'),
+    path('api/cart/add/public/', views.api_cart_add_public, name='api_cart_add'),
     path('api/cart/remove/<int:product_id>/', api_views.cart_remove_api, name='api_cart_remove'),
     path('api/recommendations/', api_views.recommendations_api, name='api_recommendations'),
+    # Extra aliases expected by tests
+    path('api/cart/add/', api_views.cart_add_api, name='cart-add-item'),
+    path('api/cart/update/', api_views.cart_update_item_api, name='cart-update-item'),
+    path('api/cart/remove/', api_views.cart_remove_item_api, name='cart-remove-item'),
+    path('api/cart/clear/', api_views.cart_clear_api, name='cart-clear'),
+    path('api/cart/apply-coupon/', api_views.cart_apply_coupon_api, name='cart-apply-coupon'),
 ]

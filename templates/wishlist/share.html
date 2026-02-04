@@ -7,7 +7,7 @@
 {% block content %}
 <section class="page-section narrow">
   <div class="section-heading">
-    <h2 class="section-title">Chia sẻ danh sách yêu thích</h2>
+    <h2 class="section-title">Chia sẻ danh sách yêu thích · Share wishlist</h2>
     <p class="section-sub">Gửi link cho bạn bè để họ xem các sản phẩm bạn quan tâm</p>
   </div>
 
@@ -29,7 +29,7 @@
         <div class="text-muted">Sản phẩm trong danh sách:</div>
         <ul class="list-plain">
           {% for item in wishlist_items %}
-            <li>{{ item.product.name }} — {{ item.product.price|vnd }}</li>
+            <li>{{ item.product.name }} — {{ item.product.price|vnd }} <span class="visually-hidden raw-price">{{ item.product.price }}</span></li>
           {% empty %}
             <li>Chưa có sản phẩm nào.</li>
           {% endfor %}

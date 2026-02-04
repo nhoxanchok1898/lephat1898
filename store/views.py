@@ -1,6 +1,10 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_POST
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.permissions import AllowAny
 from django.http import JsonResponse
+from rest_framework.response import Response
+from rest_framework import status as drf_status
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.mail import send_mail
 from django.conf import settings
@@ -399,17 +403,13 @@ def cart_summary_ajax(request):
 
 
 @csrf_exempt
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def api_cart_add_public(request):
     """Simple JSON API endpoint for adding items to the session cart (public)."""
     """Public session-backed cart add endpoint (no tracing)."""
-    if request.method != 'POST':
-        return JsonResponse({'error': 'method not allowed'}, status=405)
-
-    try:
-        data = json.loads(request.body.decode('utf-8')) if request.body else {}
-    except Exception:
-        data = {}
-
+    data = request.data or {}
     product_id = data.get('product_id')
     try:
         quantity = int(data.get('quantity', 1))
@@ -417,12 +417,12 @@ def api_cart_add_public(request):
         quantity = 1
 
     if not product_id:
-        return JsonResponse({'error': 'product_id is required'}, status=400)
+        return Response({'error': 'product_id is required'}, status=drf_status.HTTP_400_BAD_REQUEST)
 
     try:
         product = Product.objects.get(pk=product_id, is_active=True)
     except Product.DoesNotExist:
-        return JsonResponse({'error': 'Product not found'}, status=404)
+        return Response({'error': 'Product not found'}, status=drf_status.HTTP_404_NOT_FOUND)
 
     # Ensure session exists
     if not request.session.session_key:
@@ -434,11 +434,11 @@ def api_cart_add_public(request):
     request.session['cart'] = cart
     request.session.modified = True
 
-    return JsonResponse({
+    return Response({
         'success': True,
         'product': {'id': product.pk, 'name': product.name},
         'quantity': cart[product_key]
-    }, status=200)
+    }, status=drf_status.HTTP_200_OK)
 
 
 @require_POST

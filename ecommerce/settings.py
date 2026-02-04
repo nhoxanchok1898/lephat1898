@@ -18,6 +18,9 @@ import copy as _copy
 import ipaddress
 from django.template import context as _ctx
 
+def env_bool(name, default=False):
+    return os.environ.get(name, str(default)).lower() in ("1", "true", "yes", "on")
+
 # Patch Django template context copy to avoid Python 3.14 incompatibility
 def _safe_basecontext_copy(self):
     dup = _ctx.BaseContext.__new__(_ctx.BaseContext)
@@ -65,6 +68,7 @@ else:
     ]
 
 # When DEBUG, allow local LAN IP to avoid DisallowedHost when testing over Wi-Fi/LAN.
+LAN_IP = None
 if DEBUG:
     try:
         import socket
@@ -94,8 +98,8 @@ if DEBUG:
                     continue
             return None
 
-        _lan_ip = _detect_private_ipv4()
-        for _host in ('127.0.0.1', 'localhost', _lan_ip):
+        LAN_IP = _detect_private_ipv4()
+        for _host in ('127.0.0.1', 'localhost', LAN_IP):
             if _host and _host not in ALLOWED_HOSTS:
                 ALLOWED_HOSTS.append(_host)
     except Exception:
@@ -131,6 +135,8 @@ if DEBUG:
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -223,6 +229,10 @@ if not STATIC_URL.startswith('/'):
 # Directory for `collectstatic` (development/prod staging)
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    WHITENOISE_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
+
 # Media files (user uploads)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -295,3 +305,97 @@ if sentry_sdk and SENTRY_DSN:
 # create side-effects before Django finishes app setup (e.g., template engine
 # registration). If admin compatibility patches are needed, apply them later
 # in app-ready hooks or middleware.
+
+# --- Security: apply stronger defaults outside DEBUG ---
+if not DEBUG:
+    SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", True)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", 31536000))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", True)
+    SECURE_HSTS_PRELOAD = env_bool("SECURE_HSTS_PRELOAD", True)
+else:
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_HSTS_SECONDS = 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# --- CORS / CSRF trusted origins ---
+_env_cors = os.environ.get("CORS_ALLOWED_ORIGINS")
+if _env_cors:
+    CORS_ALLOWED_ORIGINS = [o.strip() for o in _env_cors.split(",") if o.strip()]
+else:
+    _default_origins = [
+        "http://127.0.0.1:8000",
+        "https://127.0.0.1:8000",
+        "http://localhost:8000",
+        "https://localhost:8000",
+    ]
+    if LAN_IP:
+        _default_origins += [
+            f"http://{LAN_IP}:8000",
+            f"https://{LAN_IP}:8000",
+        ]
+    CORS_ALLOWED_ORIGINS = _default_origins
+
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [o.replace("http://", "https://") for o in CORS_ALLOWED_ORIGINS]
+
+# --- Caching ---
+REDIS_URL = os.environ.get("REDIS_URL")
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": REDIS_URL,
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "default-locmem",
+        }
+    }
+
+# --- Email ---
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend" if DEBUG else "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 1025 if DEBUG else 587))
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", not DEBUG)
+EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "no-reply@example.com")
+
+# --- Stripe / PayPal keys ---
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_PUBLIC_KEY = os.environ.get("STRIPE_PUBLIC_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+PAYPAL_CLIENT_ID = os.environ.get("PAYPAL_CLIENT_ID", "")
+PAYPAL_CLIENT_SECRET = os.environ.get("PAYPAL_CLIENT_SECRET", "")
+PAYPAL_WEBHOOK_ID = os.environ.get("PAYPAL_WEBHOOK_ID", "")
+
+# --- DRF defaults ---
+REST_FRAMEWORK = {
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.BasicAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.AllowAny",
+    ],
+}
