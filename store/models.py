@@ -623,6 +623,11 @@ class SuspiciousActivity(models.Model):
     def __str__(self):
         return f"{self.activity_type} from {self.ip_address} at {self.created_at}"
 
+    @property
+    def timestamp(self):
+        # Backward-compatible alias expected by tests
+        return self.created_at
+
 
 class Wishlist(models.Model):
     """Wishlist model"""

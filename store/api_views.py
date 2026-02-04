@@ -87,15 +87,15 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     GET /api/orders/ - List user's orders
     GET /api/orders/<id>/ - Get order details
     """
+    queryset = Order.objects.all().order_by('-created_at')
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         # In a real app, filter by user's email or user relationship
-        # For now, return all orders (staff only should see this)
         if self.request.user.is_staff:
-            return Order.objects.all()
-        return Order.objects.none()
+            return self.queryset
+        return Order.objects.filter(user=self.request.user).order_by('-created_at')
 
 
 @api_view(['GET'])
@@ -157,11 +157,13 @@ def cart_add_api(request):
     
     request.session['cart'] = cart
     request.session.modified = True
+    total_items = sum(cart.values())
     
     return Response({
         'success': True,
         'product': ProductSerializer(product).data,
-        'quantity': cart[product_key]
+        'quantity': cart[product_key],
+        'total_items': total_items
     })
     
 

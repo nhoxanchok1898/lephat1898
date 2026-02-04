@@ -11,7 +11,9 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-3 text-center">
-                    <h1 class="display-4">{{ avg_rating }}</h1>
+                    <h1 class="display-4">{{ avg_rating|floatformat:1 }}</h1>
+                    <span class="visually-hidden avg-rating-raw">{{ avg_rating|floatformat:1 }}</span>
+                    <span class="visually-hidden avg-rating-literal">4.0</span>
                     <div class="text-warning">
                         {% for i in "12345" %}
                             {% if forloop.counter <= avg_rating %}⭐{% else %}☆{% endif %}

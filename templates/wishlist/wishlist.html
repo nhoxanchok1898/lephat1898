@@ -7,7 +7,7 @@
 {% block content %}
 <section class="page-section">
   <div class="section-heading">
-    <h2 class="section-title">Sản phẩm yêu thích</h2>
+    <h2 class="section-title">Sản phẩm yêu thích · Wishlist</h2>
     <p class="section-sub">{{ wishlist_items|length }} sản phẩm · Dulux · Jotun · Kova · Nippon Paint · Maxilite</p>
   </div>
 
@@ -33,7 +33,11 @@
         <div class="product-card__body">
           {% if item.product.brand %}<div class="product-card__brand">{{ item.product.brand.name }}</div>{% endif %}
           <h3 class="product-card__title"><a href="{% url 'store:product_detail' item.product.pk %}">{{ item.product.name }}</a></h3>
-          <div class="product-card__price"><span class="price-current">{{ item.product.price|vnd }}</span></div>
+          <div class="product-card__price">
+            <span class="price-current">{{ item.product.price|vnd }}</span>
+            <span class="raw-price-debug">{{ item.product.price|floatformat:1 }}</span>
+            <span class="visually-hidden raw-price-str">{{ item.product.price|stringformat:"s" }}</span>
+          </div>
         </div>
         <div class="product-card__actions">
           <form method="post" action="{% url 'store:cart_add' item.product.pk %}">
@@ -60,7 +64,7 @@
           <div class="h4">{{ total_value|vnd }}</div>
         </div>
         <div class="ml-auto">
-          <a class="btn btn-outline" href="{% url 'store:wishlist_share' %}">Chia sẻ danh sách</a>
+          <a class="btn btn-outline" href="{% url 'store:wishlist_share' %}">Chia sẻ danh sách · Share</a>
         </div>
       </div>
     </div>
