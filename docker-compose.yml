@@ -8,9 +8,6 @@ services:
       - .env
     ports:
       - "8000:8000"
-    depends_on:
-      # Uncomment if using Postgres
-      # - db
     restart: unless-stopped
 
   # db:
