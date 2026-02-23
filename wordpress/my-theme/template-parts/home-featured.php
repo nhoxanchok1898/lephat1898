@@ -13,13 +13,20 @@ $per_group = 2;
 $products = [];
 $selected_ids = [];
 
-$candidate_ids = wc_get_products([
-    'status'  => 'publish',
-    'limit'   => -1,
-    'orderby' => 'date',
-    'order'   => 'DESC',
-    'return'  => 'ids',
-]);
+$candidate_ids = get_transient('my_theme_home_featured_candidate_ids_v1');
+if (!is_array($candidate_ids) || empty($candidate_ids)) {
+    // Limit source records to keep home load fast while still covering enough SKUs.
+    $candidate_ids = wc_get_products([
+        'status'  => 'publish',
+        'limit'   => 240,
+        'orderby' => 'date',
+        'order'   => 'DESC',
+        'return'  => 'ids',
+    ]);
+    if (is_array($candidate_ids) && !empty($candidate_ids)) {
+        set_transient('my_theme_home_featured_candidate_ids_v1', $candidate_ids, 4 * HOUR_IN_SECONDS);
+    }
+}
 
 foreach ($group_keywords as $keywords) {
     $added = 0;
@@ -68,6 +75,12 @@ foreach ($group_keywords as $keywords) {
         if (!$product_obj) {
             continue;
         }
+        if (function_exists('my_theme_is_shop_visible_product') && !my_theme_is_shop_visible_product($product_obj)) {
+            continue;
+        }
+        if (function_exists('my_theme_is_catalog_ready_product') && !my_theme_is_catalog_ready_product($product_obj, true)) {
+            continue;
+        }
 
         $products[] = $product_obj;
         $selected_ids[] = $pid;
@@ -80,10 +93,17 @@ if (empty($products)) {
     $query = new WC_Product_Query([
         'limit'   => 8,
         'status'  => 'publish',
+        'min_price' => 1,
         'orderby' => 'date',
         'order'   => 'DESC',
     ]);
-    $products = $query->get_products();
+    $products = array_values(array_filter($query->get_products(), function ($product_obj) {
+        return ($product_obj instanceof WC_Product)
+            && function_exists('my_theme_is_shop_visible_product')
+            && my_theme_is_shop_visible_product($product_obj)
+            && function_exists('my_theme_is_catalog_ready_product')
+            && my_theme_is_catalog_ready_product($product_obj, true);
+    }));
 }
 ?>
 <section class="page-section">
@@ -94,22 +114,32 @@ if (empty($products)) {
     </div>
     <a class="btn btn-outline btn-sm" href="<?php echo esc_url(get_permalink(wc_get_page_id('shop'))); ?>">Xem toàn bộ sản phẩm</a>
   </div>
-  <div class="product-grid">
+  <div class="product-grid product-grid--home">
     <?php if (!empty($products)) : foreach ($products as $product) : ?>
+      <?php
+      $brand_label = function_exists('my_theme_get_product_brand_label') ? my_theme_get_product_brand_label($product) : 'Sản phẩm';
+      $cat_label = function_exists('my_theme_get_product_primary_category_label') ? my_theme_get_product_primary_category_label($product) : '';
+      $product_name = function_exists('my_theme_get_product_display_name') ? my_theme_get_product_display_name($product) : $product->get_name();
+      $excerpt = function_exists('my_theme_get_product_card_excerpt') ? my_theme_get_product_card_excerpt($product, 12) : '';
+      ?>
       <article class="product-card">
         <a class="product-card__thumb" href="<?php echo esc_url($product->get_permalink()); ?>">
           <?php echo $product->get_image('woocommerce_thumbnail'); ?>
         </a>
         <div class="product-card__body">
-          <div class="product-card__brand">Sản phẩm</div>
-          <h3 class="product-card__title"><a href="<?php echo esc_url($product->get_permalink()); ?>"><?php echo esc_html($product->get_name()); ?></a></h3>
-          <div class="product-card__price"><?php echo wp_kses_post($product->get_price_html()); ?></div>
+          <?php if ($brand_label !== '' && $brand_label !== 'Sản phẩm') : ?>
+            <div class="product-card__brand"><?php echo esc_html($brand_label); ?></div>
+          <?php endif; ?>
+          <h3 class="product-card__title"><a href="<?php echo esc_url($product->get_permalink()); ?>"><?php echo esc_html($product_name); ?></a></h3>
+          <?php if ($cat_label !== '') : ?><div class="product-card__taxonomy"><?php echo esc_html($cat_label); ?></div><?php endif; ?>
+          <?php if ($excerpt !== '') : ?><p class="product-card__excerpt"><?php echo esc_html($excerpt); ?></p><?php endif; ?>
+          <?php if (function_exists('my_theme_render_loop_price')) { my_theme_render_loop_price($product); } else { ?><div class="product-card__price"><?php echo wp_kses_post($product->get_price_html()); ?></div><?php } ?>
+          <?php if (function_exists('my_theme_render_pack_price_list')) { my_theme_render_pack_price_list($product, 'loop'); } ?>
           <?php if (function_exists('my_theme_render_capacity_weight')) { my_theme_render_capacity_weight($product); } ?>
           <?php if (function_exists('my_theme_render_capacity_badges')) { my_theme_render_capacity_badges($product); } ?>
         </div>
         <div class="product-card__actions">
-          <?php woocommerce_template_loop_add_to_cart(['product' => $product]); ?>
-          <a class="btn btn-outline w-100" href="<?php echo esc_url($product->get_permalink()); ?>">Xem chi tiết</a>
+          <a class="btn btn-primary w-100" href="<?php echo esc_url($product->get_permalink()); ?>">Xem chi tiết</a>
         </div>
       </article>
     <?php endforeach; else : ?>

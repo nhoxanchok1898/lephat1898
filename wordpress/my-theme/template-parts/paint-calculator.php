@@ -37,6 +37,10 @@
           <option value="8">Tường cũ (8 m² / lít)</option>
         </select>
       </div>
+      <div class="calc-submit">
+        <button class="btn btn-primary" type="button" id="calc-run">Tính ngay</button>
+        <button class="btn btn-outline" type="button" id="calc-reset">Làm mới</button>
+      </div>
     </div>
 
     <div class="calc-card calc-result">

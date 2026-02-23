@@ -27,6 +27,11 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+tmp_*
+tmp_*.html
+tmp_*.txt
+tmp_*.cookie
+wordpress/my-theme/tmp_*.php
 
 # Archive files
 *.zip

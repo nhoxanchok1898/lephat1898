@@ -3,7 +3,7 @@
     <p class="eyebrow">ĐẠI LÝ SƠN PHÁT TẤN · Dulux · Jotun · Kova · Nippon · Maxilite</p>
     <h1>Bảng giá sơn chính hãng – giao tận công trình</h1>
     <p>Giá đại lý – chiết khấu cho thợ & công trình. Tư vấn định mức và phối màu miễn phí.</p>
-    <div class="brand-strip" style="margin:10px 0 18px;">
+    <div class="brand-strip hero-brand-strip">
       <span class="brand-chip">Dulux ngoại thất</span>
       <span class="brand-chip">Jotun nội thất</span>
       <span class="brand-chip">Nippon mùi nhẹ</span>
@@ -23,7 +23,7 @@
       <li>Tư vấn định mức m², chọn hệ sơn phù hợp bề mặt</li>
       <li>Giao 24–48h nội thành TP.HCM · Hỗ trợ kỹ thuật</li>
     </ul>
-    <div class="hero-actions" style="margin-top:12px;">
+    <div class="hero-actions hero-actions--compact">
       <a class="btn btn-primary btn-sm" href="https://zalo.me/0944857999" target="_blank" rel="noopener">Zalo tư vấn nhanh</a>
       <a class="btn btn-outline btn-sm" href="<?php echo esc_url(home_url('/huong-dan-mua-hang')); ?>">Đặt lịch khảo sát</a>
     </div>

@@ -4,11 +4,13 @@ document.addEventListener('DOMContentLoaded', function () {
   var areaInput = document.getElementById('calc-area');
   var coatsInput = document.getElementById('calc-coats');
   var surfaceSelect = document.getElementById('calc-surface');
+  var runButton = document.getElementById('calc-run');
+  var resetButton = document.getElementById('calc-reset');
   var areaOut = document.querySelector('[data-out="area"]');
   var litersOut = document.querySelector('[data-out="liters"]');
   var bucketsOut = document.querySelector('[data-out="buckets"]');
 
-  if (!lengthInput || !widthInput || !areaInput || !coatsInput || !surfaceSelect) {
+  if (!lengthInput || !widthInput || !areaInput || !coatsInput || !surfaceSelect || !runButton || !resetButton) {
     return;
   }
 
@@ -79,10 +81,27 @@ document.addEventListener('DOMContentLoaded', function () {
     bucketsOut.textContent = suggestBuckets(litersRounded);
   }
 
-  [lengthInput, widthInput, areaInput, coatsInput, surfaceSelect].forEach(function (el) {
-    el.addEventListener('input', calculate);
-    el.addEventListener('change', calculate);
+  function resetCalculator() {
+    lengthInput.value = '';
+    widthInput.value = '';
+    areaInput.value = '';
+    coatsInput.value = 2;
+    surfaceSelect.value = '10';
+    calculate();
+  }
+
+  [lengthInput, widthInput, areaInput, coatsInput].forEach(function (el) {
+    el.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        calculate();
+      }
+    });
   });
+
+  surfaceSelect.addEventListener('change', calculate);
+  runButton.addEventListener('click', calculate);
+  resetButton.addEventListener('click', resetCalculator);
 
   calculate();
 });
