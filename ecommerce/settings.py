@@ -15,23 +15,44 @@ import os
 import logging
 from logging import handlers
 import copy as _copy
+import importlib.util
 import ipaddress
+import sys
 from django.template import context as _ctx
 
 def env_bool(name, default=False):
     return os.environ.get(name, str(default)).lower() in ("1", "true", "yes", "on")
 
+def module_available(module_name):
+    try:
+        return importlib.util.find_spec(module_name) is not None
+    except Exception:
+        return False
+
+try:
+    _stdout_reconfigure = getattr(sys.stdout, "reconfigure", None)
+    if callable(_stdout_reconfigure):
+        _stdout_reconfigure(encoding="utf-8", errors="replace")
+
+    _stderr_reconfigure = getattr(sys.stderr, "reconfigure", None)
+    if callable(_stderr_reconfigure):
+        _stderr_reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 # Patch Django template context copy to avoid Python 3.14 incompatibility
 def _safe_basecontext_copy(self):
-    dup = _ctx.BaseContext.__new__(_ctx.BaseContext)
-    dup.__class__ = self.__class__
-    dup.__dict__ = _copy.copy(getattr(self, '__dict__', {}))
-    dup.dicts = list(getattr(self, 'dicts', []))
+    cls = self.__class__
+    dup = cls.__new__(cls)
+    state = _copy.copy(getattr(self, '__dict__', {}))
+    state['dicts'] = list(getattr(self, 'dicts', []))
+    for key, value in state.items():
+        setattr(dup, key, value)
     return dup
 
 def _safe_context_copy(self):
     dup = _safe_basecontext_copy(self)
-    dup.render_context = _copy.copy(getattr(self, 'render_context', {}))
+    setattr(dup, 'render_context', _copy.copy(getattr(self, 'render_context', {})))
     return dup
 
 _ctx.BaseContext.__copy__ = _safe_basecontext_copy
@@ -54,6 +75,8 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 # Controlled by environment variable for safe deployment; defaults to True for dev.
 DEBUG = os.environ.get("DEBUG", "True").lower() in ("1", "true", "yes", "on")
+HAS_DJANGO_EXTENSIONS = module_available("django_extensions")
+HAS_WHITENOISE = module_available("whitenoise")
 
 # Allow local loopback hosts for development; can be overridden via ALLOWED_HOSTS env.
 _env_hosts = os.environ.get("ALLOWED_HOSTS")
@@ -130,12 +153,11 @@ INSTALLED_APPS = [
 ]
 
 # Dev-only helpers (HTTPS runserver_plus, shell_plus, etc.)
-if DEBUG:
+if DEBUG and HAS_DJANGO_EXTENSIONS:
     INSTALLED_APPS.append('django_extensions')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -145,6 +167,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'store.response_logger_middleware.ResponseLoggerMiddleware',
 ]
+if HAS_WHITENOISE:
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 ROOT_URLCONF = 'ecommerce.urls'
 
@@ -229,7 +253,7 @@ if not STATIC_URL.startswith('/'):
 # Directory for `collectstatic` (development/prod staging)
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-if not DEBUG:
+if not DEBUG and HAS_WHITENOISE:
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
     WHITENOISE_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
 
@@ -251,6 +275,9 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
+        'console': {
+            'format': '%(asctime)s %(levelname)s %(name)s %(message)s',
+        },
         'structured': {
             'format': '%(asctime)s %(levelname)s %(name)s %(pathname)s:%(lineno)d %(message)s',
         },
@@ -258,7 +285,7 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'structured',
+            'formatter': 'console',
         },
         'app_file': {
             'class': 'logging.handlers.RotatingFileHandler',
@@ -266,6 +293,7 @@ LOGGING = {
             'maxBytes': 5 * 1024 * 1024,  # 5MB
             'backupCount': 5,
             'level': 'INFO',
+            'encoding': 'utf-8',
             'formatter': 'structured',
         },
         'error_file': {
@@ -274,6 +302,7 @@ LOGGING = {
             'maxBytes': 5 * 1024 * 1024,
             'backupCount': 5,
             'level': 'WARNING',
+            'encoding': 'utf-8',
             'formatter': 'structured',
         },
     },

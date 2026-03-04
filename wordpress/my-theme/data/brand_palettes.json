@@ -1,0 +1,195 @@
+{
+  "version": "2026-02-25",
+  "brands": {
+    "dulux": {
+      "label": "Dulux",
+      "source_note": "reference",
+      "source_page": "https://www.dulux.vn/vi/mau-sac",
+      "items": [
+        { "code": "DLX-101", "name": "Pure White", "hex": "f5f3ec" },
+        { "code": "DLX-102", "name": "Warm Beige", "hex": "dfcfb9" },
+        { "code": "DLX-103", "name": "Soft Cream", "hex": "f2e6cf" },
+        { "code": "DLX-104", "name": "Pebble Grey", "hex": "c5c8c9" },
+        { "code": "DLX-105", "name": "Moon Grey", "hex": "a8adb1" },
+        { "code": "DLX-106", "name": "Ocean Blue", "hex": "5f84b5" },
+        { "code": "DLX-107", "name": "Royal Blue", "hex": "2f5e9f" },
+        { "code": "DLX-108", "name": "Mint Leaf", "hex": "b9d5c1" },
+        { "code": "DLX-109", "name": "Olive Moss", "hex": "90946c" },
+        { "code": "DLX-110", "name": "Terracotta", "hex": "ba7f63" },
+        { "code": "DLX-111", "name": "Cocoa Brown", "hex": "7b6657" },
+        { "code": "DLX-112", "name": "Sunset Peach", "hex": "e5b79d" }
+      ]
+    },
+    "maxilite": {
+      "label": "Maxilite",
+      "source_note": "reference",
+      "source_page": "https://www.dulux.vn/vi/thuong-hieu/maxilite",
+      "items": [
+        { "code": "MXL-201", "name": "Bright White", "hex": "f4f4ef" },
+        { "code": "MXL-202", "name": "Ivory Mist", "hex": "eadfcb" },
+        { "code": "MXL-203", "name": "Sand Beige", "hex": "d5c2a7" },
+        { "code": "MXL-204", "name": "Stone Grey", "hex": "bcc0c3" },
+        { "code": "MXL-205", "name": "Cloud Grey", "hex": "9fa5ab" },
+        { "code": "MXL-206", "name": "Sky Blue", "hex": "78a8d4" },
+        { "code": "MXL-207", "name": "Blue Denim", "hex": "456d9d" },
+        { "code": "MXL-208", "name": "Leaf Green", "hex": "a9c58e" },
+        { "code": "MXL-209", "name": "Herb Green", "hex": "7f9468" },
+        { "code": "MXL-210", "name": "Warm Orange", "hex": "cf956f" },
+        { "code": "MXL-211", "name": "Brick Red", "hex": "a35c50" },
+        { "code": "MXL-212", "name": "Coffee Brown", "hex": "756251" }
+      ]
+    },
+    "nippon": {
+      "label": "Nippon",
+      "source_note": "reference",
+      "source_page": "https://www.nipponpaint.com.vn/",
+      "items": [
+        { "code": "NPN-301", "name": "Snow White", "hex": "f7f6f1" },
+        { "code": "NPN-302", "name": "Vanilla Cream", "hex": "efe2c7" },
+        { "code": "NPN-303", "name": "Linen Beige", "hex": "d9c6ab" },
+        { "code": "NPN-304", "name": "Urban Grey", "hex": "c4c5c3" },
+        { "code": "NPN-305", "name": "Slate Grey", "hex": "8f989c" },
+        { "code": "NPN-306", "name": "Aqua Blue", "hex": "5ea4c9" },
+        { "code": "NPN-307", "name": "Midnight Blue", "hex": "325780" },
+        { "code": "NPN-308", "name": "Pastel Green", "hex": "b8d3b0" },
+        { "code": "NPN-309", "name": "Forest Green", "hex": "6f8965" },
+        { "code": "NPN-310", "name": "Coral Pink", "hex": "db9f96" },
+        { "code": "NPN-311", "name": "Clay Orange", "hex": "c17e63" },
+        { "code": "NPN-312", "name": "Walnut Brown", "hex": "6f5a49" }
+      ]
+    },
+    "kova": {
+      "label": "Kova",
+      "source_note": "reference",
+      "source_page": "https://www.kovapaint.com/",
+      "items": [
+        { "code": "KVA-401", "name": "Titan White", "hex": "f4f4f0" },
+        { "code": "KVA-402", "name": "Natural Cream", "hex": "e8dbc2" },
+        { "code": "KVA-403", "name": "Desert Sand", "hex": "d2bfa3" },
+        { "code": "KVA-404", "name": "Silver Grey", "hex": "c2c6c8" },
+        { "code": "KVA-405", "name": "Graphite Grey", "hex": "8e9397" },
+        { "code": "KVA-406", "name": "Lake Blue", "hex": "77a9c8" },
+        { "code": "KVA-407", "name": "Steel Blue", "hex": "4b6d8b" },
+        { "code": "KVA-408", "name": "Pale Green", "hex": "bfd3b7" },
+        { "code": "KVA-409", "name": "Moss Green", "hex": "7c8f6f" },
+        { "code": "KVA-410", "name": "Terracotta Red", "hex": "b66d5b" },
+        { "code": "KVA-411", "name": "Rust Brown", "hex": "8a5e4b" },
+        { "code": "KVA-412", "name": "Dark Cocoa", "hex": "5f4c3f" }
+      ]
+    },
+    "toa": {
+      "label": "TOA",
+      "source_note": "reference",
+      "source_page": "https://www.toagroup.com.vn/",
+      "items": [
+        { "code": "TOA-501", "name": "Polar White", "hex": "f6f5f0" },
+        { "code": "TOA-502", "name": "Ivory Sand", "hex": "ebdec8" },
+        { "code": "TOA-503", "name": "Classic Beige", "hex": "d8c4a6" },
+        { "code": "TOA-504", "name": "Smoke Grey", "hex": "c5c7c6" },
+        { "code": "TOA-505", "name": "Concrete Grey", "hex": "9ea3a6" },
+        { "code": "TOA-506", "name": "Arctic Blue", "hex": "7caed6" },
+        { "code": "TOA-507", "name": "Navy Blue", "hex": "3f5f89" },
+        { "code": "TOA-508", "name": "Tea Green", "hex": "b9cfa7" },
+        { "code": "TOA-509", "name": "Sage Green", "hex": "8da083" },
+        { "code": "TOA-510", "name": "Peach Sand", "hex": "e2b89d" },
+        { "code": "TOA-511", "name": "Copper Clay", "hex": "b9775d" },
+        { "code": "TOA-512", "name": "Chocolate", "hex": "6d5648" }
+      ]
+    },
+    "sika": {
+      "label": "Sika",
+      "source_note": "reference",
+      "source_page": "https://vnm.sika.com/",
+      "items": [
+        { "code": "SIK-601", "name": "Sika Grey 01", "hex": "d9d9d5" },
+        { "code": "SIK-602", "name": "Sika Grey 02", "hex": "c6c7c3" },
+        { "code": "SIK-603", "name": "Sika Grey 03", "hex": "abaea9" },
+        { "code": "SIK-604", "name": "Sika Grey 04", "hex": "8f9490" },
+        { "code": "SIK-605", "name": "Concrete Stone", "hex": "8f8a82" },
+        { "code": "SIK-606", "name": "Sand Cement", "hex": "c5b59b" },
+        { "code": "SIK-607", "name": "Dust Brown", "hex": "967e66" },
+        { "code": "SIK-608", "name": "Traffic Red", "hex": "b64e45" },
+        { "code": "SIK-609", "name": "Safety Yellow", "hex": "d5b24f" },
+        { "code": "SIK-610", "name": "Olive Cement", "hex": "8a8f68" },
+        { "code": "SIK-611", "name": "Signal Blue", "hex": "4f7093" },
+        { "code": "SIK-612", "name": "Green Slate", "hex": "6f8475" }
+      ]
+    },
+    "weber": {
+      "label": "Weber",
+      "source_note": "reference",
+      "source_page": "https://www.vn.weber/",
+      "items": [
+        { "code": "WEB-701", "name": "Weber White", "hex": "f3f2ee" },
+        { "code": "WEB-702", "name": "Silver Mist", "hex": "d7d9d8" },
+        { "code": "WEB-703", "name": "Light Ash", "hex": "bfc2bf" },
+        { "code": "WEB-704", "name": "Cement Grey", "hex": "a7a9a4" },
+        { "code": "WEB-705", "name": "Graphite", "hex": "6e7572" },
+        { "code": "WEB-706", "name": "Latte Beige", "hex": "d4c3a8" },
+        { "code": "WEB-707", "name": "Clay Brown", "hex": "a18367" },
+        { "code": "WEB-708", "name": "Brick", "hex": "9d5d4e" },
+        { "code": "WEB-709", "name": "Moss", "hex": "7e8668" },
+        { "code": "WEB-710", "name": "Ocean", "hex": "5b7b98" },
+        { "code": "WEB-711", "name": "Teal Stone", "hex": "5f7d76" },
+        { "code": "WEB-712", "name": "Night Grey", "hex": "4f5659" }
+      ]
+    },
+    "apollo": {
+      "label": "Apollo",
+      "source_note": "reference",
+      "source_page": "https://apollosilicone.vn/",
+      "items": [
+        { "code": "APL-801", "name": "Clear", "hex": "f2f4f2" },
+        { "code": "APL-802", "name": "Milky White", "hex": "edece7" },
+        { "code": "APL-803", "name": "Cream", "hex": "e8ddc7" },
+        { "code": "APL-804", "name": "Light Grey", "hex": "c8ccc9" },
+        { "code": "APL-805", "name": "Medium Grey", "hex": "a2a8aa" },
+        { "code": "APL-806", "name": "Dark Grey", "hex": "6b7074" },
+        { "code": "APL-807", "name": "Black", "hex": "3d4144" },
+        { "code": "APL-808", "name": "Brown", "hex": "7b5f4f" },
+        { "code": "APL-809", "name": "Teak", "hex": "9f7855" },
+        { "code": "APL-810", "name": "Blue Grey", "hex": "6f8ca5" },
+        { "code": "APL-811", "name": "Green Grey", "hex": "7f9484" },
+        { "code": "APL-812", "name": "Beige", "hex": "ccb79c" }
+      ]
+    },
+    "expo": {
+      "label": "Expo",
+      "source_note": "reference",
+      "source_page": "https://www.expo.com.vn/",
+      "items": [
+        { "code": "EXP-901", "name": "Expo White", "hex": "f5f5f0" },
+        { "code": "EXP-902", "name": "Warm Ivory", "hex": "ece2cd" },
+        { "code": "EXP-903", "name": "Beige Sand", "hex": "d5c3a8" },
+        { "code": "EXP-904", "name": "Light Grey", "hex": "c3c6c8" },
+        { "code": "EXP-905", "name": "Stone Grey", "hex": "9ea4a8" },
+        { "code": "EXP-906", "name": "Sky Blue", "hex": "7da7cf" },
+        { "code": "EXP-907", "name": "Steel Blue", "hex": "4f6d8d" },
+        { "code": "EXP-908", "name": "Leaf Green", "hex": "a9c2a1" },
+        { "code": "EXP-909", "name": "Olive Green", "hex": "81906f" },
+        { "code": "EXP-910", "name": "Clay Orange", "hex": "bf7d63" },
+        { "code": "EXP-911", "name": "Earth Brown", "hex": "835f4a" },
+        { "code": "EXP-912", "name": "Deep Brown", "hex": "5d4a3e" }
+      ]
+    },
+    "insee": {
+      "label": "Insee",
+      "source_note": "reference",
+      "source_page": "https://www.insee.com.vn/",
+      "items": [
+        { "code": "INS-951", "name": "Cement White", "hex": "f2f1ec" },
+        { "code": "INS-952", "name": "Cream Sand", "hex": "e6dcc7" },
+        { "code": "INS-953", "name": "Dust Beige", "hex": "cfbea4" },
+        { "code": "INS-954", "name": "Mist Grey", "hex": "c2c4c3" },
+        { "code": "INS-955", "name": "Concrete Grey", "hex": "9ea2a0" },
+        { "code": "INS-956", "name": "Blue Stone", "hex": "6f8fad" },
+        { "code": "INS-957", "name": "Deep Blue", "hex": "3f5f7f" },
+        { "code": "INS-958", "name": "Moss Green", "hex": "8fa087" },
+        { "code": "INS-959", "name": "Olive Stone", "hex": "7f856a" },
+        { "code": "INS-960", "name": "Terracotta", "hex": "b36f56" },
+        { "code": "INS-961", "name": "Brick Brown", "hex": "875b47" },
+        { "code": "INS-962", "name": "Dark Graphite", "hex": "4f5457" }
+      ]
+    }
+  }
+}

@@ -7,17 +7,17 @@
 <section class="page-section">
   <div class="section-heading">
     <h2 class="section-title">Đơn hàng của tôi</h2>
-    <p class="section-sub">Theo dõi trạng thái, thanh toán và chi tiết đơn</p>
+    <p class="section-sub">Theo dõi trạng thái, thanh toán và chi tiết đơn hàng</p>
   </div>
 
   {% if orders %}
-    <div class="table-responsive page-section" style="padding:0;">
+    <div class="table-responsive">
       <table class="table">
         <thead>
           <tr>
             <th>Mã</th>
-            <th>Ngày</th>
-            <th>Số lượng</th>
+            <th>Ngày tạo</th>
+            <th>Sản phẩm</th>
             <th>Thanh toán</th>
             <th>Trạng thái</th>
             <th>Đã trả</th>
@@ -26,33 +26,33 @@
         </thead>
         <tbody>
           {% for order in orders %}
-          <tr>
-            <td>#{{ order.pk }}</td>
-            <td>{{ order.created_at|date:"d/m/Y" }}</td>
-            <td>{{ order.items.count }} sản phẩm</td>
-            <td>{{ order.get_payment_method_display|default:order.payment_method|title }}</td>
-            <td>
-              <span class="badge {% if order.status == 'shipped' %}badge-success{% elif order.status == 'processing' %}badge-secondary{% else %}badge-secondary{% endif %}">
-                {{ order.status|default:order.payment_status|title }}
-              </span>
-            </td>
-            <td>
-              {% if order.is_paid %}
-                <span class="badge badge-success">Đã thanh toán{% if order.paid_at %} ({{ order.paid_at|date:"d/m/Y" }}){% endif %}</span>
-              {% else %}
-                <span class="badge badge-secondary">Chưa thanh toán</span>
-              {% endif %}
-            </td>
-            <td>
-              <a href="{% url 'store:order_detail' order.pk %}" class="btn btn-outline btn-sm">Xem</a>
-            </td>
-          </tr>
+            <tr>
+              <td>#{{ order.pk }}</td>
+              <td>{{ order.created_at|date:"d/m/Y" }}</td>
+              <td>{{ order.items.count }} sản phẩm</td>
+              <td>{{ order.get_payment_method_display|default:order.payment_method|title }}</td>
+              <td>
+                <span class="badge {% if order.status == 'shipped' %}badge-success{% else %}badge-secondary{% endif %}">
+                  {{ order.status|default:order.payment_status|title }}
+                </span>
+              </td>
+              <td>
+                {% if order.is_paid %}
+                  <span class="badge badge-success">Đã thanh toán{% if order.paid_at %} ({{ order.paid_at|date:"d/m/Y" }}){% endif %}</span>
+                {% else %}
+                  <span class="badge badge-secondary">Chưa thanh toán</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{% url 'store:order_detail' order.pk %}" class="btn btn-outline btn-sm">Xem</a>
+              </td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   {% else %}
-    <div class="alert alert-info">
+    <div class="empty-state">
       <p>Bạn chưa có đơn hàng nào.</p>
       <a href="{% url 'store:product_list' %}" class="btn btn-primary">Mua sắm ngay</a>
     </div>

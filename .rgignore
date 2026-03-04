@@ -1,0 +1,32 @@
+# Speed up ripgrep/Codex scans in this workspace.
+
+# Python cache/venv
+.venv/**
+venv/**
+__pycache__/**
+.pytest_cache/**
+.mypy_cache/**
+
+# Generated/static artifacts
+staticfiles/**
+media/**
+dist/**
+build/**
+*.egg-info/**
+wheels/**
+
+# Large generated image sets
+brand_images/**
+wordpress/my-theme/assets/dulux_import/**
+wordpress/my-theme/assets/products/**
+wordpress/my-theme/assets/official-sync/**
+
+# Logs and temporary snapshots
+logs/**
+*.log
+.tmp-archive/**
+tmp_*
+tmp_*.html
+tmp_*.json
+tmp_*.txt
+tmp_*.cookie

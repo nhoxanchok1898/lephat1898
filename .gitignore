@@ -27,6 +27,7 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+.tmp-archive/
 tmp_*
 tmp_*.html
 tmp_*.txt

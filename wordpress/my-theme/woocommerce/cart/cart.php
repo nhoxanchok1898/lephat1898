@@ -6,6 +6,17 @@ wc_print_notices();
 do_action('woocommerce_before_cart'); ?>
 
 <div class="cart-card">
+  <div class="section-heading cart-page__head">
+    <div>
+      <h2 class="section-title">Giỏ hàng của bạn</h2>
+      <p class="section-sub">Kiểm tra số lượng, dung tích và tổng tiền trước khi thanh toán.</p>
+    </div>
+    <div class="cart-page__actions">
+      <a class="btn btn-outline btn-sm" href="<?php echo esc_url(wc_get_page_permalink('shop')); ?>">Tiếp tục mua hàng</a>
+      <a class="btn btn-primary btn-sm" href="<?php echo esc_url(wc_get_checkout_url()); ?>">Đi tới thanh toán</a>
+    </div>
+  </div>
+
   <form class="woocommerce-cart-form" action="<?php echo esc_url(wc_get_cart_url()); ?>" method="post">
     <table class="shop_table shop_table_responsive cart" cellspacing="0">
       <thead>
@@ -21,13 +32,14 @@ do_action('woocommerce_before_cart'); ?>
           $product_id = apply_filters('woocommerce_cart_item_product_id', $cart_item['product_id'], $cart_item, $cart_item_key);
           if ($_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters('woocommerce_cart_item_visible', true, $cart_item, $cart_item_key)) :
             $product_permalink = apply_filters('woocommerce_cart_item_permalink', $_product->is_visible() ? $_product->get_permalink($cart_item) : '', $cart_item, $cart_item_key);
+            $display_name = function_exists('my_theme_get_product_display_name') ? my_theme_get_product_display_name($_product) : $_product->get_name();
             ?>
             <tr class="woocommerce-cart-form__cart-item <?php echo esc_attr(apply_filters('woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key)); ?>">
               <td class="product-name" data-title="<?php esc_attr_e('Sản phẩm', 'woocommerce'); ?>">
                 <?php
                 $thumbnail = apply_filters('woocommerce_cart_item_thumbnail', $_product->get_image(), $cart_item, $cart_item_key);
                 echo $product_permalink ? '<a href="' . esc_url($product_permalink) . '">' . $thumbnail . '</a>' : $thumbnail;
-                echo $product_permalink ? '<a href="' . esc_url($product_permalink) . '">' . wp_kses_post($_product->get_name()) . '</a>' : wp_kses_post($_product->get_name());
+                echo $product_permalink ? '<a href="' . esc_url($product_permalink) . '">' . esc_html($display_name) . '</a>' : esc_html($display_name);
                 do_action('woocommerce_after_cart_item_name', $cart_item, $cart_item_key);
                 echo wc_get_formatted_cart_item_data($cart_item); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                 // Backorder notification
@@ -93,5 +105,35 @@ do_action('woocommerce_before_cart'); ?>
     <?php woocommerce_cart_totals(); ?>
   </div>
 </div>
+
+<?php if (function_exists('my_theme_render_commerce_support')) : ?>
+  <?php my_theme_render_commerce_support('cart'); ?>
+<?php endif; ?>
+
+<?php if (function_exists('my_theme_render_cart_companion_paths')) : ?>
+  <?php my_theme_render_cart_companion_paths([
+    'title' => 'Rà lại vật tư thường đi cùng trước khi thanh toán',
+    'subtitle' => 'Nếu giỏ đang có lớp phủ, chống thấm hoặc vật tư chính, nên kiểm tra thêm các nhóm đi cùng bên dưới để tránh thiếu lớp khi giao hàng.',
+  ]); ?>
+<?php endif; ?>
+
+<?php
+$cart_product_ids = [];
+foreach (WC()->cart->get_cart() as $cart_entry) {
+  $cart_product_id = isset($cart_entry['product_id']) ? (int) $cart_entry['product_id'] : 0;
+  if ($cart_product_id > 0) {
+    $cart_product_ids[] = $cart_product_id;
+  }
+}
+$cart_product_ids = array_values(array_unique($cart_product_ids));
+?>
+<?php if (function_exists('my_theme_render_recently_viewed_products')) : ?>
+  <?php my_theme_render_recently_viewed_products([
+    'title' => 'Các mã bạn vừa xem để so thêm',
+    'aria_label' => 'Các mã bạn vừa xem để so thêm',
+    'class' => 'related-products-block--recently-viewed related-products-block--cart',
+    'exclude_ids' => $cart_product_ids,
+  ]); ?>
+<?php endif; ?>
 
 <?php do_action('woocommerce_after_cart'); ?>

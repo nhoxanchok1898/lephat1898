@@ -7,7 +7,10 @@
     <title>{% block title %}Đại lý Sơn Phát Tấn{% endblock %}</title>
     <meta name="description" content="Đại lý Sơn Phát Tấn - Phân phối Dulux, Jotun, Kova, Nippon Paint, Maxilite">
     <link rel="icon" href="{% static 'images/favicon.svg' %}" type="image/svg+xml">
-    <link rel="stylesheet" href="{% static 'css/main.css' %}?v=4">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}?v=5">
     {% block extra_css %}{% endblock %}
   </head>
   <body>
@@ -17,11 +20,15 @@
           <span class="brand-mark">🎨</span>
           <span>Đại lý Sơn Phát Tấn</span>
         </a>
-        <nav class="main-nav">
+
+        <button id="nav-toggle" class="nav-toggle" aria-label="Mở menu" aria-controls="primary-nav" aria-expanded="false">☰</button>
+
+        <nav id="primary-nav" class="main-nav">
           <a href="{% url 'store:home' %}">Trang chủ</a>
           <a href="{% url 'store:product_list' %}">Sản phẩm</a>
           <a href="{% url 'store:contact' %}">Liên hệ</a>
         </nav>
+
         <div class="header-actions">
           {% if user.is_authenticated %}
             <a class="btn-ghost" href="{% url 'store:profile' %}">Tài khoản</a>
@@ -30,7 +37,13 @@
             <a class="btn-ghost" href="{% url 'login' %}">Đăng nhập</a>
             <a class="btn btn-accent btn-sm" href="{% url 'store:register' %}">Đăng ký</a>
           {% endif %}
-          <a class="cart-link" href="{% url 'store:cart_view' %}">Giỏ hàng</a>
+
+          {% with cart=request.session.cart %}
+            <a class="cart-link" href="{% url 'store:cart_view' %}">
+              <span>Giỏ hàng</span>
+              {% if cart %}<span class="cart-link__count">{{ cart|length }}</span>{% endif %}
+            </a>
+          {% endwith %}
         </div>
       </div>
     </header>
@@ -52,32 +65,78 @@
       <div class="container footer-grid">
         <div>
           <div class="footer-heading">Đại lý Sơn Phát Tấn</div>
-          <p>Sơn chất lượng cho mọi công trình.</p>
+          <p>Giải pháp sơn chuyên nghiệp cho nhà ở, công trình dân dụng và dự án.</p>
         </div>
         <div>
-          <div class="footer-heading">Liên kết</div>
+          <div class="footer-heading">Danh mục</div>
           <div class="footer-links">
-            <a href="{% url 'store:product_list' %}">Sản phẩm</a>
-            <a href="{% url 'store:contact' %}">Liên hệ</a>
+            <a href="{% url 'store:product_list' %}?q=Sơn nội thất">Sơn nội thất</a>
+            <a href="{% url 'store:product_list' %}?q=Sơn ngoại thất">Sơn ngoại thất</a>
+            <a href="{% url 'store:product_list' %}?q=Chống thấm">Chống thấm</a>
           </div>
         </div>
         <div>
           <div class="footer-heading">Hỗ trợ</div>
           <div class="footer-links">
-            <a href="#">FAQ</a>
-            <a href="#">Chính sách đổi trả</a>
-            <a href="#">Hướng dẫn mua hàng</a>
+            <a href="{% url 'store:order_history' %}">Theo dõi đơn hàng</a>
+            <a href="{% url 'store:checkout' %}">Thanh toán</a>
+            <a href="{% url 'store:contact' %}">Liên hệ tư vấn</a>
           </div>
         </div>
         <div>
           <div class="footer-heading">Liên hệ</div>
-          <p>📞 0123-456-789</p>
+          <p>📞 1900-xxxx</p>
           <p>📧 info@paintstore.vn</p>
-          <p>📍 Hà Nội, Việt Nam</p>
+          <p>📍 392 TL10, Bình Trị Đông, Bình Tân, TP. Hồ Chí Minh</p>
         </div>
       </div>
-      <div class="footer-copy">© {{ now|date:"Y" }} Đại lý Sơn Phát Tấn.</div>
+      <div class="footer-copy">© {% now "Y" %} Đại lý Sơn Phát Tấn.</div>
     </footer>
+
+    <script>
+      (function () {
+        document.addEventListener('DOMContentLoaded', function () {
+          var navToggle = document.getElementById('nav-toggle');
+          var nav = document.getElementById('primary-nav');
+
+          if (navToggle && nav) {
+            navToggle.addEventListener('click', function () {
+              var open = nav.classList.toggle('is-open');
+              navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+          }
+
+          var revealNodes = document.querySelectorAll('.page-section, .product-card, .card, .cart-item, .checkout-card, .auth-card');
+          if (!revealNodes.length) {
+            return;
+          }
+
+          if (!('IntersectionObserver' in window)) {
+            revealNodes.forEach(function (node) {
+              node.classList.add('reveal-in');
+            });
+            return;
+          }
+
+          var observer = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                if (!entry.isIntersecting) {
+                  return;
+                }
+                entry.target.classList.add('reveal-in');
+                observer.unobserve(entry.target);
+              });
+            },
+            { threshold: 0.08, rootMargin: '0px 0px -6% 0px' }
+          );
+
+          revealNodes.forEach(function (node) {
+            observer.observe(node);
+          });
+        });
+      })();
+    </script>
     {% block scripts %}{% endblock %}
   </body>
 </html>

@@ -27,6 +27,10 @@ if ( ! $show_login && ! $show_register ) {
 ?>
 
 <div class="account-auth page-section">
+  <div class="account-auth__intro">
+    <p class="text-muted">Quản lý đơn hàng, cập nhật thông tin nhận hàng và nhận hỗ trợ kỹ thuật nhanh từ Đại lý Sơn Phát Tấn.</p>
+  </div>
+
   <?php if ( $show_login ) : ?>
     <div class="account-auth__header">
       <h2 class="section-title">Đăng nhập</h2>
@@ -66,7 +70,7 @@ if ( ! $show_login && ! $show_register ) {
   <?php endif; ?>
 
   <?php if ( $show_register ) : ?>
-    <div class="account-auth__header" style="margin-top: <?php echo $show_login ? '20px' : '0'; ?>;">
+    <div class="account-auth__header<?php echo $show_login ? ' account-auth__header--spaced' : ''; ?>">
       <h2 class="section-title">Đăng ký</h2>
       <a class="btn btn-outline btn-sm" href="<?php echo esc_url( add_query_arg( 'login', '1', $account_url ) ); ?>">Đăng nhập</a>
     </div>

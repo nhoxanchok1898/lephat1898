@@ -5,19 +5,21 @@
 {% block content %}
 <section class="hero">
   <div>
-    <h1>Đại lý sơn uy tín cho mọi công trình</h1>
-    <p>Phân phối chính hãng Dulux, Jotun, Kova, Nippon Paint, Maxilite. Giá tốt, giao nhanh, tư vấn miễn phí.</p>
+    <p class="eyebrow">Đại lý sơn chính hãng · Dulux · Jotun · Kova · Nippon Paint · Maxilite</p>
+    <h1>Giải pháp sơn chuyên nghiệp cho mọi công trình</h1>
+    <p>Danh mục đa dạng cho nội thất, ngoại thất và chống thấm. Tư vấn phối màu miễn phí, giao nhanh, báo giá rõ ràng theo nhu cầu thực tế.</p>
     <div class="hero-actions">
       <a class="btn btn-accent btn-lg" href="{% url 'store:product_list' %}">Xem bảng giá</a>
-      <a class="btn btn-outline btn-lg" href="{% url 'store:contact' %}">Liên hệ tư vấn</a>
+      <a class="btn btn-outline btn-lg" href="{% url 'store:contact' %}">Nhận tư vấn</a>
     </div>
   </div>
   <div class="hero-card">
-    <h3 style="margin:0 0 8px; color: var(--brand);">Ưu đãi tháng này</h3>
-    <ul style="margin:0; padding-left:16px; color: var(--text); line-height:1.7;">
-      <li>Giảm 5% cho đơn hàng sơn nội thất</li>
-      <li>Tư vấn phối màu miễn phí</li>
-      <li>Giao hàng trong 24h tại Hà Nội</li>
+    <h3>Lý do khách hàng chọn Phát Tấn</h3>
+    <ul class="list-plain">
+      <li>Cam kết hàng chính hãng, đầy đủ chứng từ.</li>
+      <li>Tư vấn vật tư theo diện tích và ngân sách.</li>
+      <li>Hỗ trợ giao nhanh trong ngày tại TP. Hồ Chí Minh.</li>
+      <li>Đội ngũ kỹ thuật đồng hành trước và sau mua.</li>
     </ul>
   </div>
 </section>
@@ -25,58 +27,65 @@
 <section class="page-section">
   <div class="section-heading">
     <h2 class="section-title">Thương hiệu đối tác</h2>
-    <p class="section-sub">Dulux • Jotun • Kova • Nippon Paint • Maxilite</p>
+    <p class="section-sub">Nguồn hàng ổn định, cập nhật dòng sản phẩm mới liên tục</p>
   </div>
   <div class="brand-strip">
-    <span class="brand-chip">Dulux</span>
-    <span class="brand-chip">Jotun</span>
-    <span class="brand-chip">Kova</span>
-    <span class="brand-chip">Nippon Paint</span>
-    <span class="brand-chip">Maxilite</span>
+    {% for brand in brands %}
+      <span class="brand-chip">{{ brand.name }}</span>
+    {% empty %}
+      <span class="brand-chip">Dulux</span>
+      <span class="brand-chip">Jotun</span>
+      <span class="brand-chip">Kova</span>
+      <span class="brand-chip">Nippon Paint</span>
+      <span class="brand-chip">Maxilite</span>
+    {% endfor %}
   </div>
 </section>
 
 <section class="page-section">
   <div class="section-heading">
-    <h2 class="section-title">Danh mục sản phẩm</h2>
-    <p class="section-sub">Nội thất • Ngoại thất • Chống thấm • Bột bả</p>
+    <h2 class="section-title">Danh mục nổi bật</h2>
+    <p class="section-sub">Tối ưu theo từng bề mặt và điều kiện công trình</p>
   </div>
-  <div class="product-grid">
+  <div class="product-grid category-grid">
     <article class="product-card">
       <div class="product-card__body">
         <div class="product-card__brand">Danh mục</div>
         <h3 class="product-card__title">Sơn nội thất</h3>
-        <p class="text-muted">Sản phẩm từ Dulux, Jotun, Nippon, Maxilite</p>
+        <p class="text-muted">Màng sơn mịn, độ phủ cao, dễ lau chùi.</p>
       </div>
       <div class="product-card__actions">
         <a class="btn btn-primary w-100" href="{% url 'store:product_list' %}?q=Sơn nội thất">Xem sản phẩm</a>
       </div>
     </article>
+
     <article class="product-card">
       <div class="product-card__body">
         <div class="product-card__brand">Danh mục</div>
         <h3 class="product-card__title">Sơn ngoại thất</h3>
-        <p class="text-muted">Bền màu, chống bám bẩn, chống thấm</p>
+        <p class="text-muted">Bền màu, chống tia UV, hạn chế bám bẩn.</p>
       </div>
       <div class="product-card__actions">
         <a class="btn btn-primary w-100" href="{% url 'store:product_list' %}?q=Sơn ngoại thất">Xem sản phẩm</a>
       </div>
     </article>
+
     <article class="product-card">
       <div class="product-card__body">
         <div class="product-card__brand">Danh mục</div>
         <h3 class="product-card__title">Chống thấm</h3>
-        <p class="text-muted">Giải pháp chống thấm cho mái, tường, sàn</p>
+        <p class="text-muted">Giải pháp cho mái, sân thượng, tường ngoài.</p>
       </div>
       <div class="product-card__actions">
         <a class="btn btn-primary w-100" href="{% url 'store:product_list' %}?q=Chống thấm">Xem sản phẩm</a>
       </div>
     </article>
+
     <article class="product-card">
       <div class="product-card__body">
         <div class="product-card__brand">Danh mục</div>
         <h3 class="product-card__title">Bột bả</h3>
-        <p class="text-muted">Bột bả cao cấp cho bề mặt phẳng mịn</p>
+        <p class="text-muted">Bề mặt phẳng mịn, tăng độ bám cho lớp sơn phủ.</p>
       </div>
       <div class="product-card__actions">
         <a class="btn btn-primary w-100" href="{% url 'store:product_list' %}?q=Bột bả">Xem sản phẩm</a>
@@ -91,7 +100,7 @@
     <a class="btn btn-outline btn-sm" href="{% url 'store:product_list' %}">Xem tất cả</a>
   </div>
   <div class="product-grid">
-    {% for product in products %}
+    {% for product in featured_products|default:new_products %}
       <article class="product-card">
         <a href="{% url 'store:product_detail' product.pk %}" class="product-card__thumb">
           {% if product.image %}

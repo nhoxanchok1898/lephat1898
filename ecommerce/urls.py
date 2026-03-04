@@ -44,10 +44,13 @@ urlpatterns = [
     path('products/', store_views.product_list, name='products_root'),
     path('products/<int:pk>/', store_views.product_detail, name='product_detail_root'),
     path('products/<int:pk>/reviews/create/', review_views.review_create, name='review_create_root'),
+    path('contact/', store_views.contact_view, name='contact_root'),
     path('wishlist/add/<int:pk>/', wishlist_views.wishlist_add, name='wishlist_add_root'),
     path('cart/add/<int:pk>/', store_views.cart_add, name='cart_add_root'),
     path('cart/', store_views.cart_view, name='cart_root'),
     path('checkout/', store_views.checkout_view, name='checkout_root'),
+    path('checkout/success/', store_views.checkout_success, name='checkout_success_root'),
+    path('ajax/search_suggestions/', store_views.search_suggestions, name='search_suggestions_root'),
     path('orders/history/', order_views.order_history, name='orders_history_root'),
     path('auth/profile/', store_auth_views.profile_view, name='auth_profile_root'),
     # Redirect /accounts/profile/ (default Django auth) về hồ sơ người dùng trong store
