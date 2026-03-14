@@ -64,3 +64,4 @@ mkcert-rootCA.pem
 
 # Local data exports
 exports/*.sql
+wordpress/my-theme/data/market-pricing-backup.json
