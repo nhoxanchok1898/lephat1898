@@ -58,6 +58,11 @@ def _build_trusted_origins(hosts, site_url):
         origins.add(site_url.rstrip('/'))
     return sorted(origins)
 
+
+def _extract_hostname(url):
+    parsed = urlparse((url or '').strip())
+    return (parsed.hostname or '').strip()
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
 if not SECRET_KEY:
@@ -66,11 +71,18 @@ if not SECRET_KEY:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
+DEFAULT_RENDER_HOSTNAME = 'lephat1898.onrender.com'
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '').strip()
+SITE_URL_HOSTNAME = _extract_hostname(os.environ.get('SITE_URL', '').strip())
+
+if not RENDER_EXTERNAL_HOSTNAME:
+    RENDER_EXTERNAL_HOSTNAME = SITE_URL_HOSTNAME or DEFAULT_RENDER_HOSTNAME
 
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS', '').split(',') if host.strip()]
 if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+if SITE_URL_HOSTNAME and SITE_URL_HOSTNAME not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(SITE_URL_HOSTNAME)
 if not ALLOWED_HOSTS:
     raise ValueError('ALLOWED_HOSTS or RENDER_EXTERNAL_HOSTNAME must be set in production')
 
