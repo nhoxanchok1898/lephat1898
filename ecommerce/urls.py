@@ -24,6 +24,7 @@ from store import search_views
 from store import api_views
 from store import review_views
 from store import order_views
+from store import monitoring
 from django.contrib.sitemaps.views import sitemap
 from django.views.generic import TemplateView
 from store.sitemaps import ProductSitemap, StaticViewSitemap
@@ -77,4 +78,5 @@ urlpatterns = [
     path('search/autocomplete/', search_views.autocomplete_view, name='search_autocomplete_root'),
     path('search/popular/', search_views.popular_searches_view, name='search_popular_root'),
     path('search/analytics/', search_views.search_analytics_view, name='search_analytics_root'),
+    path('health/', monitoring.health_ping, name='health_root'),
 ]
