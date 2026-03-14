@@ -6,11 +6,9 @@ This document describes quick deployment options for this repository.
 1) Render (recommended quick deploy)
 -------------------------------------
 - Create a new Web Service on Render and connect your GitHub repo `nhoxanchok1898/lephat1898`.
-- In Render service settings get the Service ID.
-- In GitHub repository settings, add Secrets:
-  - `RENDER_SERVICE_ID` — the Render service id (for example `srv-...`)
-  - `RENDER_API_KEY` — a Render API key with "deploy" permission
-- The workflow `.github/workflows/deploy-render.yml` will trigger on pushes to `main` and call the Render API to create a deploy.
+- Prefer Render auto-deploy from the connected GitHub repo or use the `render.yaml` Blueprint in this repository.
+- Set production environment variables in the Render dashboard (`SECRET_KEY`, `SITE_URL`, email/payment keys, etc.).
+- Render will redeploy automatically when `main` changes, so no GitHub-hosted Render API key is required for the default flow.
 
 2) Railway
 -----------
@@ -30,4 +28,4 @@ docker run -d -p 8000:8000 --name lephat1898 lephat1898:latest
 
 Notes
 -----
-- I cannot run the deploy automatically without the required secrets or credentials. If you add `RENDER_SERVICE_ID` and `RENDER_API_KEY` as GitHub secrets I can trigger a deploy by pushing to `main` or manually creating a workflow dispatch.
+- If a Render API key is ever exposed, revoke it in the Render dashboard and create a new one there. Do not keep long-lived Render deploy keys in GitHub unless you explicitly need an API-driven deploy flow.
