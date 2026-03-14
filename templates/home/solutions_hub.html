@@ -1,0 +1,92 @@
+{% extends "store/base.html" %}
+{% load static %}
+{% load price_extras %}
+{% block title %}Giai phap son va vat tu theo be mat - Dai ly Son Phat Tan{% endblock %}
+{% block content %}
+<section class="hero hero-vortex">
+  <div class="hero-vortex__content">
+    <p class="eyebrow hero-vortex__eyebrow">6 nhom giai phap vat tu cho nhu cau thi cong pho bien</p>
+    <h1>Chon dung he son theo be mat, vi tri va muc tieu su dung</h1>
+    <p class="hero-vortex__lead">Tu noi that, ngoai that den chong tham, epoxy va kim loai, moi nhom duoc sap theo bai toan thi cong de chot vat tu nhanh hon.</p>
+    <div class="hero-actions hero-vortex__actions">
+      <a class="btn btn-accent btn-lg" href="{% url 'store:product_list' %}">Mo danh muc vat tu</a>
+      <a class="btn btn-outline btn-lg" href="{% url 'store:contact' %}">Dat lich tu van</a>
+    </div>
+  </div>
+
+  <aside class="hero-vortex__panel">
+    <h3>Cach su dung trang nay</h3>
+    <p>Bat dau tu nhom be mat ban dang xu ly, sau do vao danh muc de loc tiep theo thuong hieu, gia va ton kho.</p>
+    <ul class="list-plain list-plain--tight">
+      <li>Noi that cho be mat can dep, min va de ve sinh.</li>
+      <li>Ngoai that cho mat tien can chong nang mua, bam bui.</li>
+      <li>Chong tham cho khu vuc thuong xuyen tiep xuc nuoc.</li>
+      <li>Epoxy, kim loai va keo ron cho cac hang muc dac thu.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="page-section page-section--dense">
+  <div class="section-heading">
+    <h2 class="section-title">Giai phap theo hang muc</h2>
+    <p class="section-sub">Di tu bai toan thi cong truoc, roi moi chot ma vat tu phu hop</p>
+  </div>
+  <div class="impact-grid">
+    {% for solution in solutions %}
+      <article class="impact-card">
+        <span class="impact-card__tag">{{ solution.tag }}</span>
+        <h3>{{ solution.title }}</h3>
+        <p>{{ solution.summary }}</p>
+        <a class="btn btn-primary" href="{{ solution.url }}">{{ solution.cta }}</a>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="page-section page-section--dense">
+  <div class="section-heading">
+    <h2 class="section-title">San pham dang duoc uu tien xem</h2>
+    <p class="section-sub">Mot lop goi y nhanh de ban chuyen thang sang trang chi tiet san pham</p>
+  </div>
+  <div class="product-grid product-grid--home">
+    {% for product in featured_products %}
+      <article class="product-card product-card--home">
+        <a href="{% url 'store:product_detail' product.pk %}" class="product-card__thumb product-card__thumb--home">
+          {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}">
+          {% else %}
+            <img src="{% static 'images/product-placeholder.svg' %}" alt="Chua co anh">
+          {% endif %}
+        </a>
+        <div class="product-card__body">
+          {% if product.brand %}<div class="product-card__brand">{{ product.brand.name }}</div>{% endif %}
+          <h3 class="product-card__title"><a href="{% url 'store:product_detail' product.pk %}">{{ product.name }}</a></h3>
+          <div class="product-card__price"><span class="price-current">{{ product.price|vnd }}</span></div>
+        </div>
+        <div class="product-card__actions">
+          <a class="btn btn-primary w-100" href="{% url 'store:product_detail' product.pk %}">Xem chi tiet</a>
+        </div>
+      </article>
+    {% empty %}
+      <article class="assurance-card">
+        <h3>Danh muc san pham san sang</h3>
+        <p>Neu hien tai chua co goi y phu hop, ban co the vao danh muc tong de tim theo tu khoa.</p>
+        <a class="btn btn-primary" href="{% url 'store:product_list' %}">Mo danh muc</a>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="page-section page-section--cta">
+  <div class="cta-split">
+    <div>
+      <h2>Can chot he vat tu cho cong trinh cu the?</h2>
+      <p>Gui nhu cau thi cong de nhan goi y dung theo be mat, so lop va khung ngan sach ban dang can.</p>
+    </div>
+    <div class="cta-split__actions">
+      <a class="btn btn-accent btn-lg" href="{% url 'store:contact' %}">Nhan goi y ky thuat</a>
+      <a class="btn btn-outline btn-lg" href="{% url 'store:product_list' %}">Xem toan bo san pham</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

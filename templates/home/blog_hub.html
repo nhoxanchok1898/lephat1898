@@ -1,0 +1,92 @@
+{% extends "store/base.html" %}
+{% load static %}
+{% load price_extras %}
+{% block title %}Blog thi cong va cam nang son - Dai ly Son Phat Tan{% endblock %}
+{% block content %}
+<section class="hero hero-vortex">
+  <div class="hero-vortex__content">
+    <p class="eyebrow hero-vortex__eyebrow">Blog thi cong thuc chien cho nha o, cua hang va cong trinh dan dung</p>
+    <h1>Cam nang chon son, chong tham va du tru vat tu de thi cong it phat sinh hon</h1>
+    <p class="hero-vortex__lead">Tong hop cac chu de huu ich de doi thi cong, chu nha va bo phan mua hang chon dung he vat tu theo be mat, ngan sach va muc tieu su dung.</p>
+    <div class="hero-actions hero-vortex__actions">
+      <a class="btn btn-accent btn-lg" href="{% url 'store:product_list' %}">Xem danh muc san pham</a>
+      <a class="btn btn-outline btn-lg" href="{% url 'store:contact' %}">Nhan tu van ky thuat</a>
+    </div>
+  </div>
+
+  <aside class="hero-vortex__panel">
+    <h3>Doc nhanh, ap dung duoc ngay</h3>
+    <p>Moi chu de duoc chon de giai quyet cac cau hoi hay gap truoc khi dat hang hoac vao cong trinh.</p>
+    <ul class="list-plain list-plain--tight">
+      <li>Chon he son theo moi truong su dung va tan suat lau chui.</li>
+      <li>So sanh vat tu theo muc tieu ben mau, chong tham va tien do.</li>
+      <li>Goi y cach du tru vat tu de han che giao bo sung.</li>
+      <li>Ket noi nhanh voi doi tu van khi can chot cau hinh thi cong.</li>
+    </ul>
+  </aside>
+</section>
+
+<section class="page-section page-section--dense">
+  <div class="section-heading">
+    <h2 class="section-title">Chu de noi bat</h2>
+    <p class="section-sub">Nhung noi dung duoc doc nhieu nhat quanh son noi that, ngoai that va chong tham</p>
+  </div>
+  <div class="impact-grid">
+    {% for article in articles %}
+      <article class="impact-card">
+        <span class="impact-card__tag">{{ article.tag }}</span>
+        <h3>{{ article.title }}</h3>
+        <p>{{ article.summary }}</p>
+        <a class="btn btn-primary" href="{{ article.url }}">{{ article.cta }}</a>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="page-section page-section--dense page-section--band">
+  <div class="section-heading">
+    <h2 class="section-title">Goi y san pham dang duoc quan tam</h2>
+    <p class="section-sub">Chuyen thang tu noi dung tham khao sang danh muc vat tu phu hop</p>
+  </div>
+  <div class="product-grid product-grid--home">
+    {% for product in featured_products %}
+      <article class="product-card product-card--home">
+        <a href="{% url 'store:product_detail' product.pk %}" class="product-card__thumb product-card__thumb--home">
+          {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}">
+          {% else %}
+            <img src="{% static 'images/product-placeholder.svg' %}" alt="Chua co anh">
+          {% endif %}
+        </a>
+        <div class="product-card__body">
+          {% if product.brand %}<div class="product-card__brand">{{ product.brand.name }}</div>{% endif %}
+          <h3 class="product-card__title"><a href="{% url 'store:product_detail' product.pk %}">{{ product.name }}</a></h3>
+          <div class="product-card__price"><span class="price-current">{{ product.price|vnd }}</span></div>
+        </div>
+        <div class="product-card__actions">
+          <a class="btn btn-primary w-100" href="{% url 'store:product_detail' product.pk %}">Xem chi tiet</a>
+        </div>
+      </article>
+    {% empty %}
+      <article class="assurance-card">
+        <h3>Danh muc dang cap nhat</h3>
+        <p>Ban van co the vao trang san pham de loc theo thuong hieu, danh muc hoac muc tieu thi cong.</p>
+        <a class="btn btn-primary" href="{% url 'store:product_list' %}">Mo danh muc</a>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="page-section page-section--cta">
+  <div class="cta-split">
+    <div>
+      <h2>Can mot bai toan vat tu ro rang hon?</h2>
+      <p>Gui thong tin cong trinh, be mat va ngan sach de doi ngu Phat Tan goi y he son va quy trinh phu hop.</p>
+    </div>
+    <div class="cta-split__actions">
+      <a class="btn btn-accent btn-lg" href="{% url 'store:contact' %}">Nhan tu van</a>
+      <a class="btn btn-outline btn-lg" href="{% url 'store:product_list' %}">Xem bang gia</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

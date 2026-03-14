@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import path, include
+from home import views as home_views
 from store import wishlist_views
 from store import views as store_views
 from store import auth_views as store_auth_views
@@ -42,6 +43,10 @@ urlpatterns = [
     path('auth/register/', store_auth_views.register_view, name='auth_register_root'),
     path('auth/login/', store_auth_views.login_view, name='auth_login_root'),
     # Root aliases for key storefront pages (for tests/legacy)
+    path('shop/', store_views.product_list, name='shop_root'),
+    path('blog/', home_views.blog_hub_view, name='blog_root'),
+    path('giai-phap/', home_views.solutions_hub_view, name='solutions_root'),
+    path('my-account/', store_auth_views.profile_view, name='my_account_root'),
     path('products/', store_views.product_list, name='products_root'),
     path('products/<int:pk>/', store_views.product_detail, name='product_detail_root'),
     path('products/<int:pk>/reviews/create/', review_views.review_create, name='review_create_root'),

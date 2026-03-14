@@ -34,6 +34,18 @@ class SmokeHttpStatusTests(TestCase):
         resp = self.client.get(reverse("store:product_list"))
         self.assertEqual(resp.status_code, 200)
 
+    def test_shop_alias_status_ok(self):
+        resp = self.client.get(reverse("shop_root"))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_blog_hub_status_ok(self):
+        resp = self.client.get(reverse("blog_root"))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_solutions_hub_status_ok(self):
+        resp = self.client.get(reverse("solutions_root"))
+        self.assertEqual(resp.status_code, 200)
+
     def test_product_detail_status_ok(self):
         resp = self.client.get(reverse("store:product_detail", args=[self.product.id]))
         self.assertEqual(resp.status_code, 200)
@@ -51,3 +63,8 @@ class SmokeHttpStatusTests(TestCase):
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 302)
         self.assertIn(reverse("admin:login"), resp.url)
+
+    def test_my_account_requires_login(self):
+        resp = self.client.get(reverse("my_account_root"))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(reverse("login"), resp.url)
