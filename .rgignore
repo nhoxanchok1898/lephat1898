@@ -30,3 +30,10 @@ tmp_*.html
 tmp_*.json
 tmp_*.txt
 tmp_*.cookie
+
+# Local backups and audit captures
+exports/**
+audit-*.png
+audit-*.jpg
+*.sqlite3
+tmp-render-prod.sqlite3
