@@ -7,11 +7,12 @@
 <section class="page-section">
   <div class="breadcrumb-nav" aria-label="breadcrumb">
     <ol class="breadcrumb">
-      <li><a href="{% url 'store:home' %}">Trang chủ</a></li>
+      <li><a href="{% url 'home:index' %}">Trang chủ</a></li>
       <li><a href="{% url 'store:product_list' %}">Sản phẩm</a></li>
       <li>{{ product.name }}</li>
     </ol>
   </div>
+
   <div class="detail-grid">
     <div class="detail-media">
       {% if product.image %}
@@ -20,24 +21,47 @@
         <img src="{% static 'images/product-placeholder.svg' %}" alt="Chưa có ảnh">
       {% endif %}
     </div>
+
     <div class="detail-info">
       {% if product.brand %}<div class="product-card__brand">{{ product.brand.name }}</div>{% endif %}
       <h1 class="detail-title">{{ product.name }}</h1>
-      <div class="detail-price">{{ product.price|vnd }}</div>
+
+      <div class="product-card__price">
+        {% if product.sale_price %}
+          <span class="detail-price">{{ product.sale_price|vnd }}</span>
+          <span class="price-old">{{ product.price|vnd }}</span>
+        {% else %}
+          <span class="detail-price">{{ product.price|vnd }}</span>
+        {% endif %}
+      </div>
+
       <ul class="detail-meta-list">
-        <li>Danh mục: {{ product.category.name }}</li>
+        {% if product.category %}<li>Danh mục: {{ product.category.name }}</li>{% endif %}
         {% if product.brand %}<li>Thương hiệu: {{ product.brand.name }}</li>{% endif %}
-        {% if product.weight %}<li>Khối lượng: {{ product.weight }}</li>{% endif %}
+        {% if product.volume %}
+          <li>Quy cách: {{ product.volume }} {% if product.unit_type == 'KG' %}Kg{% else %}L{% endif %}</li>
+        {% endif %}
+        <li>Tồn kho: {% if product.available_stock > 0 %}Còn hàng{% else %}Hết hàng{% endif %}</li>
       </ul>
-      <p class="detail-meta">{{ product.description }}</p>
+
+      {% if product.description %}
+        <p class="detail-meta">{{ product.description }}</p>
+      {% else %}
+        <p class="detail-meta">Sản phẩm chính hãng, phù hợp nhiều nhu cầu thi công và cải tạo công trình.</p>
+      {% endif %}
+
       <form method="post" action="{% url 'store:cart_add' product.pk %}" class="stack">
         {% csrf_token %}
         <div class="qty-row">
           <label class="form-label" for="quantity">Số lượng</label>
-          <input id="quantity" class="form-control" type="number" name="quantity" value="1" min="1">
+          <input id="quantity" class="form-control" type="number" name="quantity" value="1" min="1" max="{{ product.available_stock|default:1 }}" {% if product.available_stock <= 0 %}disabled{% endif %}>
         </div>
         <div class="hero-actions">
-          <button type="submit" class="btn btn-primary">Thêm vào giỏ</button>
+          {% if product.available_stock > 0 %}
+            <button type="submit" class="btn btn-primary">Thêm vào giỏ</button>
+          {% else %}
+            <button type="button" class="btn btn-secondary" disabled>Hiện đang hết hàng</button>
+          {% endif %}
           <a class="btn btn-outline" href="{% url 'store:product_list' %}">Quay lại danh sách</a>
         </div>
       </form>
@@ -45,6 +69,3 @@
   </div>
 </section>
 {% endblock %}
-
-
-

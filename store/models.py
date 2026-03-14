@@ -88,6 +88,32 @@ class Product(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
+        # Keep legacy `quantity` and canonical `stock_quantity` synchronized
+        # without overriding explicit updates on existing products.
+        legacy_qty = int(self.quantity or 0)
+        stock_qty = int(self.stock_quantity or 0)
+        previous_legacy_qty = None
+        previous_stock_qty = None
+
+        if self.pk:
+            previous = Product.objects.filter(pk=self.pk).values('quantity', 'stock_quantity').first()
+            if isinstance(previous, dict):
+                previous_legacy_qty = int(previous.get('quantity') or 0)
+                previous_stock_qty = int(previous.get('stock_quantity') or 0)
+
+        if previous_legacy_qty is None or previous_stock_qty is None:
+            if stock_qty == 0 and legacy_qty > 0:
+                self.stock_quantity = legacy_qty
+            elif legacy_qty == 0 and stock_qty > 0:
+                self.quantity = stock_qty
+        else:
+            legacy_changed = legacy_qty != previous_legacy_qty
+            stock_changed = stock_qty != previous_stock_qty
+            if legacy_changed and not stock_changed:
+                self.stock_quantity = legacy_qty
+            elif stock_changed and not legacy_changed:
+                self.quantity = stock_qty
+
         # Auto-set is_on_sale if sale_price is set and less than price
         if self.sale_price and self.sale_price < self.price:
             self.is_on_sale = True
@@ -98,10 +124,98 @@ class Product(models.Model):
     def get_price(self):
         """Get the effective price (sale price if available, otherwise regular price)"""
         return self.sale_price if self.sale_price else self.price
+
+    @classmethod
+    def with_effective_stock(cls, queryset=None):
+        """Annotate a queryset with stock that prioritizes StockLevel when present."""
+        if queryset is None:
+            queryset = cls.objects.all()
+        return queryset.annotate(
+            effective_stock=models.Case(
+                models.When(stock__isnull=False, then=models.F('stock__quantity')),
+                models.When(stock_quantity__gt=0, then=models.F('stock_quantity')),
+                default=models.F('quantity'),
+                output_field=models.IntegerField(),
+            )
+        )
+
+    @property
+    def available_stock(self):
+        """Unified stock for templates and business logic during legacy migration."""
+        annotated_stock = getattr(self, 'effective_stock', None)
+        if annotated_stock is not None:
+            return max(0, int(annotated_stock or 0))
+
+        try:
+            return max(0, int(self.stock.quantity or 0))
+        except StockLevel.DoesNotExist:
+            pass
+
+        stock_qty = int(self.stock_quantity or 0)
+        legacy_qty = int(self.quantity or 0)
+        return stock_qty if stock_qty > 0 or legacy_qty <= 0 else legacy_qty
+
+    @property
+    def has_defined_stock(self):
+        """Whether this product has any explicit stock constraint."""
+        try:
+            self.stock
+            return True
+        except StockLevel.DoesNotExist:
+            pass
+
+        return int(self.stock_quantity or 0) > 0 or int(self.quantity or 0) > 0
+
+    def get_stock_state(self):
+        """Normalized stock payload shared by storefront and APIs."""
+        return {
+            'stock_available': self.available_stock,
+            'has_defined_stock': self.has_defined_stock,
+        }
+
+    def set_available_stock(self, quantity, ensure_stock_record=False):
+        """Set stock quantity and keep StockLevel plus legacy fields aligned."""
+        normalized = max(0, int(quantity or 0))
+        stock = None
+
+        try:
+            stock = self.stock
+        except StockLevel.DoesNotExist:
+            if ensure_stock_record:
+                stock = StockLevel(product=self, quantity=normalized)
+                stock.save()
+
+        if stock is not None:
+            previous_quantity = int(stock.quantity or 0)
+            stock.quantity = normalized
+            if normalized > previous_quantity:
+                stock.last_restocked = timezone.now()
+                stock.save(update_fields=['quantity', 'last_restocked'])
+            elif stock.pk:
+                stock.save(update_fields=['quantity'])
+
+        update_fields = []
+        if int(self.stock_quantity or 0) != normalized:
+            self.stock_quantity = normalized
+            update_fields.append('stock_quantity')
+        if int(self.quantity or 0) != normalized:
+            self.quantity = normalized
+            update_fields.append('quantity')
+        if update_fields:
+            self.save(update_fields=update_fields)
+
+        return normalized
+
+    def adjust_available_stock(self, delta, ensure_stock_record=False):
+        """Increase or decrease stock safely while keeping all stock stores in sync."""
+        return self.set_available_stock(
+            self.available_stock + int(delta or 0),
+            ensure_stock_record=ensure_stock_record,
+        )
     
     def is_in_stock(self):
         """Check if product is in stock"""
-        return self.stock_quantity > 0
+        return self.available_stock > 0
 
 
 class Order(models.Model):

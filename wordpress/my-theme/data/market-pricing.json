@@ -1,0 +1,4610 @@
+{
+  "summary": {
+    "product_total": 87,
+    "matched_total": 20,
+    "partial_total": 35,
+    "unmatched_total": 32,
+    "brand": {
+      "dulux": {
+        "matched": 0,
+        "partial": 27,
+        "unmatched": 5
+      },
+      "maxilite": {
+        "matched": 7,
+        "partial": 8,
+        "unmatched": 0
+      },
+      "weber": {
+        "matched": 13,
+        "partial": 0,
+        "unmatched": 27
+      }
+    },
+    "source_offer_total": 86
+  },
+  "products": [
+    {
+      "id": 531,
+      "slug": "bottretcaocapdulux",
+      "name": "Bột trét cao cấp Dulux",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "10kg": "10kg",
+        "40kg": "40kg"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Bột trét tường Dulux E700 ngoại thất: Báo giá, định mức 40kg và thi công",
+          "url": "https://tavaco.vn/bot-tret-dulux-professional-e700.html",
+          "score": 6.5972,
+          "shared_tokens": [
+            "tret"
+          ],
+          "prices": {
+            "40kg": 380000
+          }
+        },
+        {
+          "title": "Bột trét tường Dulux A502 (Cao cấp): Báo giá, Định mức & Hướng dẫn thi công",
+          "url": "https://tavaco.vn/bot-tret-dulux-a502.html",
+          "score": 6.512,
+          "shared_tokens": [
+            "tret"
+          ],
+          "prices": {
+            "40kg": 400000
+          }
+        },
+        {
+          "title": "Bột trét tường Dulux A500 (B347): Báo giá, định mức 40kg và thi công",
+          "url": "https://tavaco.vn/bot-tret-dulux-professional-a500.html",
+          "score": 6.5111,
+          "shared_tokens": [
+            "tret"
+          ],
+          "prices": {
+            "40kg": 400000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "40kg": 370000
+      },
+      "resolved_detail": {
+        "40kg": {
+          "market_price": 380000,
+          "target_price": 370000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/bot-tret-dulux-professional-e700.html",
+              "source": "tavaco.vn",
+              "title": "Bột trét tường Dulux E700 ngoại thất: Báo giá, định mức 40kg và thi công",
+              "score": 6.5972,
+              "market_price": 380000
+            }
+          ]
+        }
+      },
+      "base_price": 370000
+    },
+    {
+      "id": 559,
+      "slug": "chatchongthamduluxaquatech",
+      "name": "Chất Chống Thấm Dulux Aquatech",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg",
+        "6kg": "6kg",
+        "10kg": "10kg",
+        "20kg": "20kg"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Chống Thấm Dulux Aquatech Flex W759",
+          "url": "https://sonthanhcong.com/son-chong-tham-dulux-aquatech-flex-w759/",
+          "score": 6.8537,
+          "shared_tokens": [
+            "aquatech"
+          ],
+          "prices": {
+            "20kg": 2570000,
+            "6kg": 860000
+          }
+        },
+        {
+          "title": "Chống Thấm Sàn Dulux Aquatech Max",
+          "url": "https://sonthanhcong.com/chong-tham-san-dulux-aquatech-max/",
+          "score": 6.83,
+          "shared_tokens": [
+            "aquatech"
+          ],
+          "prices": {
+            "20kg": 2625000,
+            "6kg": 850000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "20kg": 2560000,
+        "6kg": 840000
+      },
+      "resolved_detail": {
+        "20kg": {
+          "market_price": 2570000,
+          "target_price": 2560000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-chong-tham-dulux-aquatech-flex-w759/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Chống Thấm Dulux Aquatech Flex W759",
+              "score": 6.8537,
+              "market_price": 2570000
+            }
+          ]
+        },
+        "6kg": {
+          "market_price": 850000,
+          "target_price": 840000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/chong-tham-san-dulux-aquatech-max/",
+              "source": "sonthanhcong.com",
+              "title": "Chống Thấm Sàn Dulux Aquatech Max",
+              "score": 6.83,
+              "market_price": 850000
+            }
+          ]
+        }
+      },
+      "base_price": 840000
+    },
+    {
+      "id": 583,
+      "slug": "chatchongthamduluxaquatechchongthamvuottroi",
+      "name": "Chất chống thấm Dulux Aquatech Chống Thấm Vượt Trội",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg",
+        "10kg": "10kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Sơn Dulux Easyclean Lau Chùi Vượt Trội Kháng Virus",
+          "url": "https://sonthanhcong.com/son-dulux-easyclean-lau-chui-vuot-troi-khang-virus/",
+          "score": 9.6582,
+          "shared_tokens": [
+            "troi",
+            "vuot"
+          ],
+          "prices": {
+            "1L": 205000,
+            "5L": 978000,
+            "15L": 2732000
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 613,
+      "slug": "chatchongthamduluxaquatechflexwaterproofing",
+      "name": "Chất Chống Thấm Dulux Aquatech Flex Waterproofing",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "6kg": "6kg",
+        "10kg": "10kg",
+        "20kg": "20kg"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Chống Thấm Dulux Aquatech Flex W759",
+          "url": "https://sonthanhcong.com/son-chong-tham-dulux-aquatech-flex-w759/",
+          "score": 11.2884,
+          "shared_tokens": [
+            "aquatech",
+            "flex"
+          ],
+          "prices": {
+            "20kg": 2570000,
+            "6kg": 860000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "20kg": 2560000,
+        "6kg": 850000
+      },
+      "resolved_detail": {
+        "20kg": {
+          "market_price": 2570000,
+          "target_price": 2560000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-chong-tham-dulux-aquatech-flex-w759/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Chống Thấm Dulux Aquatech Flex W759",
+              "score": 11.2884,
+              "market_price": 2570000
+            }
+          ]
+        },
+        "6kg": {
+          "market_price": 860000,
+          "target_price": 850000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-chong-tham-dulux-aquatech-flex-w759/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Chống Thấm Dulux Aquatech Flex W759",
+              "score": 11.2884,
+              "market_price": 860000
+            }
+          ]
+        }
+      },
+      "base_price": 850000
+    },
+    {
+      "id": 593,
+      "slug": "chatchongthamduluxaquatechtm3in1",
+      "name": "Chất chống thấm Dulux AquatechTM 3in1",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "6kg": "6kg",
+        "10kg": "10kg",
+        "20kg": "20kg"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Chống Thấm Dulux Aquatech Flex W759",
+          "url": "https://sonthanhcong.com/son-chong-tham-dulux-aquatech-flex-w759/",
+          "score": 2.68,
+          "shared_tokens": [],
+          "prices": {
+            "20kg": 2570000,
+            "6kg": 860000
+          }
+        },
+        {
+          "title": "Chống Thấm Sàn Dulux Aquatech Max",
+          "url": "https://sonthanhcong.com/chong-tham-san-dulux-aquatech-max/",
+          "score": 2.6547,
+          "shared_tokens": [],
+          "prices": {
+            "20kg": 2625000,
+            "6kg": 850000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "20kg": 2560000,
+        "6kg": 840000
+      },
+      "resolved_detail": {
+        "20kg": {
+          "market_price": 2570000,
+          "target_price": 2560000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-chong-tham-dulux-aquatech-flex-w759/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Chống Thấm Dulux Aquatech Flex W759",
+              "score": 2.68,
+              "market_price": 2570000
+            }
+          ]
+        },
+        "6kg": {
+          "market_price": 850000,
+          "target_price": 840000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/chong-tham-san-dulux-aquatech-max/",
+              "source": "sonthanhcong.com",
+              "title": "Chống Thấm Sàn Dulux Aquatech Max",
+              "score": 2.6547,
+              "market_price": 850000
+            }
+          ]
+        }
+      },
+      "base_price": 840000
+    },
+    {
+      "id": 551,
+      "slug": "chongthamsanduluxaquatechmax",
+      "name": "Chống thấm sàn Dulux Aquatech Max",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "6kg": "6kg",
+        "10kg": "10kg",
+        "20kg": "20kg"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Chống Thấm Sàn Dulux Aquatech Max",
+          "url": "https://sonthanhcong.com/chong-tham-san-dulux-aquatech-max/",
+          "score": 12.0485,
+          "shared_tokens": [
+            "aquatech",
+            "max"
+          ],
+          "prices": {
+            "20kg": 2625000,
+            "6kg": 850000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "20kg": 2615000,
+        "6kg": 840000
+      },
+      "resolved_detail": {
+        "20kg": {
+          "market_price": 2625000,
+          "target_price": 2615000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/chong-tham-san-dulux-aquatech-max/",
+              "source": "sonthanhcong.com",
+              "title": "Chống Thấm Sàn Dulux Aquatech Max",
+              "score": 12.0485,
+              "market_price": 2625000
+            }
+          ]
+        },
+        "6kg": {
+          "market_price": 850000,
+          "target_price": 840000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/chong-tham-san-dulux-aquatech-max/",
+              "source": "sonthanhcong.com",
+              "title": "Chống Thấm Sàn Dulux Aquatech Max",
+              "score": 12.0485,
+              "market_price": 850000
+            }
+          ]
+        }
+      },
+      "base_price": 840000
+    },
+    {
+      "id": 541,
+      "slug": "duluxambiance5in1diamondglow-sieubong",
+      "name": "Dulux Ambiance 5in1 Diamond Glow Siêu bóng",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1L": "1L",
+        "2L": "2L",
+        "5L": "5L",
+        "15L": "15L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+          "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+          "score": 10.7697,
+          "shared_tokens": [
+            "5in1",
+            "ambiance"
+          ],
+          "prices": {
+            "1L": 398000,
+            "5L": 1993000,
+            "15L": 5664000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1L": 388000,
+        "5L": 1983000,
+        "15L": 5654000
+      },
+      "resolved_detail": {
+        "1L": {
+          "market_price": 398000,
+          "target_price": 388000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+              "score": 10.7697,
+              "market_price": 398000
+            }
+          ]
+        },
+        "5L": {
+          "market_price": 1993000,
+          "target_price": 1983000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+              "score": 10.7697,
+              "market_price": 1993000
+            }
+          ]
+        },
+        "15L": {
+          "market_price": 5664000,
+          "target_price": 5654000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+              "score": 10.7697,
+              "market_price": 5664000
+            }
+          ]
+        }
+      },
+      "base_price": 388000
+    },
+    {
+      "id": 549,
+      "slug": "duluxambiance5in1pearlglow-bongmo",
+      "name": "Dulux Ambiance 5in1 Pearl Glow Bề mặt mờ",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1L": "1L",
+        "2L": "2L",
+        "5L": "5L",
+        "15L": "15L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+          "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+          "score": 10.7381,
+          "shared_tokens": [
+            "5in1",
+            "ambiance"
+          ],
+          "prices": {
+            "1L": 398000,
+            "5L": 1993000,
+            "15L": 5664000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1L": 388000,
+        "5L": 1983000,
+        "15L": 5654000
+      },
+      "resolved_detail": {
+        "1L": {
+          "market_price": 398000,
+          "target_price": 388000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+              "score": 10.7381,
+              "market_price": 398000
+            }
+          ]
+        },
+        "5L": {
+          "market_price": 1993000,
+          "target_price": 1983000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+              "score": 10.7381,
+              "market_price": 1993000
+            }
+          ]
+        },
+        "15L": {
+          "market_price": 5664000,
+          "target_price": 5654000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+              "score": 10.7381,
+              "market_price": 5664000
+            }
+          ]
+        }
+      },
+      "base_price": 388000
+    },
+    {
+      "id": 589,
+      "slug": "duluxambiance5in1superflexx-bongmo",
+      "name": "Dulux Ambiance 5in1 Superflexx Bóng mờ",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1L": "1L",
+        "2L": "2L",
+        "3L": "3L",
+        "5L": "5L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux 5in1 Superflexx Che Phủ Vết Rạn Nứt",
+          "url": "https://sonthanhcong.com/son-dulux-5in1-superflexx/",
+          "score": 11.7062,
+          "shared_tokens": [
+            "5in1",
+            "superflexx"
+          ],
+          "prices": {
+            "1L": 423000,
+            "5L": 2081000
+          }
+        },
+        {
+          "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+          "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+          "score": 10.7765,
+          "shared_tokens": [
+            "5in1",
+            "ambiance"
+          ],
+          "prices": {
+            "1L": 398000,
+            "5L": 1993000,
+            "15L": 5664000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1L": 388000,
+        "5L": 1983000
+      },
+      "resolved_detail": {
+        "1L": {
+          "market_price": 398000,
+          "target_price": 388000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+              "score": 10.7765,
+              "market_price": 398000
+            }
+          ]
+        },
+        "5L": {
+          "market_price": 1993000,
+          "target_price": 1983000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+              "score": 10.7765,
+              "market_price": 1993000
+            }
+          ]
+        }
+      },
+      "base_price": 388000
+    },
+    {
+      "id": 565,
+      "slug": "duluxambiance5in1superflexx-sieubong",
+      "name": "Dulux Ambiance 5in1 Superflexx Siêu bóng",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1L": "1L",
+        "2L": "2L",
+        "3L": "3L",
+        "5L": "5L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux 5in1 Superflexx Che Phủ Vết Rạn Nứt",
+          "url": "https://sonthanhcong.com/son-dulux-5in1-superflexx/",
+          "score": 11.6267,
+          "shared_tokens": [
+            "5in1",
+            "superflexx"
+          ],
+          "prices": {
+            "1L": 423000,
+            "5L": 2081000
+          }
+        },
+        {
+          "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+          "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+          "score": 10.7585,
+          "shared_tokens": [
+            "5in1",
+            "ambiance"
+          ],
+          "prices": {
+            "1L": 398000,
+            "5L": 1993000,
+            "15L": 5664000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1L": 388000,
+        "5L": 1983000
+      },
+      "resolved_detail": {
+        "1L": {
+          "market_price": 398000,
+          "target_price": 388000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+              "score": 10.7585,
+              "market_price": 398000
+            }
+          ]
+        },
+        "5L": {
+          "market_price": 1993000,
+          "target_price": 1983000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+              "score": 10.7585,
+              "market_price": 1993000
+            }
+          ]
+        }
+      },
+      "base_price": 388000
+    },
+    {
+      "id": 611,
+      "slug": "duluxambianceairfresh",
+      "name": "DULUX AMBIANCE AIRFRESH",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1L": "1L",
+        "2L": "2L",
+        "5L": "5L",
+        "15L": "15L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+          "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+          "score": 6.6627,
+          "shared_tokens": [
+            "ambiance"
+          ],
+          "prices": {
+            "1L": 398000,
+            "5L": 1993000,
+            "15L": 5664000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1L": 388000,
+        "5L": 1983000,
+        "15L": 5654000
+      },
+      "resolved_detail": {
+        "1L": {
+          "market_price": 398000,
+          "target_price": 388000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+              "score": 6.6627,
+              "market_price": 398000
+            }
+          ]
+        },
+        "5L": {
+          "market_price": 1993000,
+          "target_price": 1983000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+              "score": 6.6627,
+              "market_price": 1993000
+            }
+          ]
+        },
+        "15L": {
+          "market_price": 5664000,
+          "target_price": 5654000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+              "score": 6.6627,
+              "market_price": 5664000
+            }
+          ]
+        }
+      },
+      "base_price": 388000
+    },
+    {
+      "id": 597,
+      "slug": "duluxeasycleanchongbambankhangvirus-bematbong",
+      "name": "Dulux EasyClean chống bám bẩn kháng virus bề mặt bóng",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1L": "1L",
+        "2L": "2L",
+        "5L": "5L",
+        "15L": "15L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux EasyClean Kháng Virus Chống Bám Bẩn Bề Mặt Bóng E017B 15L",
+          "url": "https://tavaco.vn/son-dulux-easyclean-khang-virus-chong-bam-ban-be-mat-bong-e017b.html",
+          "score": 29.4351,
+          "shared_tokens": [
+            "bam",
+            "ban",
+            "bong",
+            "easyclean",
+            "khang",
+            "mat",
+            "virus"
+          ],
+          "prices": {
+            "1L": 176000,
+            "5L": 650000,
+            "15L": 1760
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1L": 166000,
+        "5L": 640000
+      },
+      "resolved_detail": {
+        "1L": {
+          "market_price": 176000,
+          "target_price": 166000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-easyclean-khang-virus-chong-bam-ban-be-mat-bong-e017b.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux EasyClean Kháng Virus Chống Bám Bẩn Bề Mặt Bóng E017B 15L",
+              "score": 29.4351,
+              "market_price": 176000
+            }
+          ]
+        },
+        "5L": {
+          "market_price": 650000,
+          "target_price": 640000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-easyclean-khang-virus-chong-bam-ban-be-mat-bong-e017b.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux EasyClean Kháng Virus Chống Bám Bẩn Bề Mặt Bóng E017B 15L",
+              "score": 29.4351,
+              "market_price": 650000
+            }
+          ]
+        }
+      },
+      "base_price": 166000
+    },
+    {
+      "id": 609,
+      "slug": "duluxeasycleanchongbambankhangvirusbematmo",
+      "name": "Dulux EasyClean Chống Bám Bẩn Kháng Virus – Bề Mặt Mờ",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1L": "1L",
+        "2L": "2L",
+        "5L": "5L",
+        "15L": "15L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux EasyClean Chống Bám Bẩn Kháng Virus Bề Mặt Mờ E016M",
+          "url": "https://tavaco.vn/son-dulux-easyclean-khang-virus-chong-bam-ban-be-mat-mo.html",
+          "score": 29.5539,
+          "shared_tokens": [
+            "bam",
+            "ban",
+            "easyclean",
+            "khang",
+            "mat",
+            "mo",
+            "virus"
+          ],
+          "prices": {
+            "15L": 1730,
+            "5L": 620000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 610000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 620000,
+          "target_price": 610000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-easyclean-khang-virus-chong-bam-ban-be-mat-mo.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux EasyClean Chống Bám Bẩn Kháng Virus Bề Mặt Mờ E016M",
+              "score": 29.5539,
+              "market_price": 620000
+            }
+          ]
+        }
+      },
+      "base_price": 610000
+    },
+    {
+      "id": 615,
+      "slug": "duluxeasycleanlauchuihieuquabematbong",
+      "name": "Dulux Easyclean Lau Chùi Hiệu Quả Bề Mặt Bóng",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1L": "1L",
+        "2L": "2L",
+        "5L": "5L",
+        "18L": "18L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux Easyclean Lau Chùi Vượt Trội Kháng Virus",
+          "url": "https://sonthanhcong.com/son-dulux-easyclean-lau-chui-vuot-troi-khang-virus/",
+          "score": 15.7789,
+          "shared_tokens": [
+            "chui",
+            "easyclean",
+            "lau"
+          ],
+          "prices": {
+            "1L": 205000,
+            "5L": 978000,
+            "15L": 2732000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1L": 195000,
+        "5L": 968000
+      },
+      "resolved_detail": {
+        "1L": {
+          "market_price": 205000,
+          "target_price": 195000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-easyclean-lau-chui-vuot-troi-khang-virus/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux Easyclean Lau Chùi Vượt Trội Kháng Virus",
+              "score": 15.7789,
+              "market_price": 205000
+            }
+          ]
+        },
+        "5L": {
+          "market_price": 978000,
+          "target_price": 968000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-easyclean-lau-chui-vuot-troi-khang-virus/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux Easyclean Lau Chùi Vượt Trội Kháng Virus",
+              "score": 15.7789,
+              "market_price": 978000
+            }
+          ]
+        }
+      },
+      "base_price": 195000
+    },
+    {
+      "id": 579,
+      "slug": "duluxeasycleanlauchuihieuquabematmo",
+      "name": "Dulux EasyClean Lau Chùi Hiệu Quả Bề Mặt Mờ",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1L": "1L",
+        "2L": "2L",
+        "5L": "5L",
+        "18L": "18L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux Easyclean Lau Chùi Vượt Trội Kháng Virus",
+          "url": "https://sonthanhcong.com/son-dulux-easyclean-lau-chui-vuot-troi-khang-virus/",
+          "score": 15.7216,
+          "shared_tokens": [
+            "chui",
+            "easyclean",
+            "lau"
+          ],
+          "prices": {
+            "1L": 205000,
+            "5L": 978000,
+            "15L": 2732000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1L": 195000,
+        "5L": 968000
+      },
+      "resolved_detail": {
+        "1L": {
+          "market_price": 205000,
+          "target_price": 195000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-easyclean-lau-chui-vuot-troi-khang-virus/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux Easyclean Lau Chùi Vượt Trội Kháng Virus",
+              "score": 15.7216,
+              "market_price": 205000
+            }
+          ]
+        },
+        "5L": {
+          "market_price": 978000,
+          "target_price": 968000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-easyclean-lau-chui-vuot-troi-khang-virus/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux Easyclean Lau Chùi Vượt Trội Kháng Virus",
+              "score": 15.7216,
+              "market_price": 978000
+            }
+          ]
+        }
+      },
+      "base_price": 195000
+    },
+    {
+      "id": 535,
+      "slug": "duluxinspirengoaithatsacmaubenepbematbong",
+      "name": "Dulux Inspire Ngoại Thất Sắc Màu Bền Đẹp Bề Mặt Bóng",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "2L": "2L",
+        "5L": "5L",
+        "18L": "18L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux Inspire Nội Thất Sắc Màu Bền Đẹp Bề Mặt Mờ",
+          "url": "https://tavaco.vn/son-dulux-inspire-trong-nha-39a-15lit.html",
+          "score": 18.166,
+          "shared_tokens": [
+            "ep",
+            "inspire",
+            "mat",
+            "mau"
+          ],
+          "prices": {
+            "5L": 410000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 400000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 410000,
+          "target_price": 400000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-inspire-trong-nha-39a-15lit.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux Inspire Nội Thất Sắc Màu Bền Đẹp Bề Mặt Mờ",
+              "score": 18.166,
+              "market_price": 410000
+            }
+          ]
+        }
+      },
+      "base_price": 400000
+    },
+    {
+      "id": 563,
+      "slug": "duluxinspirengoaithatsacmaubenepbematmo",
+      "name": "Dulux Inspire Ngoại Thất Sắc Màu Bền Đẹp Bề Mặt Mờ",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "2L": "2L",
+        "5L": "5L",
+        "18L": "18L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux Inspire Nội Thất Sắc Màu Bền Đẹp Bề Mặt Mờ",
+          "url": "https://tavaco.vn/son-dulux-inspire-trong-nha-39a-15lit.html",
+          "score": 21.4291,
+          "shared_tokens": [
+            "ep",
+            "inspire",
+            "mat",
+            "mau",
+            "mo"
+          ],
+          "prices": {
+            "5L": 410000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 400000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 410000,
+          "target_price": 400000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-inspire-trong-nha-39a-15lit.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux Inspire Nội Thất Sắc Màu Bền Đẹp Bề Mặt Mờ",
+              "score": 21.4291,
+              "market_price": 410000
+            }
+          ]
+        }
+      },
+      "base_price": 400000
+    },
+    {
+      "id": 545,
+      "slug": "duluxinspirenoithatsacmaubenepbematbong",
+      "name": "Dulux Inspire Nội Thất Sắc Màu Bền Đẹp Bề Mặt Bóng",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1L": "1L",
+        "2L": "2L",
+        "5L": "5L",
+        "15L": "15L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux Inspire Nội Thất Sắc Màu Bền Đẹp Bề Mặt Mờ",
+          "url": "https://tavaco.vn/son-dulux-inspire-trong-nha-39a-15lit.html",
+          "score": 18.2874,
+          "shared_tokens": [
+            "ep",
+            "inspire",
+            "mat",
+            "mau"
+          ],
+          "prices": {
+            "5L": 410000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 400000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 410000,
+          "target_price": 400000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-inspire-trong-nha-39a-15lit.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux Inspire Nội Thất Sắc Màu Bền Đẹp Bề Mặt Mờ",
+              "score": 18.2874,
+              "market_price": 410000
+            }
+          ]
+        }
+      },
+      "base_price": 400000
+    },
+    {
+      "id": 585,
+      "slug": "duluxinspirenoithatsacmaubenepbematmo",
+      "name": "Dulux Inspire Nội Thất Sắc Màu Bền Đẹp Bề Mặt Mờ",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1L": "1L",
+        "2L": "2L",
+        "5L": "5L",
+        "15L": "15L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux Inspire Nội Thất Sắc Màu Bền Đẹp Bề Mặt Mờ",
+          "url": "https://tavaco.vn/son-dulux-inspire-trong-nha-39a-15lit.html",
+          "score": 21.5047,
+          "shared_tokens": [
+            "ep",
+            "inspire",
+            "mat",
+            "mau",
+            "mo"
+          ],
+          "prices": {
+            "5L": 410000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 400000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 410000,
+          "target_price": 400000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-inspire-trong-nha-39a-15lit.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux Inspire Nội Thất Sắc Màu Bền Đẹp Bề Mặt Mờ",
+              "score": 21.5047,
+              "market_price": 410000
+            }
+          ]
+        }
+      },
+      "base_price": 400000
+    },
+    {
+      "id": 529,
+      "slug": "duluxweathershieldbematbong",
+      "name": "Dulux Weathershield Bề Mặt Bóng",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1L": "1L",
+        "2L": "2L",
+        "5L": "5L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux Weathershield Colour Protect Bề Mặt Bóng E023",
+          "url": "https://tavaco.vn/son-dulux-weathershield-colour-protect-be-mat-bong-e023.html",
+          "score": 12.2913,
+          "shared_tokens": [
+            "bong",
+            "mat",
+            "weathershield"
+          ],
+          "prices": {
+            "1L": 454000,
+            "5L": 2046000,
+            "15L": 5828000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1L": 444000,
+        "5L": 2036000
+      },
+      "resolved_detail": {
+        "1L": {
+          "market_price": 454000,
+          "target_price": 444000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-weathershield-colour-protect-be-mat-bong-e023.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux Weathershield Colour Protect Bề Mặt Bóng E023",
+              "score": 12.2913,
+              "market_price": 454000
+            }
+          ]
+        },
+        "5L": {
+          "market_price": 2046000,
+          "target_price": 2036000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-weathershield-colour-protect-be-mat-bong-e023.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux Weathershield Colour Protect Bề Mặt Bóng E023",
+              "score": 12.2913,
+              "market_price": 2046000
+            }
+          ]
+        }
+      },
+      "base_price": 444000
+    },
+    {
+      "id": 573,
+      "slug": "duluxweathershieldbematmo",
+      "name": "Dulux Weathershield Bề Mặt Mờ",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1L": "1L",
+        "2L": "2L",
+        "5L": "5L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux Weathershield Colour Protect Bề Mặt Mờ E015",
+          "url": "https://tavaco.vn/son-dulux-weathershield-colour-protect-be-mat-mo-e015.html",
+          "score": 12.1619,
+          "shared_tokens": [
+            "mat",
+            "mo",
+            "weathershield"
+          ],
+          "prices": {
+            "1L": 454000,
+            "5L": 2046000,
+            "15L": 5828000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1L": 444000,
+        "5L": 2036000
+      },
+      "resolved_detail": {
+        "1L": {
+          "market_price": 454000,
+          "target_price": 444000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-weathershield-colour-protect-be-mat-mo-e015.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux Weathershield Colour Protect Bề Mặt Mờ E015",
+              "score": 12.1619,
+              "market_price": 454000
+            }
+          ]
+        },
+        "5L": {
+          "market_price": 2046000,
+          "target_price": 2036000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-weathershield-colour-protect-be-mat-mo-e015.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux Weathershield Colour Protect Bề Mặt Mờ E015",
+              "score": 12.1619,
+              "market_price": 2046000
+            }
+          ]
+        }
+      },
+      "base_price": 444000
+    },
+    {
+      "id": 539,
+      "slug": "duluxweathershieldchatchongtham",
+      "name": "Dulux Weathershield Chất Chống Thấm",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "0.5L": "0.5L",
+        "2L": "2L",
+        "3L": "3L"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Sơn Dulux Weathershield Chống Thấm Ngoại Thất",
+          "url": "https://sonthanhcong.com/son-dulux-weathershield-chong-tham-ngoai-that/",
+          "score": 4.2864,
+          "shared_tokens": [
+            "weathershield"
+          ],
+          "prices": {
+            "1L": 568000,
+            "5L": 2544000,
+            "15L": 7250000
+          }
+        },
+        {
+          "title": "Sơn Dulux WeatherShield BJ8 - Màng Sơn Đanh Chắc Sơn Chống Thấm Cao Cấp",
+          "url": "https://tavaco.vn/son-dulux-weathershield-mo-bj8-5lit.html",
+          "score": 4.2522,
+          "shared_tokens": [
+            "weathershield"
+          ],
+          "prices": {
+            "1L": 341000
+          }
+        },
+        {
+          "title": "Sơn Lót Dulux WeatherShield Ngoại Thất A936",
+          "url": "https://sonthanhcong.com/son-lot-dulux-weathershield-ngoai-that-a936/",
+          "score": 4.2094,
+          "shared_tokens": [
+            "weathershield"
+          ],
+          "prices": {
+            "5L": 1206000,
+            "15L": 3300000
+          }
+        },
+        {
+          "title": "Sơn Lót Ngoại Thất Dulux Weathershield Powersealer Z060",
+          "url": "https://sonthanhcong.com/son-lot-ngoai-that-dulux-weathershield-powersealer-z060/",
+          "score": 4.1935,
+          "shared_tokens": [
+            "weathershield"
+          ],
+          "prices": {
+            "5L": 1326000,
+            "18L": 4586000
+          }
+        },
+        {
+          "title": "Sơn Dulux Weathershield Che Phủ Vết Nứt GJ8",
+          "url": "https://sonthanhcong.com/son-dulux-weathershield-che-phu-vet-nut-gj8/",
+          "score": 4.179,
+          "shared_tokens": [
+            "weathershield"
+          ],
+          "prices": {
+            "1L": 621000,
+            "5L": 2804000
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 575,
+      "slug": "duluxweathershieldcolourprotectbematbong",
+      "name": "Dulux Weathershield Colour Protect Bề Mặt Bóng",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "2L": "2L"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Sơn Dulux Weathershield Colour Protect Bề Mặt Bóng E023",
+          "url": "https://tavaco.vn/son-dulux-weathershield-colour-protect-be-mat-bong-e023.html",
+          "score": 19.3722,
+          "shared_tokens": [
+            "bong",
+            "colour",
+            "mat",
+            "protect",
+            "weathershield"
+          ],
+          "prices": {
+            "1L": 454000,
+            "5L": 2046000,
+            "15L": 5828000
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 537,
+      "slug": "duluxweathershieldcolourprotectbematmo",
+      "name": "Dulux Weathershield Colour Protect Bề Mặt Mờ",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "2L": "2L"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Sơn Dulux Weathershield Colour Protect Bề Mặt Mờ E015",
+          "url": "https://tavaco.vn/son-dulux-weathershield-colour-protect-be-mat-mo-e015.html",
+          "score": 19.2511,
+          "shared_tokens": [
+            "colour",
+            "mat",
+            "mo",
+            "protect",
+            "weathershield"
+          ],
+          "prices": {
+            "1L": 454000,
+            "5L": 2046000,
+            "15L": 5828000
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 603,
+      "slug": "duluxweathershieldpowerflexxbematbong",
+      "name": "Dulux Weathershield Powerflexx Bề Mặt Bóng",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1L": "1L",
+        "2L": "2L",
+        "5L": "5L",
+        "6L": "6L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux Weathershield Colour Protect Bề Mặt Bóng E023",
+          "url": "https://tavaco.vn/son-dulux-weathershield-colour-protect-be-mat-bong-e023.html",
+          "score": 12.2613,
+          "shared_tokens": [
+            "bong",
+            "mat",
+            "weathershield"
+          ],
+          "prices": {
+            "1L": 454000,
+            "5L": 2046000,
+            "15L": 5828000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1L": 444000,
+        "5L": 2036000
+      },
+      "resolved_detail": {
+        "1L": {
+          "market_price": 454000,
+          "target_price": 444000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-weathershield-colour-protect-be-mat-bong-e023.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux Weathershield Colour Protect Bề Mặt Bóng E023",
+              "score": 12.2613,
+              "market_price": 454000
+            }
+          ]
+        },
+        "5L": {
+          "market_price": 2046000,
+          "target_price": 2036000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-weathershield-colour-protect-be-mat-bong-e023.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux Weathershield Colour Protect Bề Mặt Bóng E023",
+              "score": 12.2613,
+              "market_price": 2046000
+            }
+          ]
+        }
+      },
+      "base_price": 444000
+    },
+    {
+      "id": 561,
+      "slug": "duluxweathershieldpowerflexxbematmo",
+      "name": "Dulux Weathershield Powerflexx Bề Mặt Mờ",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "1L": "1L",
+        "2L": "2L",
+        "5L": "5L",
+        "6L": "6L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux Weathershield Colour Protect Bề Mặt Mờ E015",
+          "url": "https://tavaco.vn/son-dulux-weathershield-colour-protect-be-mat-mo-e015.html",
+          "score": 12.1332,
+          "shared_tokens": [
+            "mat",
+            "mo",
+            "weathershield"
+          ],
+          "prices": {
+            "1L": 454000,
+            "5L": 2046000,
+            "15L": 5828000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1L": 444000,
+        "5L": 2036000
+      },
+      "resolved_detail": {
+        "1L": {
+          "market_price": 454000,
+          "target_price": 444000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-weathershield-colour-protect-be-mat-mo-e015.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux Weathershield Colour Protect Bề Mặt Mờ E015",
+              "score": 12.1332,
+              "market_price": 454000
+            }
+          ]
+        },
+        "5L": {
+          "market_price": 2046000,
+          "target_price": 2036000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-weathershield-colour-protect-be-mat-mo-e015.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux Weathershield Colour Protect Bề Mặt Mờ E015",
+              "score": 12.1332,
+              "market_price": 2046000
+            }
+          ]
+        }
+      },
+      "base_price": 444000
+    },
+    {
+      "id": 595,
+      "slug": "duluxweathershieldroyalshine",
+      "name": "Dulux Weathershield Royal Shine",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "2L": "2L",
+        "3L": "3L"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Sơn Lót Dulux WeatherShield Ngoại Thất A936",
+          "url": "https://sonthanhcong.com/son-lot-dulux-weathershield-ngoai-that-a936/",
+          "score": 4.2001,
+          "shared_tokens": [
+            "weathershield"
+          ],
+          "prices": {
+            "5L": 1206000,
+            "15L": 3300000
+          }
+        },
+        {
+          "title": "Sơn Dulux Weathershield Chống Thấm Ngoại Thất",
+          "url": "https://sonthanhcong.com/son-dulux-weathershield-chong-tham-ngoai-that/",
+          "score": 4.155,
+          "shared_tokens": [
+            "weathershield"
+          ],
+          "prices": {
+            "1L": 568000,
+            "5L": 2544000,
+            "15L": 7250000
+          }
+        },
+        {
+          "title": "Sơn Dulux Weathershield Colour Protect Bề Mặt Bóng E023",
+          "url": "https://tavaco.vn/son-dulux-weathershield-colour-protect-be-mat-bong-e023.html",
+          "score": 4.1546,
+          "shared_tokens": [
+            "weathershield"
+          ],
+          "prices": {
+            "1L": 454000,
+            "5L": 2046000,
+            "15L": 5828000
+          }
+        },
+        {
+          "title": "Sơn Dulux Weathershield Colour Protect Bề Mặt Mờ E015",
+          "url": "https://tavaco.vn/son-dulux-weathershield-colour-protect-be-mat-mo-e015.html",
+          "score": 4.1367,
+          "shared_tokens": [
+            "weathershield"
+          ],
+          "prices": {
+            "1L": 454000,
+            "5L": 2046000,
+            "15L": 5828000
+          }
+        },
+        {
+          "title": "Sơn Dulux Weathershield Che Phủ Vết Nứt GJ8",
+          "url": "https://sonthanhcong.com/son-dulux-weathershield-che-phu-vet-nut-gj8/",
+          "score": 4.1358,
+          "shared_tokens": [
+            "weathershield"
+          ],
+          "prices": {
+            "1L": 621000,
+            "5L": 2804000
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 617,
+      "slug": "sonlotcaocapdulux",
+      "name": "Sơn lót cao cấp Dulux",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "2L": "2L",
+        "5L": "5L",
+        "18L": "18L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Lót Dulux EasyClean Nội Thất A935",
+          "url": "https://sonthanhcong.com/son-lot-dulux-easyclean-noi-that-a935/",
+          "score": 2.7514,
+          "shared_tokens": [],
+          "prices": {
+            "5L": 783000,
+            "15L": 2234000
+          }
+        },
+        {
+          "title": "Sơn Lót Dulux WeatherShield Ngoại Thất A936",
+          "url": "https://sonthanhcong.com/son-lot-dulux-weathershield-ngoai-that-a936/",
+          "score": 2.7402,
+          "shared_tokens": [],
+          "prices": {
+            "5L": 1206000,
+            "15L": 3300000
+          }
+        },
+        {
+          "title": "Sơn Lót Ngoại Thất Dulux Weathershield Powersealer Z060",
+          "url": "https://sonthanhcong.com/son-lot-ngoai-that-dulux-weathershield-powersealer-z060/",
+          "score": 2.6527,
+          "shared_tokens": [],
+          "prices": {
+            "5L": 1326000,
+            "18L": 4586000
+          }
+        },
+        {
+          "title": "Sơn Dulux Inspire Nội Thất Kinh Tế",
+          "url": "https://sonthanhcong.com/son-dulux-inspire-noi-that/",
+          "score": 2.6148,
+          "shared_tokens": [],
+          "prices": {
+            "5L": 804000,
+            "15L": 2296000
+          }
+        },
+        {
+          "title": "Sơn Dulux 5in1 Superflexx Che Phủ Vết Rạn Nứt",
+          "url": "https://sonthanhcong.com/son-dulux-5in1-superflexx/",
+          "score": 2.6134,
+          "shared_tokens": [],
+          "prices": {
+            "1L": 423000,
+            "5L": 2081000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 400000,
+        "18L": 4576000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 410000,
+          "target_price": 400000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-inspire-trong-nha-39a-15lit.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux Inspire Nội Thất Sắc Màu Bền Đẹp Bề Mặt Mờ",
+              "score": 2.5744,
+              "market_price": 410000
+            }
+          ]
+        },
+        "18L": {
+          "market_price": 4586000,
+          "target_price": 4576000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-lot-ngoai-that-dulux-weathershield-powersealer-z060/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Lót Ngoại Thất Dulux Weathershield Powersealer Z060",
+              "score": 2.6527,
+              "market_price": 4586000
+            }
+          ]
+        }
+      },
+      "base_price": 400000
+    },
+    {
+      "id": 533,
+      "slug": "sonlotngoaithatsieucaocapduluxweathershieldpowersealer",
+      "name": "Sơn Lót Ngoại Thất Siêu Cao Cấp Dulux Weathershield Powersealer",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "2L": "2L",
+        "5L": "5L",
+        "18L": "18L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Lót Ngoại Thất Dulux Weathershield Powersealer Z060",
+          "url": "https://sonthanhcong.com/son-lot-ngoai-that-dulux-weathershield-powersealer-z060/",
+          "score": 11.1826,
+          "shared_tokens": [
+            "powersealer",
+            "weathershield"
+          ],
+          "prices": {
+            "5L": 1326000,
+            "18L": 4586000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 1316000,
+        "18L": 4576000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 1326000,
+          "target_price": 1316000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-lot-ngoai-that-dulux-weathershield-powersealer-z060/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Lót Ngoại Thất Dulux Weathershield Powersealer Z060",
+              "score": 11.1826,
+              "market_price": 1326000
+            }
+          ]
+        },
+        "18L": {
+          "market_price": 4586000,
+          "target_price": 4576000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-lot-ngoai-that-dulux-weathershield-powersealer-z060/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Lót Ngoại Thất Dulux Weathershield Powersealer Z060",
+              "score": 11.1826,
+              "market_price": 4586000
+            }
+          ]
+        }
+      },
+      "base_price": 1316000
+    },
+    {
+      "id": 599,
+      "slug": "sonlotnoithatcaocapduluxeasyclean",
+      "name": "Sơn lót nội thất cao cấp Dulux EasyClean",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "2L": "2L",
+        "5L": "5L",
+        "15L": "15L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Lót Dulux EasyClean Nội Thất A935",
+          "url": "https://sonthanhcong.com/son-lot-dulux-easyclean-noi-that-a935/",
+          "score": 6.5652,
+          "shared_tokens": [
+            "easyclean"
+          ],
+          "prices": {
+            "5L": 783000,
+            "15L": 2234000
+          }
+        },
+        {
+          "title": "Sơn Dulux EasyClean Chống Bám Bẩn Kháng Virus Bề Mặt Mờ E016M",
+          "url": "https://tavaco.vn/son-dulux-easyclean-khang-virus-chong-bam-ban-be-mat-mo.html",
+          "score": 6.5022,
+          "shared_tokens": [
+            "easyclean"
+          ],
+          "prices": {
+            "15L": 1730,
+            "5L": 620000
+          }
+        },
+        {
+          "title": "Sơn Dulux Easyclean Kháng Virus Chống Bám Bẩn",
+          "url": "https://sonthanhcong.com/son-dulux-easyclean-khang-virus/",
+          "score": 6.486,
+          "shared_tokens": [
+            "easyclean"
+          ],
+          "prices": {
+            "1L": 220000,
+            "5L": 650000,
+            "15L": 1800000
+          }
+        },
+        {
+          "title": "Sơn Dulux EasyClean Kháng Virus Chống Bám Bẩn Bề Mặt Bóng E017B 15L",
+          "url": "https://tavaco.vn/son-dulux-easyclean-khang-virus-chong-bam-ban-be-mat-bong-e017b.html",
+          "score": 6.4707,
+          "shared_tokens": [
+            "easyclean"
+          ],
+          "prices": {
+            "1L": 176000,
+            "5L": 650000,
+            "15L": 1760
+          }
+        },
+        {
+          "title": "Sơn Dulux Easyclean Lau Chùi Vượt Trội Kháng Virus",
+          "url": "https://sonthanhcong.com/son-dulux-easyclean-lau-chui-vuot-troi-khang-virus/",
+          "score": 6.3488,
+          "shared_tokens": [
+            "easyclean"
+          ],
+          "prices": {
+            "1L": 205000,
+            "5L": 978000,
+            "15L": 2732000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 610000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 620000,
+          "target_price": 610000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-easyclean-khang-virus-chong-bam-ban-be-mat-mo.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux EasyClean Chống Bám Bẩn Kháng Virus Bề Mặt Mờ E016M",
+              "score": 6.5022,
+              "market_price": 620000
+            }
+          ]
+        }
+      },
+      "base_price": 610000
+    },
+    {
+      "id": 567,
+      "slug": "sonlotnoithatcaocapsupersealer",
+      "name": "Sơn Lót Nội Thất Cao Cấp SuperSealer",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "2L": "2L",
+        "5L": "5L",
+        "18L": "18L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Lót Ngoại Thất Dulux Weathershield Powersealer Z060",
+          "url": "https://sonthanhcong.com/son-lot-ngoai-that-dulux-weathershield-powersealer-z060/",
+          "score": 2.5748,
+          "shared_tokens": [],
+          "prices": {
+            "5L": 1326000,
+            "18L": 4586000
+          }
+        },
+        {
+          "title": "Sơn Dulux Inspire Nội Thất Sắc Màu Bền Đẹp Bề Mặt Mờ",
+          "url": "https://tavaco.vn/son-dulux-inspire-trong-nha-39a-15lit.html",
+          "score": 2.5665,
+          "shared_tokens": [],
+          "prices": {
+            "5L": 410000
+          }
+        },
+        {
+          "title": "Sơn Dulux Weathershield Chống Thấm Ngoại Thất",
+          "url": "https://sonthanhcong.com/son-dulux-weathershield-chong-tham-ngoai-that/",
+          "score": 2.4792,
+          "shared_tokens": [],
+          "prices": {
+            "1L": 568000,
+            "5L": 2544000,
+            "15L": 7250000
+          }
+        },
+        {
+          "title": "Mua sơn Maxilite Trong Nhà Total 30C tại sơn Dulux Maxilite Tavaco",
+          "url": "https://tavaco.vn/son-maxilite-trong-nha-total.html",
+          "score": 2.4729,
+          "shared_tokens": [],
+          "prices": {
+            "5L": 549000,
+            "15L": 1460000
+          }
+        },
+        {
+          "title": "Sơn Dulux EasyClean Kháng Virus Chống Bám Bẩn Bề Mặt Bóng E017B 15L",
+          "url": "https://tavaco.vn/son-dulux-easyclean-khang-virus-chong-bam-ban-be-mat-bong-e017b.html",
+          "score": 2.469,
+          "shared_tokens": [],
+          "prices": {
+            "1L": 176000,
+            "5L": 650000,
+            "15L": 1760
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 400000,
+        "18L": 4576000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 410000,
+          "target_price": 400000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dulux-inspire-trong-nha-39a-15lit.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dulux Inspire Nội Thất Sắc Màu Bền Đẹp Bề Mặt Mờ",
+              "score": 2.5665,
+              "market_price": 410000
+            }
+          ]
+        },
+        "18L": {
+          "market_price": 4586000,
+          "target_price": 4576000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-lot-ngoai-that-dulux-weathershield-powersealer-z060/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Lót Ngoại Thất Dulux Weathershield Powersealer Z060",
+              "score": 2.5748,
+              "market_price": 4586000
+            }
+          ]
+        }
+      },
+      "base_price": 400000
+    },
+    {
+      "id": 571,
+      "slug": "sonlotnoithatsieucaocapduluxambiance",
+      "name": "Sơn Lót Nội Thất Siêu Cao Cấp Dulux Ambiance",
+      "brand": "dulux",
+      "existing_price": "",
+      "pack_labels": {
+        "2L": "2L",
+        "5L": "5L",
+        "15L": "15L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+          "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+          "score": 6.6221,
+          "shared_tokens": [
+            "ambiance"
+          ],
+          "prices": {
+            "1L": 398000,
+            "5L": 1993000,
+            "15L": 5664000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 1983000,
+        "15L": 5654000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 1993000,
+          "target_price": 1983000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+              "score": 6.6221,
+              "market_price": 1993000
+            }
+          ]
+        },
+        "15L": {
+          "market_price": 5664000,
+          "target_price": 5654000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-dulux-5in1-ambiance/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Dulux 5in1 Ambiance Chùi Rửa Vết Bẩn",
+              "score": 6.6221,
+              "market_price": 5664000
+            }
+          ]
+        }
+      },
+      "base_price": 1983000
+    },
+    {
+      "id": 543,
+      "slug": "bottrettuongnoingoaithatmaxilitetudulux",
+      "name": "Bột trét tường Nội &amp; Ngoại thất Maxilite từ Dulux",
+      "brand": "maxilite",
+      "existing_price": "",
+      "pack_labels": {
+        "40kg": "40kg"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Bột Trét Tường Maxilite A502-29137",
+          "url": "https://sonthanhcong.com/bot-tret-tuong-maxilite-a502-29137/",
+          "score": 6.344,
+          "shared_tokens": [
+            "tret"
+          ],
+          "prices": {
+            "__default__": 365000,
+            "40kg": 385000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "40kg": 375000
+      },
+      "resolved_detail": {
+        "40kg": {
+          "market_price": 385000,
+          "target_price": 375000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/bot-tret-tuong-maxilite-a502-29137/",
+              "source": "sonthanhcong.com",
+              "title": "Bột Trét Tường Maxilite A502-29137",
+              "score": 6.344,
+              "market_price": 385000
+            }
+          ]
+        }
+      },
+      "base_price": 375000
+    },
+    {
+      "id": 547,
+      "slug": "bottrettuongtrongnhamaxilite",
+      "name": "Bột trét tường trong nhà Maxilite",
+      "brand": "maxilite",
+      "existing_price": "354000",
+      "pack_labels": {
+        "40kg": "40kg"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Bột Trét Tường Maxilite A502-29137",
+          "url": "https://sonthanhcong.com/bot-tret-tuong-maxilite-a502-29137/",
+          "score": 6.4898,
+          "shared_tokens": [
+            "tret"
+          ],
+          "prices": {
+            "__default__": 365000,
+            "40kg": 385000
+          }
+        },
+        {
+          "title": "Sơn Lót Maxilite Trong Nhà ME4 Chất Lượng Cao Giá Thành Rẻ tại Tavaco",
+          "url": "https://tavaco.vn/son-lot-maxilite-trong-nha.html",
+          "score": 5.109,
+          "shared_tokens": [
+            "nha"
+          ],
+          "prices": {
+            "5L": 452000,
+            "15L": 1266000,
+            "18L": 1518000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "40kg": 375000
+      },
+      "resolved_detail": {
+        "40kg": {
+          "market_price": 385000,
+          "target_price": 375000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/bot-tret-tuong-maxilite-a502-29137/",
+              "source": "sonthanhcong.com",
+              "title": "Bột Trét Tường Maxilite A502-29137",
+              "score": 6.4898,
+              "market_price": 385000
+            }
+          ]
+        }
+      },
+      "base_price": 375000
+    },
+    {
+      "id": 601,
+      "slug": "maxilitesonlotngoaitroi",
+      "name": "Maxilite Sơn Lót Ngoài Trời",
+      "brand": "maxilite",
+      "existing_price": "588000",
+      "pack_labels": {
+        "5L": "5L",
+        "18L": "18L"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn lót Maxilite ngoài trời 48C bảo vệ tường khỏi sự kiềm hóa từ xi măng",
+          "url": "https://tavaco.vn/son-lot-maxilite-ngoai-troi.html",
+          "score": 6.6312,
+          "shared_tokens": [
+            "troi"
+          ],
+          "prices": {
+            "5L": 743000,
+            "15L": 2032000,
+            "18L": 2437000
+          }
+        },
+        {
+          "title": "Sơn Maxilite Ngoài Trời Tough 15L",
+          "url": "https://tavaco.vn/son-maxilite-ngoai-troi-tough.html",
+          "score": 6.5069,
+          "shared_tokens": [
+            "troi"
+          ],
+          "prices": {
+            "5L": 749000,
+            "15L": 2013000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 733000,
+        "18L": 2427000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 743000,
+          "target_price": 733000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-lot-maxilite-ngoai-troi.html",
+              "source": "tavaco.vn",
+              "title": "Sơn lót Maxilite ngoài trời 48C bảo vệ tường khỏi sự kiềm hóa từ xi măng",
+              "score": 6.6312,
+              "market_price": 743000
+            }
+          ]
+        },
+        "18L": {
+          "market_price": 2437000,
+          "target_price": 2427000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-lot-maxilite-ngoai-troi.html",
+              "source": "tavaco.vn",
+              "title": "Sơn lót Maxilite ngoài trời 48C bảo vệ tường khỏi sự kiềm hóa từ xi măng",
+              "score": 6.6312,
+              "market_price": 2437000
+            }
+          ]
+        }
+      },
+      "base_price": 733000
+    },
+    {
+      "id": 577,
+      "slug": "sondaumaxilite",
+      "name": "Sơn dầu Maxilite",
+      "brand": "maxilite",
+      "existing_price": "",
+      "pack_labels": {
+        "0.75L": "0.75L",
+        "2L": "2L",
+        "2.5L": "2.5L",
+        "17L": "17L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Dầu Maxilite cho Gỗ và kim loại Sắt Thép",
+          "url": "https://tavaco.vn/son-dau-maxilite.html",
+          "score": 8.0012,
+          "shared_tokens": [
+            "dau"
+          ],
+          "prices": {
+            "17L": 3137000,
+            "18L": 2397000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "17L": 3127000
+      },
+      "resolved_detail": {
+        "17L": {
+          "market_price": 3137000,
+          "target_price": 3127000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-dau-maxilite.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Dầu Maxilite cho Gỗ và kim loại Sắt Thép",
+              "score": 8.0012,
+              "market_price": 3137000
+            }
+          ]
+        }
+      },
+      "base_price": 3127000
+    },
+    {
+      "id": 591,
+      "slug": "sonlotngannguarisetmaxilite",
+      "name": "Sơn Lót Ngăn Ngừa Rỉ Sét Maxilite",
+      "brand": "maxilite",
+      "existing_price": "",
+      "pack_labels": {
+        "0.8L": "0.8L",
+        "2L": "2L",
+        "3L": "3L",
+        "18L": "18L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Chống Rỉ Maxilite gốc Alkyd cho Kim Loại Sắt Thép",
+          "url": "https://tavaco.vn/son-chong-ri-maxilite.html",
+          "score": 7.7638,
+          "shared_tokens": [
+            "ri"
+          ],
+          "prices": {
+            "18L": 2397000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "18L": 2387000
+      },
+      "resolved_detail": {
+        "18L": {
+          "market_price": 2397000,
+          "target_price": 2387000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-chong-ri-maxilite.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Chống Rỉ Maxilite gốc Alkyd cho Kim Loại Sắt Thép",
+              "score": 7.7638,
+              "market_price": 2397000
+            }
+          ]
+        }
+      },
+      "base_price": 2387000
+    },
+    {
+      "id": 553,
+      "slug": "sonlottrongnhamaxilite",
+      "name": "Sơn lót trong nhà Maxilite",
+      "brand": "maxilite",
+      "existing_price": "358000",
+      "pack_labels": {
+        "5L": "5L",
+        "18L": "18L"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Lót Maxilite Trong Nhà ME4 Chất Lượng Cao Giá Thành Rẻ tại Tavaco",
+          "url": "https://tavaco.vn/son-lot-maxilite-trong-nha.html",
+          "score": 6.9622,
+          "shared_tokens": [
+            "nha"
+          ],
+          "prices": {
+            "5L": 452000,
+            "15L": 1266000,
+            "18L": 1518000
+          }
+        },
+        {
+          "title": "Giá Sơn Maxilite Smooth Trong Nhà ME5 tại TPHCM",
+          "url": "https://tavaco.vn/son-maxilite-smooth.html",
+          "score": 6.8864,
+          "shared_tokens": [
+            "nha"
+          ],
+          "prices": {
+            "5L": 269000,
+            "18L": 917000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 259000,
+        "18L": 907000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 269000,
+          "target_price": 259000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-maxilite-smooth.html",
+              "source": "tavaco.vn",
+              "title": "Giá Sơn Maxilite Smooth Trong Nhà ME5 tại TPHCM",
+              "score": 6.8864,
+              "market_price": 269000
+            }
+          ]
+        },
+        "18L": {
+          "market_price": 917000,
+          "target_price": 907000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-maxilite-smooth.html",
+              "source": "tavaco.vn",
+              "title": "Giá Sơn Maxilite Smooth Trong Nhà ME5 tại TPHCM",
+              "score": 6.8864,
+              "market_price": 917000
+            }
+          ]
+        }
+      },
+      "base_price": 259000
+    },
+    {
+      "id": 555,
+      "slug": "sonnuocngoaithatmaxilitetoughtudulux_bematbongmo",
+      "name": "Sơn nước ngoại thất Maxilite Tough từ Dulux bề mặt bóng mờ",
+      "brand": "maxilite",
+      "existing_price": "",
+      "pack_labels": {
+        "2L": "2L",
+        "5L": "5L",
+        "15L": "15L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Maxilite Ngoài Trời Tough 15L",
+          "url": "https://tavaco.vn/son-maxilite-ngoai-troi-tough.html",
+          "score": 7.2777,
+          "shared_tokens": [
+            "tough"
+          ],
+          "prices": {
+            "5L": 749000,
+            "15L": 2013000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 739000,
+        "15L": 2003000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 749000,
+          "target_price": 739000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-maxilite-ngoai-troi-tough.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Maxilite Ngoài Trời Tough 15L",
+              "score": 7.2777,
+              "market_price": 749000
+            }
+          ]
+        },
+        "15L": {
+          "market_price": 2013000,
+          "target_price": 2003000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-maxilite-ngoai-troi-tough.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Maxilite Ngoài Trời Tough 15L",
+              "score": 7.2777,
+              "market_price": 2013000
+            }
+          ]
+        }
+      },
+      "base_price": 739000
+    },
+    {
+      "id": 607,
+      "slug": "sonnuocngoaithatmaxilitetoughtudulux_bematmo",
+      "name": "Sơn nước ngoại thất Maxilite Tough từ Dulux bề mặt mờ",
+      "brand": "maxilite",
+      "existing_price": "592000",
+      "pack_labels": {
+        "5L": "5L",
+        "18L": "18L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Maxilite Ngoài Trời Tough 15L",
+          "url": "https://tavaco.vn/son-maxilite-ngoai-troi-tough.html",
+          "score": 7.319,
+          "shared_tokens": [
+            "tough"
+          ],
+          "prices": {
+            "5L": 749000,
+            "15L": 2013000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 739000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 749000,
+          "target_price": 739000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-maxilite-ngoai-troi-tough.html",
+              "source": "tavaco.vn",
+              "title": "Sơn Maxilite Ngoài Trời Tough 15L",
+              "score": 7.319,
+              "market_price": 749000
+            }
+          ]
+        }
+      },
+      "base_price": 739000
+    },
+    {
+      "id": 581,
+      "slug": "sonnuocngoaitroimaxiliteultima-bematbong",
+      "name": "Sơn nước ngoài trời Maxilite Ultima bề mặt bóng",
+      "brand": "maxilite",
+      "existing_price": "769500",
+      "pack_labels": {
+        "5L": "5L",
+        "18L": "18L"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn lót Maxilite ngoài trời 48C bảo vệ tường khỏi sự kiềm hóa từ xi măng",
+          "url": "https://tavaco.vn/son-lot-maxilite-ngoai-troi.html",
+          "score": 6.5898,
+          "shared_tokens": [
+            "troi"
+          ],
+          "prices": {
+            "5L": 743000,
+            "15L": 2032000,
+            "18L": 2437000
+          }
+        },
+        {
+          "title": "Sơn Maxilite Ngoài Trời Tough 15L",
+          "url": "https://tavaco.vn/son-maxilite-ngoai-troi-tough.html",
+          "score": 6.1269,
+          "shared_tokens": [
+            "troi"
+          ],
+          "prices": {
+            "5L": 749000,
+            "15L": 2013000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 733000,
+        "18L": 2427000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 743000,
+          "target_price": 733000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-lot-maxilite-ngoai-troi.html",
+              "source": "tavaco.vn",
+              "title": "Sơn lót Maxilite ngoài trời 48C bảo vệ tường khỏi sự kiềm hóa từ xi măng",
+              "score": 6.5898,
+              "market_price": 743000
+            }
+          ]
+        },
+        "18L": {
+          "market_price": 2437000,
+          "target_price": 2427000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-lot-maxilite-ngoai-troi.html",
+              "source": "tavaco.vn",
+              "title": "Sơn lót Maxilite ngoài trời 48C bảo vệ tường khỏi sự kiềm hóa từ xi măng",
+              "score": 6.5898,
+              "market_price": 2437000
+            }
+          ]
+        }
+      },
+      "base_price": 733000
+    },
+    {
+      "id": 569,
+      "slug": "sonnuocngoaitroimaxiliteultima-bematmo",
+      "name": "Sơn nước ngoài trời Maxilite Ultima bề mặt mờ",
+      "brand": "maxilite",
+      "existing_price": "769500",
+      "pack_labels": {
+        "5L": "5L",
+        "18L": "18L"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn lót Maxilite ngoài trời 48C bảo vệ tường khỏi sự kiềm hóa từ xi măng",
+          "url": "https://tavaco.vn/son-lot-maxilite-ngoai-troi.html",
+          "score": 6.4956,
+          "shared_tokens": [
+            "troi"
+          ],
+          "prices": {
+            "5L": 743000,
+            "15L": 2032000,
+            "18L": 2437000
+          }
+        },
+        {
+          "title": "Sơn Maxilite Ngoài Trời Tough 15L",
+          "url": "https://tavaco.vn/son-maxilite-ngoai-troi-tough.html",
+          "score": 6.1391,
+          "shared_tokens": [
+            "troi"
+          ],
+          "prices": {
+            "5L": 749000,
+            "15L": 2013000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 733000,
+        "18L": 2427000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 743000,
+          "target_price": 733000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-lot-maxilite-ngoai-troi.html",
+              "source": "tavaco.vn",
+              "title": "Sơn lót Maxilite ngoài trời 48C bảo vệ tường khỏi sự kiềm hóa từ xi măng",
+              "score": 6.4956,
+              "market_price": 743000
+            }
+          ]
+        },
+        "18L": {
+          "market_price": 2437000,
+          "target_price": 2427000,
+          "sources": [
+            {
+              "url": "https://tavaco.vn/son-lot-maxilite-ngoai-troi.html",
+              "source": "tavaco.vn",
+              "title": "Sơn lót Maxilite ngoài trời 48C bảo vệ tường khỏi sự kiềm hóa từ xi măng",
+              "score": 6.4956,
+              "market_price": 2437000
+            }
+          ]
+        }
+      },
+      "base_price": 733000
+    },
+    {
+      "id": 557,
+      "slug": "sonnuocnoithatmaxilitechephuhieuquatudulux",
+      "name": "Sơn nước nội thất Maxilite Che Phủ Hiệu Quả từ Dulux",
+      "brand": "maxilite",
+      "existing_price": "",
+      "pack_labels": {
+        "2L": "2L",
+        "5L": "5L",
+        "15L": "15L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Mua sơn Maxilite Hicover MK14 tại sơn Maxilite Tavaco",
+          "url": "https://tavaco.vn/son-maxilite-hicover-mk14.html",
+          "score": 2.6148,
+          "shared_tokens": [],
+          "prices": {
+            "5L": 360000,
+            "15L": 1007000
+          }
+        },
+        {
+          "title": "Sơn Lót Maxilite Trong Nhà ME4 Chất Lượng Cao Giá Thành Rẻ tại Tavaco",
+          "url": "https://tavaco.vn/son-lot-maxilite-trong-nha.html",
+          "score": 2.5941,
+          "shared_tokens": [],
+          "prices": {
+            "5L": 452000,
+            "15L": 1266000,
+            "18L": 1518000
+          }
+        },
+        {
+          "title": "Sơn lót Maxilite ngoài trời 48C bảo vệ tường khỏi sự kiềm hóa từ xi măng",
+          "url": "https://tavaco.vn/son-lot-maxilite-ngoai-troi.html",
+          "score": 2.5404,
+          "shared_tokens": [],
+          "prices": {
+            "5L": 743000,
+            "15L": 2032000,
+            "18L": 2437000
+          }
+        },
+        {
+          "title": "Sơn Lót Maxilite Nội Thất",
+          "url": "https://sonthanhcong.com/son-lot-maxilite-noi-that/",
+          "score": 2.4559,
+          "shared_tokens": [],
+          "prices": {
+            "5L": 452000,
+            "15L": 1266000
+          }
+        },
+        {
+          "title": "Sơn Lót Maxilite Ngoại Thất",
+          "url": "https://sonthanhcong.com/son-lot-maxilite-ngoai-that/",
+          "score": 2.4209,
+          "shared_tokens": [],
+          "prices": {
+            "5L": 743000,
+            "15L": 2032000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 251000,
+        "15L": 977000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 261000,
+          "target_price": 251000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-maxilite-smooth-kinh-te/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Maxilite Smooth Kinh Tế",
+              "score": 2.3129,
+              "market_price": 261000
+            }
+          ]
+        },
+        "15L": {
+          "market_price": 987000,
+          "target_price": 977000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-maxilite-noi-that-hi-cover/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Maxilite nội thất Hi-Cover",
+              "score": 2.2771,
+              "market_price": 987000
+            }
+          ]
+        }
+      },
+      "base_price": 251000
+    },
+    {
+      "id": 525,
+      "slug": "sonnuocnoithatmaxilitehi-covertudulux",
+      "name": "Sơn nước nội thất Maxilite Hi-Cover từ Dulux",
+      "brand": "maxilite",
+      "existing_price": "262000",
+      "pack_labels": {
+        "5L": "5L",
+        "18L": "18L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Maxilite nội thất Hi-Cover",
+          "url": "https://sonthanhcong.com/son-maxilite-noi-that-hi-cover/",
+          "score": 12.5662,
+          "shared_tokens": [
+            "cover",
+            "hi"
+          ],
+          "prices": {
+            "5L": 353000,
+            "15L": 987000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 343000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 353000,
+          "target_price": 343000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-maxilite-noi-that-hi-cover/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Maxilite nội thất Hi-Cover",
+              "score": 12.5662,
+              "market_price": 353000
+            }
+          ]
+        }
+      },
+      "base_price": 343000
+    },
+    {
+      "id": 587,
+      "slug": "sonnuocnoithatmaxilitesmooth",
+      "name": "Sơn nước nội thất Maxilite Smooth",
+      "brand": "maxilite",
+      "existing_price": "187000",
+      "pack_labels": {
+        "5L": "5L",
+        "18L": "18L"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Giá Sơn Maxilite Smooth Trong Nhà ME5 tại TPHCM",
+          "url": "https://tavaco.vn/son-maxilite-smooth.html",
+          "score": 7.5438,
+          "shared_tokens": [
+            "smooth"
+          ],
+          "prices": {
+            "5L": 269000,
+            "18L": 917000
+          }
+        },
+        {
+          "title": "Sơn Maxilite Smooth Kinh Tế",
+          "url": "https://sonthanhcong.com/son-maxilite-smooth-kinh-te/",
+          "score": 7.4176,
+          "shared_tokens": [
+            "smooth"
+          ],
+          "prices": {
+            "5L": 261000,
+            "18L": 890000,
+            "17L": 736000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 251000,
+        "18L": 880000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 261000,
+          "target_price": 251000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-maxilite-smooth-kinh-te/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Maxilite Smooth Kinh Tế",
+              "score": 7.4176,
+              "market_price": 261000
+            }
+          ]
+        },
+        "18L": {
+          "market_price": 890000,
+          "target_price": 880000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-maxilite-smooth-kinh-te/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Maxilite Smooth Kinh Tế",
+              "score": 7.4176,
+              "market_price": 890000
+            }
+          ]
+        }
+      },
+      "base_price": 251000
+    },
+    {
+      "id": 527,
+      "slug": "sonnuocnoithatmaxilitetotaltuduluxbematbongmo",
+      "name": "Sơn nước nội thất Maxilite Total từ Dulux Bề mặt Bóng Mờ",
+      "brand": "maxilite",
+      "existing_price": "",
+      "pack_labels": {
+        "2L": "2L",
+        "5L": "5L",
+        "15L": "15L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Maxilite Nội Thất Total",
+          "url": "https://sonthanhcong.com/son-maxilite-noi-that-total/",
+          "score": 6.8385,
+          "shared_tokens": [
+            "total"
+          ],
+          "prices": {
+            "5L": 538000,
+            "15L": 1432000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 528000,
+        "15L": 1422000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 538000,
+          "target_price": 528000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-maxilite-noi-that-total/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Maxilite Nội Thất Total",
+              "score": 6.8385,
+              "market_price": 538000
+            }
+          ]
+        },
+        "15L": {
+          "market_price": 1432000,
+          "target_price": 1422000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-maxilite-noi-that-total/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Maxilite Nội Thất Total",
+              "score": 6.8385,
+              "market_price": 1432000
+            }
+          ]
+        }
+      },
+      "base_price": 528000
+    },
+    {
+      "id": 605,
+      "slug": "sonnuocnoithatmaxilitetotaltuduluxbematmo",
+      "name": "Sơn nước nội thất Maxilite Total từ Dulux Bề Mặt Mờ",
+      "brand": "maxilite",
+      "existing_price": "442500",
+      "pack_labels": {
+        "5L": "5L",
+        "18L": "18L"
+      },
+      "status": "partial",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Sơn Maxilite Nội Thất Total",
+          "url": "https://sonthanhcong.com/son-maxilite-noi-that-total/",
+          "score": 6.8689,
+          "shared_tokens": [
+            "total"
+          ],
+          "prices": {
+            "5L": 538000,
+            "15L": 1432000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5L": 528000
+      },
+      "resolved_detail": {
+        "5L": {
+          "market_price": 538000,
+          "target_price": 528000,
+          "sources": [
+            {
+              "url": "https://sonthanhcong.com/son-maxilite-noi-that-total/",
+              "source": "sonthanhcong.com",
+              "title": "Sơn Maxilite Nội Thất Total",
+              "score": 6.8689,
+              "market_price": 538000
+            }
+          ]
+        }
+      },
+      "base_price": 528000
+    },
+    {
+      "id": 246,
+      "slug": "keo-cha-ron-webercolor-classic",
+      "name": "Keo chà ron Webercolor Classic",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Keo chà ron Weber.color classic 1kg/bao",
+          "url": "https://topto.vn/san-pham/keo-cha-ron-weber-color-classic/",
+          "score": 13.9554,
+          "shared_tokens": [
+            "cha",
+            "classic",
+            "ron"
+          ],
+          "prices": {
+            "1kg": 30000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1kg": 20000
+      },
+      "resolved_detail": {
+        "1kg": {
+          "market_price": 30000,
+          "target_price": 20000,
+          "sources": [
+            {
+              "url": "https://topto.vn/san-pham/keo-cha-ron-weber-color-classic/",
+              "source": "topto.vn",
+              "title": "Keo chà ron Weber.color classic 1kg/bao",
+              "score": 13.9554,
+              "market_price": 30000
+            }
+          ]
+        }
+      },
+      "base_price": 20000
+    },
+    {
+      "id": 248,
+      "slug": "keo-dan-gach-webertai-fix-40kg",
+      "name": "Keo dán gạch Webertai Fix 40kg",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "40kg": "40kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Keo Dán Gạch Webertai Fix – Hàng Chính Hãng, Rẻ Nhất Tại HCM",
+          "url": "https://phugiacongtrinh.com/product/keo-dan-gach-webertai-fix/",
+          "score": 11.7263,
+          "shared_tokens": [
+            "fix",
+            "gach",
+            "webertai"
+          ],
+          "prices": {
+            "__default__": 224000
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 250,
+      "slug": "keo-dan-gach-webertai-gres-40kg",
+      "name": "Keo dán gạch Webertai Gres 40kg",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "40kg": "40kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Keo Dán Gạch Webertai Gres – Giá Rẻ Nhất Thị Trường",
+          "url": "https://phugiacongtrinh.com/product/keo-dan-gach-webertai-gres/",
+          "score": 11.849,
+          "shared_tokens": [
+            "gach",
+            "gres",
+            "webertai"
+          ],
+          "prices": {
+            "__default__": 359000
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 252,
+      "slug": "keo-dan-gach-webertai-vis-40kg",
+      "name": "Keo dán gạch Webertai Vis 40kg",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "40kg": "40kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Keo Dán Gạch Webertai Vis – Giá Vô Cùng Hấp Dẫn",
+          "url": "https://phugiacongtrinh.com/product/keo-dan-gach-webertai-vis/",
+          "score": 11.8029,
+          "shared_tokens": [
+            "gach",
+            "vis",
+            "webertai"
+          ],
+          "prices": {
+            "__default__": 199900
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 257,
+      "slug": "weberad-latex",
+      "name": "Weberad Latex",
+      "brand": "weber",
+      "existing_price": "300000",
+      "pack_labels": {
+        "5L": "5L"
+      },
+      "status": "unmatched",
+      "reason": "no_candidate_offer",
+      "candidates": [],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 261,
+      "slug": "webercolor-classic",
+      "name": "Webercolor Classic",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "WEBERCOLOR CLASSIC (1KG/BAO)",
+          "url": "https://chongthamsonphat.com.vn/webercolor-classic-1kgbao",
+          "score": 9.8276,
+          "shared_tokens": [
+            "classic",
+            "webercolor"
+          ],
+          "prices": {
+            "1kg": 25000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1kg": 15000
+      },
+      "resolved_detail": {
+        "1kg": {
+          "market_price": 25000,
+          "target_price": 15000,
+          "sources": [
+            {
+              "url": "https://chongthamsonphat.com.vn/webercolor-classic-1kgbao",
+              "source": "chongthamsonphat.com.vn",
+              "title": "WEBERCOLOR CLASSIC (1KG/BAO)",
+              "score": 9.8276,
+              "market_price": 25000
+            }
+          ]
+        }
+      },
+      "base_price": 15000
+    },
+    {
+      "id": 258,
+      "slug": "webercolor-classic-2023",
+      "name": "Webercolor Classic 2023",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "WEBERCOLOR CLASSIC (1KG/BAO)",
+          "url": "https://chongthamsonphat.com.vn/webercolor-classic-1kgbao",
+          "score": 9.7657,
+          "shared_tokens": [
+            "classic",
+            "webercolor"
+          ],
+          "prices": {
+            "1kg": 25000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1kg": 15000
+      },
+      "resolved_detail": {
+        "1kg": {
+          "market_price": 25000,
+          "target_price": 15000,
+          "sources": [
+            {
+              "url": "https://chongthamsonphat.com.vn/webercolor-classic-1kgbao",
+              "source": "chongthamsonphat.com.vn",
+              "title": "WEBERCOLOR CLASSIC (1KG/BAO)",
+              "score": 9.7657,
+              "market_price": 25000
+            }
+          ]
+        }
+      },
+      "base_price": 15000
+    },
+    {
+      "id": 263,
+      "slug": "webercolor-classic-ps",
+      "name": "Webercolor Classic Ps",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "WEBERCOLOR CLASSIC (1KG/BAO)",
+          "url": "https://chongthamsonphat.com.vn/webercolor-classic-1kgbao",
+          "score": 9.7897,
+          "shared_tokens": [
+            "classic",
+            "webercolor"
+          ],
+          "prices": {
+            "1kg": 25000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1kg": 15000
+      },
+      "resolved_detail": {
+        "1kg": {
+          "market_price": 25000,
+          "target_price": 15000,
+          "sources": [
+            {
+              "url": "https://chongthamsonphat.com.vn/webercolor-classic-1kgbao",
+              "source": "chongthamsonphat.com.vn",
+              "title": "WEBERCOLOR CLASSIC (1KG/BAO)",
+              "score": 9.7897,
+              "market_price": 25000
+            }
+          ]
+        }
+      },
+      "base_price": 15000
+    },
+    {
+      "id": 264,
+      "slug": "webercolor-hr",
+      "name": "Webercolor Hr",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Keo Chà Ron Webercolor HR – Giá Siêu Khuyến Mãi",
+          "url": "https://phugiacongtrinh.com/product/keo-cha-ron-weber-color-hr/",
+          "score": 8.1435,
+          "shared_tokens": [
+            "hr",
+            "webercolor"
+          ],
+          "prices": {
+            "__default__": 199900
+          }
+        },
+        {
+          "title": "Rinh liền tay keo chà ron Webercolor Weber HR trực tuyến chính hãng chất lượng cao | TATmart.com",
+          "url": "https://www.tatmart.com/keo-weber-color-weber-hr.html",
+          "score": 7.9571,
+          "shared_tokens": [
+            "hr",
+            "webercolor"
+          ],
+          "prices": {
+            "__default__": 4950000
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 267,
+      "slug": "webercolor-mosaic",
+      "name": "Webercolor Mosaic",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "WEBERCOLOR POWER (1KG/BAO)",
+          "url": "https://chongthamsonphat.com.vn/webercolor-power-1kgbao",
+          "score": 5.7474,
+          "shared_tokens": [
+            "webercolor"
+          ],
+          "prices": {
+            "1kg": 25000
+          }
+        },
+        {
+          "title": "WEBERCOLOR CLASSIC (1KG/BAO)",
+          "url": "https://chongthamsonphat.com.vn/webercolor-classic-1kgbao",
+          "score": 5.6719,
+          "shared_tokens": [
+            "webercolor"
+          ],
+          "prices": {
+            "1kg": 25000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1kg": 15000
+      },
+      "resolved_detail": {
+        "1kg": {
+          "market_price": 25000,
+          "target_price": 15000,
+          "sources": [
+            {
+              "url": "https://chongthamsonphat.com.vn/webercolor-power-1kgbao",
+              "source": "chongthamsonphat.com.vn",
+              "title": "WEBERCOLOR POWER (1KG/BAO)",
+              "score": 5.7474,
+              "market_price": 25000
+            },
+            {
+              "url": "https://chongthamsonphat.com.vn/webercolor-classic-1kgbao",
+              "source": "chongthamsonphat.com.vn",
+              "title": "WEBERCOLOR CLASSIC (1KG/BAO)",
+              "score": 5.6719,
+              "market_price": 25000
+            }
+          ]
+        }
+      },
+      "base_price": 15000
+    },
+    {
+      "id": 269,
+      "slug": "webercolor-no-stain",
+      "name": "Webercolor No Stain",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "WEBERCOLOR POWER (1KG/BAO)",
+          "url": "https://chongthamsonphat.com.vn/webercolor-power-1kgbao",
+          "score": 5.7237,
+          "shared_tokens": [
+            "webercolor"
+          ],
+          "prices": {
+            "1kg": 25000
+          }
+        },
+        {
+          "title": "WEBERCOLOR CLASSIC (1KG/BAO)",
+          "url": "https://chongthamsonphat.com.vn/webercolor-classic-1kgbao",
+          "score": 5.3471,
+          "shared_tokens": [
+            "webercolor"
+          ],
+          "prices": {
+            "1kg": 25000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1kg": 15000
+      },
+      "resolved_detail": {
+        "1kg": {
+          "market_price": 25000,
+          "target_price": 15000,
+          "sources": [
+            {
+              "url": "https://chongthamsonphat.com.vn/webercolor-power-1kgbao",
+              "source": "chongthamsonphat.com.vn",
+              "title": "WEBERCOLOR POWER (1KG/BAO)",
+              "score": 5.7237,
+              "market_price": 25000
+            },
+            {
+              "url": "https://chongthamsonphat.com.vn/webercolor-classic-1kgbao",
+              "source": "chongthamsonphat.com.vn",
+              "title": "WEBERCOLOR CLASSIC (1KG/BAO)",
+              "score": 5.3471,
+              "market_price": 25000
+            }
+          ]
+        }
+      },
+      "base_price": 15000
+    },
+    {
+      "id": 271,
+      "slug": "webercolor-outside",
+      "name": "Webercolor Outside",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Webercolor Outside – Keo Chà Ron Ngoài Trời Giá Siêu Khuyến Mãi",
+          "url": "https://phugiacongtrinh.com/product/keo-cha-ron-ngoai-troi-webercolor-outside/",
+          "score": 9.1643,
+          "shared_tokens": [
+            "outside",
+            "webercolor"
+          ],
+          "prices": {
+            "__default__": 59900
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 273,
+      "slug": "webercolor-power-po111s",
+      "name": "Webercolor Power Po111S",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "WEBERCOLOR POWER (1KG/BAO)",
+          "url": "https://chongthamsonphat.com.vn/webercolor-power-1kgbao",
+          "score": 9.8432,
+          "shared_tokens": [
+            "power",
+            "webercolor"
+          ],
+          "prices": {
+            "1kg": 25000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1kg": 15000
+      },
+      "resolved_detail": {
+        "1kg": {
+          "market_price": 25000,
+          "target_price": 15000,
+          "sources": [
+            {
+              "url": "https://chongthamsonphat.com.vn/webercolor-power-1kgbao",
+              "source": "chongthamsonphat.com.vn",
+              "title": "WEBERCOLOR POWER (1KG/BAO)",
+              "score": 9.8432,
+              "market_price": 25000
+            }
+          ]
+        }
+      },
+      "base_price": 15000
+    },
+    {
+      "id": 275,
+      "slug": "webercolor-power-ps",
+      "name": "Webercolor Power Ps",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "WEBERCOLOR POWER (1KG/BAO)",
+          "url": "https://chongthamsonphat.com.vn/webercolor-power-1kgbao",
+          "score": 9.9886,
+          "shared_tokens": [
+            "power",
+            "webercolor"
+          ],
+          "prices": {
+            "1kg": 25000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1kg": 15000
+      },
+      "resolved_detail": {
+        "1kg": {
+          "market_price": 25000,
+          "target_price": 15000,
+          "sources": [
+            {
+              "url": "https://chongthamsonphat.com.vn/webercolor-power-1kgbao",
+              "source": "chongthamsonphat.com.vn",
+              "title": "WEBERCOLOR POWER (1KG/BAO)",
+              "score": 9.9886,
+              "market_price": 25000
+            }
+          ]
+        }
+      },
+      "base_price": 15000
+    },
+    {
+      "id": 277,
+      "slug": "webercolor-shine",
+      "name": "Webercolor Shine",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "WEBERCOLOR POWER (1KG/BAO)",
+          "url": "https://chongthamsonphat.com.vn/webercolor-power-1kgbao",
+          "score": 5.7597,
+          "shared_tokens": [
+            "webercolor"
+          ],
+          "prices": {
+            "1kg": 25000
+          }
+        },
+        {
+          "title": "WEBERCOLOR CLASSIC (1KG/BAO)",
+          "url": "https://chongthamsonphat.com.vn/webercolor-classic-1kgbao",
+          "score": 5.6307,
+          "shared_tokens": [
+            "webercolor"
+          ],
+          "prices": {
+            "1kg": 25000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1kg": 15000
+      },
+      "resolved_detail": {
+        "1kg": {
+          "market_price": 25000,
+          "target_price": 15000,
+          "sources": [
+            {
+              "url": "https://chongthamsonphat.com.vn/webercolor-power-1kgbao",
+              "source": "chongthamsonphat.com.vn",
+              "title": "WEBERCOLOR POWER (1KG/BAO)",
+              "score": 5.7597,
+              "market_price": 25000
+            },
+            {
+              "url": "https://chongthamsonphat.com.vn/webercolor-classic-1kgbao",
+              "source": "chongthamsonphat.com.vn",
+              "title": "WEBERCOLOR CLASSIC (1KG/BAO)",
+              "score": 5.6307,
+              "market_price": 25000
+            }
+          ]
+        }
+      },
+      "base_price": 15000
+    },
+    {
+      "id": 278,
+      "slug": "webercolor-sieu-trang-g68s",
+      "name": "Webercolor Siêu Trắng G68S",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "WEBERCOLOR POWER (1KG/BAO)",
+          "url": "https://chongthamsonphat.com.vn/webercolor-power-1kgbao",
+          "score": 5.6489,
+          "shared_tokens": [
+            "webercolor"
+          ],
+          "prices": {
+            "1kg": 25000
+          }
+        },
+        {
+          "title": "WEBERCOLOR CLASSIC (1KG/BAO)",
+          "url": "https://chongthamsonphat.com.vn/webercolor-classic-1kgbao",
+          "score": 5.5827,
+          "shared_tokens": [
+            "webercolor"
+          ],
+          "prices": {
+            "1kg": 25000
+          }
+        },
+        {
+          "title": "Weber.tai Fix 25kg White - Keo dán gạch với độ bám dính gấp 4 lần. dùng cho gạch kích thước lên đến 600x600mm màu Trắng",
+          "url": "https://dtlgroup.vn/weber-tai-flix-25kg-trang-keo-dan-gach-op-lat",
+          "score": 5.5198,
+          "shared_tokens": [
+            "trang"
+          ],
+          "prices": {
+            "25kg": 19440
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1kg": 15000
+      },
+      "resolved_detail": {
+        "1kg": {
+          "market_price": 25000,
+          "target_price": 15000,
+          "sources": [
+            {
+              "url": "https://chongthamsonphat.com.vn/webercolor-power-1kgbao",
+              "source": "chongthamsonphat.com.vn",
+              "title": "WEBERCOLOR POWER (1KG/BAO)",
+              "score": 5.6489,
+              "market_price": 25000
+            },
+            {
+              "url": "https://chongthamsonphat.com.vn/webercolor-classic-1kgbao",
+              "source": "chongthamsonphat.com.vn",
+              "title": "WEBERCOLOR CLASSIC (1KG/BAO)",
+              "score": 5.5827,
+              "market_price": 25000
+            }
+          ]
+        }
+      },
+      "base_price": 15000
+    },
+    {
+      "id": 281,
+      "slug": "webercolor-slim",
+      "name": "Webercolor Slim",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "WEBERCOLOR POWER (1KG/BAO)",
+          "url": "https://chongthamsonphat.com.vn/webercolor-power-1kgbao",
+          "score": 5.7723,
+          "shared_tokens": [
+            "webercolor"
+          ],
+          "prices": {
+            "1kg": 25000
+          }
+        },
+        {
+          "title": "WEBERCOLOR CLASSIC (1KG/BAO)",
+          "url": "https://chongthamsonphat.com.vn/webercolor-classic-1kgbao",
+          "score": 5.6414,
+          "shared_tokens": [
+            "webercolor"
+          ],
+          "prices": {
+            "1kg": 25000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "1kg": 15000
+      },
+      "resolved_detail": {
+        "1kg": {
+          "market_price": 25000,
+          "target_price": 15000,
+          "sources": [
+            {
+              "url": "https://chongthamsonphat.com.vn/webercolor-power-1kgbao",
+              "source": "chongthamsonphat.com.vn",
+              "title": "WEBERCOLOR POWER (1KG/BAO)",
+              "score": 5.7723,
+              "market_price": 25000
+            },
+            {
+              "url": "https://chongthamsonphat.com.vn/webercolor-classic-1kgbao",
+              "source": "chongthamsonphat.com.vn",
+              "title": "WEBERCOLOR CLASSIC (1KG/BAO)",
+              "score": 5.6414,
+              "market_price": 25000
+            }
+          ]
+        }
+      },
+      "base_price": 15000
+    },
+    {
+      "id": 285,
+      "slug": "webercolor-sp",
+      "name": "Webercolor Sp",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "WeberColor SP 18.2kg - Keo chà ron gạch chuyên dụng cho bể bơi",
+          "url": "https://dtlgroup.vn/webercolor-sp-18-2kg-keo-cha-ron-gach-chuyen-dung-cho-be-boi",
+          "score": 8.5929,
+          "shared_tokens": [
+            "sp",
+            "webercolor"
+          ],
+          "prices": {
+            "18.2kg": 136404
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 282,
+      "slug": "webercolor-sp-ho-boi",
+      "name": "Webercolor SP Hồ Bơi",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1kg": "1kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "WeberColor SP 18.2kg - Keo chà ron gạch chuyên dụng cho bể bơi",
+          "url": "https://dtlgroup.vn/webercolor-sp-18-2kg-keo-cha-ron-gach-chuyen-dung-cho-be-boi",
+          "score": 13.207,
+          "shared_tokens": [
+            "boi",
+            "sp",
+            "webercolor"
+          ],
+          "prices": {
+            "18.2kg": 136404
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 287,
+      "slug": "weberdry-2kflex",
+      "name": "Weberdry 2Kflex",
+      "brand": "weber",
+      "existing_price": "1000000",
+      "pack_labels": {
+        "25kg": "25kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Weberdry Top 5kg - Chống thấm 2 Thành phần Xi Măng + Polymer đàn hồi cao",
+          "url": "https://dtlgroup.vn/weberdry-top-5kg-chong-tham-2-thanh-phan-xi-mang-polymer-dan-hoi-cao",
+          "score": 4.4945,
+          "shared_tokens": [
+            "weberdry"
+          ],
+          "prices": {
+            "5kg": 90720
+          }
+        },
+        {
+          "title": "Weberdry Top 15kg - Chống thấm 2 Thành phần Xi Măng + Polymer đàn hồi cao",
+          "url": "https://dtlgroup.vn/weberdry-top-15kg-chong-tham-2-thanh-phan-xi-mang-polymer-dan-hoi-cao",
+          "score": 4.4884,
+          "shared_tokens": [
+            "weberdry"
+          ],
+          "prices": {
+            "15kg": 68401
+          }
+        },
+        {
+          "title": "Weberdry PU Grey 20kg - Chống thấm gốc Polyurethane 1 Thành Phần",
+          "url": "https://dtlgroup.vn/weberdry-pu-grey-20kg-chong-tham-goc-polyurethane-1-thanh-phan",
+          "score": 4.3733,
+          "shared_tokens": [
+            "weberdry"
+          ],
+          "prices": {
+            "20kg": 156600
+          }
+        },
+        {
+          "title": "Weberdry PU Grey 6kg - Chống thấm gốc Polyurethane 1 Thành Phần",
+          "url": "https://dtlgroup.vn/weberdry-pu-grey-6kg-chong-tham-goc-polyurethane-1-thanh-phan",
+          "score": 4.3401,
+          "shared_tokens": [
+            "weberdry"
+          ],
+          "prices": {
+            "6kg": 234000
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 288,
+      "slug": "weberdry-crystallize-hybrid",
+      "name": "Weberdry Crystallize Hybrid",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "25kg": "25kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Weberdry Top 5kg - Chống thấm 2 Thành phần Xi Măng + Polymer đàn hồi cao",
+          "url": "https://dtlgroup.vn/weberdry-top-5kg-chong-tham-2-thanh-phan-xi-mang-polymer-dan-hoi-cao",
+          "score": 4.525,
+          "shared_tokens": [
+            "weberdry"
+          ],
+          "prices": {
+            "5kg": 90720
+          }
+        },
+        {
+          "title": "Weberdry Top 15kg - Chống thấm 2 Thành phần Xi Măng + Polymer đàn hồi cao",
+          "url": "https://dtlgroup.vn/weberdry-top-15kg-chong-tham-2-thanh-phan-xi-mang-polymer-dan-hoi-cao",
+          "score": 4.5198,
+          "shared_tokens": [
+            "weberdry"
+          ],
+          "prices": {
+            "15kg": 68401
+          }
+        },
+        {
+          "title": "Weberdry PU Grey 6kg - Chống thấm gốc Polyurethane 1 Thành Phần",
+          "url": "https://dtlgroup.vn/weberdry-pu-grey-6kg-chong-tham-goc-polyurethane-1-thanh-phan",
+          "score": 4.367,
+          "shared_tokens": [
+            "weberdry"
+          ],
+          "prices": {
+            "6kg": 234000
+          }
+        },
+        {
+          "title": "Weberdry PU Grey 20kg - Chống thấm gốc Polyurethane 1 Thành Phần",
+          "url": "https://dtlgroup.vn/weberdry-pu-grey-20kg-chong-tham-goc-polyurethane-1-thanh-phan",
+          "score": 4.3626,
+          "shared_tokens": [
+            "weberdry"
+          ],
+          "prices": {
+            "20kg": 156600
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 293,
+      "slug": "weberdry-pu",
+      "name": "Weberdry Pu",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "25kg": "25kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Weberdry PU Grey 6kg - Chống thấm gốc Polyurethane 1 Thành Phần",
+          "url": "https://dtlgroup.vn/weberdry-pu-grey-6kg-chong-tham-goc-polyurethane-1-thanh-phan",
+          "score": 9.0164,
+          "shared_tokens": [
+            "pu",
+            "weberdry"
+          ],
+          "prices": {
+            "6kg": 234000
+          }
+        },
+        {
+          "title": "Weberdry PU Grey 20kg - Chống thấm gốc Polyurethane 1 Thành Phần",
+          "url": "https://dtlgroup.vn/weberdry-pu-grey-20kg-chong-tham-goc-polyurethane-1-thanh-phan",
+          "score": 9.0098,
+          "shared_tokens": [
+            "pu",
+            "weberdry"
+          ],
+          "prices": {
+            "20kg": 156600
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 291,
+      "slug": "weberdry-pu-pro",
+      "name": "Weberdry Pu Pro",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "25kg": "25kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Weberdry PU Grey 6kg - Chống thấm gốc Polyurethane 1 Thành Phần",
+          "url": "https://dtlgroup.vn/weberdry-pu-grey-6kg-chong-tham-goc-polyurethane-1-thanh-phan",
+          "score": 9.0441,
+          "shared_tokens": [
+            "pu",
+            "weberdry"
+          ],
+          "prices": {
+            "6kg": 234000
+          }
+        },
+        {
+          "title": "Weberdry PU Grey 20kg - Chống thấm gốc Polyurethane 1 Thành Phần",
+          "url": "https://dtlgroup.vn/weberdry-pu-grey-20kg-chong-tham-goc-polyurethane-1-thanh-phan",
+          "score": 9.0377,
+          "shared_tokens": [
+            "pu",
+            "weberdry"
+          ],
+          "prices": {
+            "20kg": 156600
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 295,
+      "slug": "weberdry-seal-pro",
+      "name": "Weberdry Seal Pro",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "25kg": "25kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Chống thấm Weber Dry.seal 5kg",
+          "url": "https://topto.vn/san-pham/chong-tham-weber-dry-seal-5kg/",
+          "score": 5.7767,
+          "shared_tokens": [
+            "seal"
+          ],
+          "prices": {
+            "5kg": 1125000
+          }
+        },
+        {
+          "title": "Weberdry Top 5kg - Chống thấm 2 Thành phần Xi Măng + Polymer đàn hồi cao",
+          "url": "https://dtlgroup.vn/weberdry-top-5kg-chong-tham-2-thanh-phan-xi-mang-polymer-dan-hoi-cao",
+          "score": 4.5418,
+          "shared_tokens": [
+            "weberdry"
+          ],
+          "prices": {
+            "5kg": 90720
+          }
+        },
+        {
+          "title": "Weberdry Top 15kg - Chống thấm 2 Thành phần Xi Măng + Polymer đàn hồi cao",
+          "url": "https://dtlgroup.vn/weberdry-top-15kg-chong-tham-2-thanh-phan-xi-mang-polymer-dan-hoi-cao",
+          "score": 4.5356,
+          "shared_tokens": [
+            "weberdry"
+          ],
+          "prices": {
+            "15kg": 68401
+          }
+        },
+        {
+          "title": "Weberdry PU Grey 6kg - Chống thấm gốc Polyurethane 1 Thành Phần",
+          "url": "https://dtlgroup.vn/weberdry-pu-grey-6kg-chong-tham-goc-polyurethane-1-thanh-phan",
+          "score": 4.4696,
+          "shared_tokens": [
+            "weberdry"
+          ],
+          "prices": {
+            "6kg": 234000
+          }
+        },
+        {
+          "title": "Weberdry PU Grey 20kg - Chống thấm gốc Polyurethane 1 Thành Phần",
+          "url": "https://dtlgroup.vn/weberdry-pu-grey-20kg-chong-tham-goc-polyurethane-1-thanh-phan",
+          "score": 4.4637,
+          "shared_tokens": [
+            "weberdry"
+          ],
+          "prices": {
+            "20kg": 156600
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 297,
+      "slug": "weberdry-top",
+      "name": "Weberdry Top",
+      "brand": "weber",
+      "existing_price": "390000",
+      "pack_labels": {
+        "25kg": "25kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Weberdry Top 5kg - Chống thấm 2 Thành phần Xi Măng + Polymer đàn hồi cao",
+          "url": "https://dtlgroup.vn/weberdry-top-5kg-chong-tham-2-thanh-phan-xi-mang-polymer-dan-hoi-cao",
+          "score": 9.0934,
+          "shared_tokens": [
+            "top",
+            "weberdry"
+          ],
+          "prices": {
+            "5kg": 90720
+          }
+        },
+        {
+          "title": "Weberdry Top 15kg - Chống thấm 2 Thành phần Xi Măng + Polymer đàn hồi cao",
+          "url": "https://dtlgroup.vn/weberdry-top-15kg-chong-tham-2-thanh-phan-xi-mang-polymer-dan-hoi-cao",
+          "score": 9.085,
+          "shared_tokens": [
+            "top",
+            "weberdry"
+          ],
+          "prices": {
+            "15kg": 68401
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 299,
+      "slug": "weberepox-easy",
+      "name": "Weberepox Easy",
+      "brand": "weber",
+      "existing_price": "1833000",
+      "pack_labels": {
+        "5kg": "5kg"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Keo dán gạch và chà ron Weber.color Poxy 5kg",
+          "url": "https://topto.vn/san-pham/keo-dan-gach-va-cha-ron-weber-color-poxy/",
+          "score": 2.7726,
+          "shared_tokens": [],
+          "prices": {
+            "5kg": 2500000
+          }
+        },
+        {
+          "title": "Keo dán gạch Weber.tai 2 in 1 5kg/bao",
+          "url": "https://topto.vn/san-pham/keo-dan-gach-weber-tai-2-in-1/",
+          "score": 2.65,
+          "shared_tokens": [],
+          "prices": {
+            "5kg": 157500
+          }
+        },
+        {
+          "title": "Chống thấm Weber Dry.seal 5kg",
+          "url": "https://topto.vn/san-pham/chong-tham-weber-dry-seal-5kg/",
+          "score": 2.515,
+          "shared_tokens": [],
+          "prices": {
+            "5kg": 1125000
+          }
+        },
+        {
+          "title": "Weberdry Top 5kg - Chống thấm 2 Thành phần Xi Măng + Polymer đàn hồi cao",
+          "url": "https://dtlgroup.vn/weberdry-top-5kg-chong-tham-2-thanh-phan-xi-mang-polymer-dan-hoi-cao",
+          "score": 2.322,
+          "shared_tokens": [],
+          "prices": {
+            "5kg": 90720
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "5kg": 80720
+      },
+      "resolved_detail": {
+        "5kg": {
+          "market_price": 90720,
+          "target_price": 80720,
+          "sources": [
+            {
+              "url": "https://dtlgroup.vn/weberdry-top-5kg-chong-tham-2-thanh-phan-xi-mang-polymer-dan-hoi-cao",
+              "source": "dtlgroup.vn",
+              "title": "Weberdry Top 5kg - Chống thấm 2 Thành phần Xi Măng + Polymer đàn hồi cao",
+              "score": 2.322,
+              "market_price": 90720
+            }
+          ]
+        }
+      },
+      "base_price": 80720
+    },
+    {
+      "id": 301,
+      "slug": "weberprime-epox",
+      "name": "Weberprime Epox",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "16kg": "Bộ 16kg (A 8kg + B 8kg)"
+      },
+      "status": "unmatched",
+      "reason": "no_candidate_offer",
+      "candidates": [],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 303,
+      "slug": "weberprime-spf",
+      "name": "Weberprime Spf",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "17kg": "Thùng 17kg"
+      },
+      "status": "unmatched",
+      "reason": "no_candidate_offer",
+      "candidates": [],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 305,
+      "slug": "weberproof-hdpe",
+      "name": "Weberproof Hdpe",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1m x 20m": "Cuộn 1m x 20m"
+      },
+      "status": "unmatched",
+      "reason": "no_candidate_offer",
+      "candidates": [],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 306,
+      "slug": "weberproof-tpo",
+      "name": "Weberproof Tpo",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "1m x 20m": "Cuộn 1m x 20m"
+      },
+      "status": "unmatched",
+      "reason": "no_candidate_offer",
+      "candidates": [],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 309,
+      "slug": "weberseal-wa100",
+      "name": "Weberseal Wa100",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "450g": "450g/chai"
+      },
+      "status": "unmatched",
+      "reason": "no_candidate_offer",
+      "candidates": [],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 310,
+      "slug": "weberseal-ws300",
+      "name": "Weberseal Ws300",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "300ml": "300ml/chai"
+      },
+      "status": "unmatched",
+      "reason": "no_candidate_offer",
+      "candidates": [],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 313,
+      "slug": "weberseal-ws500",
+      "name": "Weberseal Ws500",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "300ml": "300ml/chai",
+        "600ml": "600ml/sausage"
+      },
+      "status": "unmatched",
+      "reason": "no_candidate_offer",
+      "candidates": [],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 314,
+      "slug": "webershield",
+      "name": "Webershield",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "18L": "Bộ 18L (A 14.4L + B 3.6L)"
+      },
+      "status": "unmatched",
+      "reason": "no_candidate_offer",
+      "candidates": [],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 319,
+      "slug": "webertai-fix",
+      "name": "Webertai Fix",
+      "brand": "weber",
+      "existing_price": "320000",
+      "pack_labels": {
+        "25kg": "25kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Keo Dán Gạch Webertai Fix – Hàng Chính Hãng, Rẻ Nhất Tại HCM",
+          "url": "https://phugiacongtrinh.com/product/keo-dan-gach-webertai-fix/",
+          "score": 8.4458,
+          "shared_tokens": [
+            "fix",
+            "webertai"
+          ],
+          "prices": {
+            "__default__": 224000
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 321,
+      "slug": "webertai-flex",
+      "name": "Webertai Flex",
+      "brand": "weber",
+      "existing_price": "880000",
+      "pack_labels": {
+        "20kg": "20kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Keo Dán Gạch Webertai Flex – Hàng Chính Hãng, Rẻ Nhất Tại HCM",
+          "url": "https://phugiacongtrinh.com/product/keo-dan-gach-webertai-flex/",
+          "score": 8.9332,
+          "shared_tokens": [
+            "flex",
+            "webertai"
+          ],
+          "prices": {
+            "__default__": 33900
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 322,
+      "slug": "webertai-gres",
+      "name": "Webertai Gres",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "40kg": "40kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Keo Dán Gạch Webertai Gres – Giá Rẻ Nhất Thị Trường",
+          "url": "https://phugiacongtrinh.com/product/keo-dan-gach-webertai-gres/",
+          "score": 11.6962,
+          "shared_tokens": [
+            "gach",
+            "gres",
+            "webertai"
+          ],
+          "prices": {
+            "__default__": 359000
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 317,
+      "slug": "webertai-st250",
+      "name": "Webertai St250",
+      "brand": "weber",
+      "existing_price": "180000",
+      "pack_labels": {
+        "25kg": "25kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Keo Dán Gạch Webertai Gres – Giá Rẻ Nhất Thị Trường",
+          "url": "https://phugiacongtrinh.com/product/keo-dan-gach-webertai-gres/",
+          "score": 4.224,
+          "shared_tokens": [
+            "webertai"
+          ],
+          "prices": {
+            "__default__": 359000
+          }
+        },
+        {
+          "title": "Keo Dán Gạch Webertai Vis – Giá Vô Cùng Hấp Dẫn",
+          "url": "https://phugiacongtrinh.com/product/keo-dan-gach-webertai-vis/",
+          "score": 4.2075,
+          "shared_tokens": [
+            "webertai"
+          ],
+          "prices": {
+            "__default__": 199900
+          }
+        },
+        {
+          "title": "Keo Dán Gạch Webertai B100 – Keo Dán Gạch Rẻ Nhất Tại HCM",
+          "url": "https://phugiacongtrinh.com/product/keo-dan-gach-webertai-b100/",
+          "score": 4.1426,
+          "shared_tokens": [
+            "webertai"
+          ],
+          "prices": {
+            "__default__": 229000
+          }
+        },
+        {
+          "title": "Keo Dán Gạch Webertai Fix – Hàng Chính Hãng, Rẻ Nhất Tại HCM",
+          "url": "https://phugiacongtrinh.com/product/keo-dan-gach-webertai-fix/",
+          "score": 4.1311,
+          "shared_tokens": [
+            "webertai"
+          ],
+          "prices": {
+            "__default__": 224000
+          }
+        },
+        {
+          "title": "Keo Dán Gạch Webertai Flex – Hàng Chính Hãng, Rẻ Nhất Tại HCM",
+          "url": "https://phugiacongtrinh.com/product/keo-dan-gach-webertai-flex/",
+          "score": 4.1255,
+          "shared_tokens": [
+            "webertai"
+          ],
+          "prices": {
+            "__default__": 33900
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 325,
+      "slug": "webertai-vis",
+      "name": "Webertai Vis",
+      "brand": "weber",
+      "existing_price": "",
+      "pack_labels": {
+        "40kg": "40kg"
+      },
+      "status": "unmatched",
+      "reason": "no_exact_pack_match",
+      "candidates": [
+        {
+          "title": "Keo Dán Gạch Webertai Vis – Giá Vô Cùng Hấp Dẫn",
+          "url": "https://phugiacongtrinh.com/product/keo-dan-gach-webertai-vis/",
+          "score": 11.7141,
+          "shared_tokens": [
+            "gach",
+            "vis",
+            "webertai"
+          ],
+          "prices": {
+            "__default__": 199900
+          }
+        }
+      ],
+      "resolved_price_map": {},
+      "base_price": 0
+    },
+    {
+      "id": 326,
+      "slug": "webertec-grout",
+      "name": "Webertec Grout",
+      "brand": "weber",
+      "existing_price": "320000",
+      "pack_labels": {
+        "25kg": "25kg"
+      },
+      "status": "matched",
+      "reason": "",
+      "candidates": [
+        {
+          "title": "Vữa bù co ngót Weber Tee Non Shrink grout 25kg",
+          "url": "https://topto.vn/san-pham/vua-bu-co-ngot-weber-tee-non-shrink-grout-25kg/",
+          "score": 7.5204,
+          "shared_tokens": [
+            "grout"
+          ],
+          "prices": {
+            "25kg": 315000
+          }
+        }
+      ],
+      "resolved_price_map": {
+        "25kg": 305000
+      },
+      "resolved_detail": {
+        "25kg": {
+          "market_price": 315000,
+          "target_price": 305000,
+          "sources": [
+            {
+              "url": "https://topto.vn/san-pham/vua-bu-co-ngot-weber-tee-non-shrink-grout-25kg/",
+              "source": "topto.vn",
+              "title": "Vữa bù co ngót Weber Tee Non Shrink grout 25kg",
+              "score": 7.5204,
+              "market_price": 315000
+            }
+          ]
+        }
+      },
+      "base_price": 305000
+    }
+  ]
+}

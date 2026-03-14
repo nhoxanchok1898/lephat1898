@@ -6,7 +6,7 @@ from decimal import Decimal
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
-from store.models import Order, OrderItem, Product, Brand, Category
+from store.models import Order, OrderItem, Product, Brand, Category, StockLevel
 from store.payment_webhooks import (
     verify_stripe_signature,
     handle_payment_success,
@@ -91,6 +91,30 @@ class PaymentWebhookTestCase(TestCase):
         
         expected_stock = initial_stock - self.order_item.quantity
         self.assertEqual(self.product.stock_quantity, expected_stock)
+
+    def test_payment_success_reduces_managed_inventory(self):
+        """Managed StockLevel inventory should also be decremented and synced."""
+        self.product.stock_quantity = 99
+        self.product.quantity = 99
+        self.product.save()
+        StockLevel.objects.create(product=self.product, quantity=7, low_stock_threshold=1)
+
+        event_data = {
+            'object': {
+                'id': 'pi_test123',
+                'metadata': {
+                    'order_id': str(self.order.id)
+                }
+            }
+        }
+
+        handle_payment_success(event_data)
+
+        self.product.refresh_from_db()
+        stock = StockLevel.objects.get(product=self.product)
+        self.assertEqual(stock.quantity, 5)
+        self.assertEqual(self.product.stock_quantity, 5)
+        self.assertEqual(self.product.quantity, 5)
     
     def test_payment_success_idempotent(self):
         """Test payment success is idempotent (doesn't process twice)"""
@@ -161,6 +185,32 @@ class PaymentWebhookTestCase(TestCase):
         
         expected_stock = initial_stock + self.order_item.quantity
         self.assertEqual(self.product.stock_quantity, expected_stock)
+
+    def test_refund_restores_managed_inventory(self):
+        """Managed StockLevel inventory should be restored on refund."""
+        self.order.payment_status = 'completed'
+        self.order.save()
+
+        StockLevel.objects.create(product=self.product, quantity=5, low_stock_threshold=1)
+        self.product.stock_quantity = 5
+        self.product.quantity = 5
+        self.product.save()
+
+        event_data = {
+            'object': {
+                'metadata': {
+                    'order_id': str(self.order.id)
+                }
+            }
+        }
+
+        handle_refund(event_data)
+
+        self.product.refresh_from_db()
+        stock = StockLevel.objects.get(product=self.product)
+        self.assertEqual(stock.quantity, 7)
+        self.assertEqual(self.product.stock_quantity, 7)
+        self.assertEqual(self.product.quantity, 7)
     
     def test_refund_updates_order_status(self):
         """Test refund updates order status"""

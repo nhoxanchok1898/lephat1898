@@ -32,16 +32,10 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
     
     def get_stock_quantity(self, obj):
-        try:
-            return obj.stock.quantity
-        except StockLevel.DoesNotExist:
-            return None
+        return obj.available_stock
     
     def get_in_stock(self, obj):
-        try:
-            return obj.stock.quantity > 0
-        except StockLevel.DoesNotExist:
-            return True
+        return obj.is_in_stock()
 
 
 class OrderItemSerializer(serializers.ModelSerializer):

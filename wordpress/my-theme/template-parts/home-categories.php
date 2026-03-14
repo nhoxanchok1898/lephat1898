@@ -1,8 +1,8 @@
 <section id="categories" class="page-section">
   <?php $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop'); ?>
   <div class="section-heading">
-    <h2 class="section-title">Chọn đúng hệ sơn cho công trình</h2>
-    <p class="section-sub">Tư vấn đúng bề mặt, đúng môi trường, tiết kiệm chi phí thi công</p>
+    <h2 class="section-title">Phân loại theo hạng mục thi công</h2>
+    <p class="section-sub">Chọn đúng nhóm sản phẩm theo bề mặt để lọc nhanh và không bị rối</p>
   </div>
   <div class="category-grid">
     <?php
@@ -36,7 +36,7 @@
         }
         return strnatcasecmp($a->name, $b->name);
       });
-      $cats = array_slice($cats, 0, 8);
+      $cats = array_slice($cats, 0, 12);
     } else {
       $cats = [];
     }

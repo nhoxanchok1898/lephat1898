@@ -2,6 +2,9 @@
 /**
  * Paint area & quantity calculator (UI only).
  */
+$calculator_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
+$calculator_phone_href = isset($calculator_snapshot['phone_href']) ? (string) $calculator_snapshot['phone_href'] : 'tel:0944857999';
+$calculator_zalo_url = isset($calculator_snapshot['zalo_url']) ? (string) $calculator_snapshot['zalo_url'] : 'https://zalo.me/0944857999';
 ?>
 <section class="page-section paint-calculator" id="tinh-son">
   <div class="section-heading">
@@ -58,8 +61,8 @@
       </div>
       <div class="calc-note">Khuyến nghị chỉ mang tính tham khảo.</div>
       <div class="calc-actions">
-        <a class="btn btn-primary btn-sm" href="tel:0944857999">Gọi tư vấn</a>
-        <a class="btn btn-outline btn-sm" href="https://zalo.me/0944857999" target="_blank" rel="noopener">Zalo kỹ thuật</a>
+        <a class="btn btn-primary btn-sm" href="<?php echo esc_url($calculator_phone_href); ?>">Gọi tư vấn</a>
+        <a class="btn btn-outline btn-sm" href="<?php echo esc_url($calculator_zalo_url); ?>" target="_blank" rel="noopener">Zalo kỹ thuật</a>
         <a class="btn btn-accent btn-sm" href="<?php echo esc_url(home_url('/lien-he')); ?>">Gửi yêu cầu</a>
       </div>
     </div>

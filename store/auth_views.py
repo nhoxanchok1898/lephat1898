@@ -17,7 +17,7 @@ def register_view(request):
     Handles GET (display form) and POST (process registration)
     """
     if request.user.is_authenticated:
-        return redirect('store:home')
+        return redirect('home:index')
     
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
@@ -60,7 +60,7 @@ def register_view(request):
             # Log the user in
             login(request, user)
             messages.success(request, f'Welcome {username}! Your account has been created.')
-            return redirect('store:home')
+            return redirect('home:index')
         
         except IntegrityError:
             messages.error(request, 'An error occurred. Please try again.')
@@ -75,7 +75,7 @@ def login_view(request):
     Handles GET (display form) and POST (process login)
     """
     if request.user.is_authenticated:
-        return redirect('store:home')
+        return redirect('home:index')
     
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
@@ -93,7 +93,7 @@ def login_view(request):
             messages.success(request, f'Welcome back, {user.username}!')
             
             # Redirect to next page if specified
-            next_url = request.GET.get('next', request.POST.get('next', 'store:home'))
+            next_url = request.GET.get('next', request.POST.get('next', 'home:index'))
             return redirect(next_url)
         else:
             messages.error(request, 'Invalid username or password.')
@@ -112,7 +112,7 @@ def logout_view(request):
         logout(request)
         messages.success(request, f'Goodbye, {username}! You have been logged out.')
     
-    return redirect('store:home')
+    return redirect('home:index')
 
 
 @login_required
@@ -225,7 +225,7 @@ def password_reset_request_view(request):
     from .models import EmailLog
     
     if request.user.is_authenticated:
-        return redirect('store:home')
+        return redirect('home:index')
     
     if request.method == 'POST':
         email = request.POST.get('email', '').strip()

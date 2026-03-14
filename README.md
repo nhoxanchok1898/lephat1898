@@ -51,6 +51,10 @@ python manage.py runserver
 - **[Deployment Guide](DEPLOYMENT.md)** - Production deployment
 - **[API Documentation](API.md)** - Complete API reference
 - **[Security Guide](SECURITY.md)** - Security best practices
+- **[Website Content Playbook](WEBSITE_CONTENT_PLAYBOOK.md)** - Cấu trúc nội dung, CTA và backlog landing/blog cho site
+- **[Catalog Operations SOP](CATALOG_OPERATIONS_SOP.md)** - Quy trình quản lý sản phẩm, giá và ảnh qua Catalog QA
+- **[Content Execution Backlog](CONTENT_EXECUTION_BACKLOG.md)** - Brief chi tiết cho 10 bài blog và 5 landing page ưu tiên
+- **[Page Copy Templates](PAGE_COPY_TEMPLATES.md)** - Mẫu copy nhanh cho sản phẩm, landing page, FAQ và CTA
 
 ## 🧪 Testing
 
@@ -60,6 +64,13 @@ python manage.py test tests.smoke
 # hoặc
 ./run_tests.sh   # Linux/macOS
 run_tests.bat    # Windows
+```
+
+### WordPress storefront smoke test
+```bash
+python tools/wp_route_smoke_test.py
+# hoặc chỉ định site khác
+python tools/wp_route_smoke_test.py --base-url http://localhost:8080/
 ```
 
 ### Toàn bộ test

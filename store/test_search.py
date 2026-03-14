@@ -3,7 +3,7 @@ Tests for Advanced Search Functionality
 """
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
-from store.models import Product, Brand, Category, SearchQuery
+from store.models import Product, Brand, Category, SearchQuery, StockLevel
 from store.search import ProductSearch, SearchAnalytics
 from decimal import Decimal
 
@@ -97,6 +97,43 @@ class ProductSearchTest(TestCase):
         # Should exclude out-of-stock product
         self.assertEqual(len(results['results']), 2)
         self.assertNotIn(self.product3, results['results'])
+
+    def test_search_with_in_stock_filter_honors_stocklevel(self):
+        """Search stock filter should respect managed stock precedence."""
+        managed_in = Product.objects.create(
+            name='Managed Search Paint',
+            description='Managed stock product',
+            brand=self.brand1,
+            category=self.category1,
+            price=Decimal('150000'),
+            quantity=0,
+            stock_quantity=0,
+            is_active=True,
+            rating=Decimal('4.0')
+        )
+        StockLevel.objects.create(product=managed_in, quantity=4, low_stock_threshold=1)
+
+        managed_out = Product.objects.create(
+            name='Managed Out Search Paint',
+            description='Managed zero stock product',
+            brand=self.brand1,
+            category=self.category1,
+            price=Decimal('160000'),
+            quantity=12,
+            stock_quantity=12,
+            is_active=True,
+            rating=Decimal('3.9')
+        )
+        StockLevel.objects.create(product=managed_out, quantity=0, low_stock_threshold=1)
+
+        results = self.searcher.search(
+            'Managed',
+            filters={'in_stock': True}
+        )
+
+        result_names = [product.name for product in results['results']]
+        self.assertIn('Managed Search Paint', result_names)
+        self.assertNotIn('Managed Out Search Paint', result_names)
     
     def test_search_with_on_sale_filter(self):
         """Test search with on-sale filter"""
@@ -223,6 +260,26 @@ class SearchViewsTest(TestCase):
         self.assertEqual(len(data['results']), 1)
         self.assertIn('pagination', data)
         self.assertIn('facets', data)
+
+    def test_product_search_view_returns_effective_stock_quantity(self):
+        """Search API should expose managed stock quantity, not stale legacy fields."""
+        managed = Product.objects.create(
+            name='Managed API Paint',
+            brand=self.brand,
+            category=self.category,
+            price=Decimal('120000'),
+            quantity=0,
+            stock_quantity=0,
+            is_active=True
+        )
+        StockLevel.objects.create(product=managed, quantity=7, low_stock_threshold=2)
+
+        response = self.client.get('/search/?q=Managed')
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data['results']), 1)
+        self.assertEqual(data['results'][0]['stock_quantity'], 7)
     
     def test_autocomplete_view(self):
         """Test autocomplete API endpoint"""

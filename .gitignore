@@ -27,10 +27,27 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+.tmp-archive/
 tmp_*
+tmp-*
 tmp_*.html
+tmp-*.html
+tmp_*.json
+tmp-*.json
 tmp_*.txt
+tmp-*.txt
 tmp_*.cookie
+tmp-*.cookie
+tmp_*.png
+tmp-*.png
+tmp_*.jpg
+tmp-*.jpg
+tmp_*.jpeg
+tmp-*.jpeg
+tmp_*.bin
+tmp-*.bin
+tmp-codex-cache/
+tmp-market-cache/
 wordpress/my-theme/tmp_*.php
 
 # Archive files
@@ -44,3 +61,7 @@ sitemap_error.html
 certs/
 *.pem
 mkcert-rootCA.pem
+
+# Local data exports
+exports/*.sql
+wordpress/my-theme/data/market-pricing-backup.json

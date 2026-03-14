@@ -7,7 +7,7 @@
 <section class="page-section cart-page">
   <div class="section-heading">
     <h2 class="section-title">Giỏ hàng của bạn</h2>
-    <p class="section-sub">{% if items %}{{ items|length }} sản phẩm{% else %}Chưa có sản phẩm{% endif %}</p>
+    <p class="section-sub">{% if items %}{{ item_count }} sản phẩm trong giỏ{% else %}Chưa có sản phẩm{% endif %}</p>
   </div>
 
   {% if items %}

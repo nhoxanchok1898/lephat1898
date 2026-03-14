@@ -1,0 +1,387 @@
+{
+  "source_page": "https://www.dulux.vn/vi/san-pham",
+  "generated_at": "2026-02-25T02:22:02Z",
+  "total": 47,
+  "supported": 30,
+  "unsupported": 17,
+  "errors": 0,
+  "missing_flag": 0,
+  "items": [
+    {
+      "slug": "bottretcaocapdulux",
+      "url": "https://www.dulux.vn/vi/san-pham/bột-trét-cao-cấp-dulux",
+      "name": "Bột trét cao cấp Dulux",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "bottrettuongnoingoaithatmaxilitetudulux",
+      "url": "https://www.dulux.vn/vi/san-pham/bột-trét-tường-nội-ngoại-thất-maxilite-từ-dulux",
+      "name": "Bột trét tường Nội & Ngoại thất Maxilite từ Dulux",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "bottrettuongtrongnhamaxilite",
+      "url": "https://www.dulux.vn/vi/san-pham/bột-trét-tường-trong-nhà-maxilite",
+      "name": "Bột trét tường trong nhà Maxilite",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "chatchongthamduluxaquatech",
+      "url": "https://www.dulux.vn/vi/san-pham/chất-chống-thấm-dulux-aquatech",
+      "name": "Chất Chống Thấm Dulux Aquatech",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "chatchongthamduluxaquatechchongthamvuottroi",
+      "url": "https://www.dulux.vn/vi/san-pham/chất-chống-thấm-dulux-aquatech-chống-thấm-vượt-trội",
+      "name": "Chất chống thấm Dulux Aquatech Chống Thấm Vượt Trội",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "chatchongthamduluxaquatechflexwaterproofing",
+      "url": "https://www.dulux.vn/vi/san-pham/chất-chống-thấm-dulux-aquatech-flex-waterproofing",
+      "name": "Chất Chống Thấm Dulux Aquatech Flex Waterproofing",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "chatchongthamduluxaquatechtm3in1",
+      "url": "https://www.dulux.vn/vi/san-pham/chất-chống-thấm-dulux-aquatechtm-3in1",
+      "name": "Chất chống thấm Dulux AquatechTM 3in1",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "chongthamsanduluxaquatechmax",
+      "url": "https://www.dulux.vn/vi/san-pham/chống-thấm-sàn-dulux-aquatech-max",
+      "name": "Chống thấm sàn Dulux Aquatech Max",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxambiance5in1diamondglow-sieubong",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-ambiance-5in1-diamond-glow-siêu-bóng",
+      "name": "Dulux Ambiance 5in1 Diamond Glow - Siêu Bóng",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxambiance5in1pearlglow-bongmo",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-ambiance-5in1-pearl-glow-bóng-mờ",
+      "name": "Dulux  Ambiance 5in1 Pearl Glow - Bóng Mờ",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxambiance5in1superflexx-bongmo",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-ambiance-5in1-superflexx-bóng-mờ",
+      "name": "Dulux Ambiance 5in1 Superflexx - Bóng Mờ",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxambiance5in1superflexx-sieubong",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-ambiance-5in1-superflexx-siêu-bóng",
+      "name": "Dulux Ambiance 5in1 Superflexx - Siêu Bóng",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxambianceairfresh",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-ambiance-airfresh",
+      "name": "DULUX AMBIANCE AIRFRESH",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxeasycleanchongbambankhangvirus-bematbong",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-easyclean-chống-bám-bẩn-kháng-virus-bề-mặt-bóng",
+      "name": "Dulux EasyClean Chống Bám Bẩn Kháng Virus - Bề Mặt Bóng",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxeasycleanchongbambankhangvirusbematmo",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-easyclean-chống-bám-bẩn-kháng-virus-–-bề-mặt-mờ",
+      "name": "Dulux EasyClean Chống Bám Bẩn Kháng Virus – Bề Mặt Mờ",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxeasycleanlauchuihieuquabematbong",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-easyclean-lau-chùi-hiệu-quả-bề-mặt-bóng",
+      "name": "Dulux Easyclean Lau Chùi Hiệu Quả Bề Mặt Bóng",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxeasycleanlauchuihieuquabematmo",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-easyclean-lau-chùi-hiệu-quả-bề-mặt-mờ",
+      "name": "Dulux EasyClean Lau Chùi Hiệu Quả Bề Mặt Mờ",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxinspirengoaithatsacmaubenepbematbong",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-inspire-ngoại-thất-sắc-màu-bền-đẹp-bề-mặt-bóng",
+      "name": "Dulux Inspire Ngoại Thất Sắc Màu Bền Đẹp Bề Mặt Bóng",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxinspirengoaithatsacmaubenepbematmo",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-inspire-ngoại-thất-sắc-màu-bền-đẹp-bề-mặt-mờ",
+      "name": "Dulux Inspire Ngoại Thất Sắc Màu Bền Đẹp Bề Mặt Mờ",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxinspirenoithatsacmaubenepbematbong",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-inspire-nội-thất-sắc-màu-bền-đẹp-bề-mặt-bóng",
+      "name": "Dulux Inspire Nội Thất Sắc Màu Bền Đẹp Bề Mặt Bóng",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxinspirenoithatsacmaubenepbematmo",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-inspire-nội-thất-sắc-màu-bền-đẹp-bề-mặt-mờ",
+      "name": "Dulux Inspire Nội Thất Sắc Màu Bền Đẹp Bề Mặt Mờ",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxweathershieldbematbong",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-weathershield-bề-mặt-bóng",
+      "name": "Dulux Weathershield Bề Mặt Bóng",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxweathershieldbematmo",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-weathershield-bề-mặt-mờ",
+      "name": "Dulux Weathershield Bề Mặt Mờ",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxweathershieldchatchongtham",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-weathershield-chất-chống-thấm",
+      "name": "Dulux Weathershield Chất Chống Thấm",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxweathershieldcolourprotectbematbong",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-weathershield-colour-protect-bề-mặt-bóng",
+      "name": "Dulux Weathershield Colour Protect Bề Mặt Bóng",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxweathershieldcolourprotectbematmo",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-weathershield-colour-protect-bề-mặt-mờ",
+      "name": "Dulux Weathershield Colour Protect Bề Mặt Mờ",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxweathershieldpowerflexxbematbong",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-weathershield-powerflexx-bề-mặt-bóng",
+      "name": "Dulux Weathershield Powerflexx Bề Mặt Bóng",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxweathershieldpowerflexxbematmo",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-weathershield-powerflexx-bề-mặt-mờ",
+      "name": "Dulux Weathershield Powerflexx Bề Mặt Mờ",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "duluxweathershieldroyalshine",
+      "url": "https://www.dulux.vn/vi/san-pham/dulux-weathershield-royal-shine",
+      "name": "Dulux Weathershield Royal Shine",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "maxilitesonlotngoaitroi",
+      "url": "https://www.dulux.vn/vi/san-pham/maxilite-sơn-lót-ngoài-trời",
+      "name": "Maxilite Sơn Lót Ngoài Trời",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sondaumaxilite",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-dầu-maxilite",
+      "name": "Sơn dầu Maxilite",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sonlotcaocapdulux",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-lót-cao-cấp-dulux",
+      "name": "Sơn lót cao cấp Dulux",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sonlotngannguarisetmaxilite",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-lót-ngăn-ngừa-rỉ-sét-maxilite",
+      "name": "Sơn Lót Ngăn Ngừa Rỉ Sét Maxilite",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sonlotngoaithatsieucaocapduluxweathershieldpowersealer",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-lót-ngoại-thất-siêu-cao-cấp-dulux-weathershield-powersealer",
+      "name": "Sơn Lót Ngoại Thất Siêu Cao Cấp Dulux Weathershield Powersealer",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sonlotnoithatcaocapduluxeasyclean",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-lót-nội-thất-cao-cấp-dulux-easyclean",
+      "name": "Sơn lót nội thất cao cấp Dulux EasyClean",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sonlotnoithatcaocapsupersealer",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-lót-nội-thất-cao-cấp-supersealer",
+      "name": "Sơn Lót Nội Thất Cao Cấp SuperSealer",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sonlotnoithatsieucaocapduluxambiance",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-lót-nội-thất-siêu-cao-cấp-dulux-ambiance",
+      "name": "Sơn Lót Nội Thất Siêu Cao Cấp Dulux Ambiance",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sonlottrongnhamaxilite",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-lót-trong-nhà-maxilite",
+      "name": "Sơn lót trong nhà Maxilite",
+      "requires_color": false,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sonnuocngoaithatmaxilitetoughtuduluxbematbongmo",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-nước-ngoại-thất-maxilite-tough-từ-dulux-bề-mặt-bóng-mờ",
+      "name": "Sơn nước ngoại thất Maxilite Tough từ Dulux_Bề mặt Bóng Mờ",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sonnuocngoaithatmaxilitetoughtuduluxbematmo",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-nước-ngoại-thất-maxilite-tough-từ-dulux-bề-mặt-mờ",
+      "name": "Sơn nước ngoại thất Maxilite Tough từ Dulux_Bề Mặt Mờ",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sonnuocngoaitroimaxiliteultima-bematbong",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-nước-ngoài-trời-maxilite-ultima-bề-mặt-bóng",
+      "name": "Sơn Nước Ngoài Trời Maxilite Ultima - Bề Mặt Bóng",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sonnuocngoaitroimaxiliteultima-bematmo",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-nước-ngoài-trời-maxilite-ultima-bề-mặt-mờ",
+      "name": "Sơn Nước Ngoài Trời Maxilite Ultima - Bề Mặt Mờ",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sonnuocnoithatmaxilitechephuhieuquatudulux",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-nước-nội-thất-maxilite-che-phủ-hiệu-quả-từ-dulux",
+      "name": "Sơn nước nội thất Maxilite Che Phủ Hiệu Quả từ Dulux",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sonnuocnoithatmaxilitehi-covertudulux",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-nước-nội-thất-maxilite-hi-cover-từ-dulux",
+      "name": "Sơn nước nội thất Maxilite Hi-Cover từ Dulux",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sonnuocnoithatmaxilitesmooth",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-nước-nội-thất-maxilite-smooth",
+      "name": "Sơn nước nội thất Maxilite Smooth",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sonnuocnoithatmaxilitetotaltuduluxbematbongmo",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-nước-nội-thất-maxilite-total-từ-dulux-bề-mặt-bóng-mờ",
+      "name": "Sơn nước nội thất Maxilite Total từ Dulux Bề mặt Bóng Mờ",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    },
+    {
+      "slug": "sonnuocnoithatmaxilitetotaltuduluxbematmo",
+      "url": "https://www.dulux.vn/vi/san-pham/sơn-nước-nội-thất-maxilite-total-từ-dulux-bề-mặt-mờ",
+      "name": "Sơn nước nội thất Maxilite Total từ Dulux Bề Mặt Mờ",
+      "requires_color": true,
+      "detected_from": "data-requires-color",
+      "status": "ok"
+    }
+  ]
+}

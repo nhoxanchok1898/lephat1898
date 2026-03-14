@@ -4,74 +4,73 @@
 {% block title %}Reviews - {{ product.name }} - Paint Store{% endblock %}
 
 {% block content %}
-<div class="mt-4">
-    <h2>Reviews for {{ product.name }}</h2>
-    
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-3 text-center">
-                    <h1 class="display-4">{{ avg_rating|floatformat:1 }}</h1>
-                    <span class="visually-hidden avg-rating-raw">{{ avg_rating|floatformat:1 }}</span>
-                    <span class="visually-hidden avg-rating-literal">4.0</span>
-                    <div class="text-warning">
-                        {% for i in "12345" %}
-                            {% if forloop.counter <= avg_rating %}⭐{% else %}☆{% endif %}
-                        {% endfor %}
-                    </div>
-                    <p>{{ reviews.count }} review{{ reviews.count|pluralize }}</p>
-                </div>
-                <div class="col-md-9">
-                    <a href="{% url 'store:review_create' product.pk %}" class="btn btn-primary">Write a Review</a>
-                </div>
-            </div>
+<section class="page-section">
+  <div class="section-heading">
+    <h2 class="section-title">Reviews for {{ product.name }}</h2>
+    <a href="{% url 'store:review_create' product.pk %}" class="btn btn-primary btn-sm">Write a Review</a>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-3 text-center">
+          <div class="display-4">{{ avg_rating|floatformat:1 }}</div>
+          <span class="visually-hidden avg-rating-raw">{{ avg_rating|floatformat:1 }}</span>
+          <span class="visually-hidden avg-rating-literal">4.0</span>
+          <div class="text-warning">
+            {% for i in "12345" %}
+              {% if forloop.counter <= avg_rating %}⭐{% else %}☆{% endif %}
+            {% endfor %}
+          </div>
+          <p class="text-muted">{{ reviews.count }} review{{ reviews.count|pluralize }}</p>
         </div>
+        <div class="col-md-9">
+          <p class="text-muted">Đánh giá từ người dùng đã trải nghiệm sản phẩm tại Đại lý Sơn Phát Tấn.</p>
+        </div>
+      </div>
     </div>
-    
-    {% if reviews %}
-        {% for review in reviews %}
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <strong>{{ review.user.username }}</strong>
-                        {% if review.verified_purchase %}
-                            <span class="badge bg-success">Verified Purchase</span>
-                        {% endif %}
-                        <div class="text-warning">
-                            {% for i in "12345" %}
-                                {% if forloop.counter <= review.rating %}⭐{% else %}☆{% endif %}
-                            {% endfor %}
-                        </div>
-                    </div>
-                    <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
-                </div>
-                
-                <p class="mt-3">{{ review.comment }}</p>
-                
-                {% if review.images.all %}
-                <div class="review-images mt-2">
-                    {% for image in review.images.all %}
-                        <img src="{{ image.image.url }}" alt="Review image" class="review-thumb">
-                    {% endfor %}
-                </div>
-                {% endif %}
-                
-                <div class="mt-3">
-                    <form method="post" action="{% url 'store:review_helpful' review.pk %}" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-sm btn-outline-secondary">
-                            👍 Helpful ({{ review.helpful_count }})
-                        </button>
-                    </form>
-                </div>
+  </div>
+
+  {% if reviews %}
+    {% for review in reviews %}
+      <div class="card mb-3">
+        <div class="card-body stack">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+              <strong>{{ review.user.username }}</strong>
+              {% if review.verified_purchase %}
+                <span class="badge badge-success">Verified Purchase</span>
+              {% endif %}
+              <div class="text-warning">
+                {% for i in "12345" %}
+                  {% if forloop.counter <= review.rating %}⭐{% else %}☆{% endif %}
+                {% endfor %}
+              </div>
             </div>
+            <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
+          </div>
+
+          <p>{{ review.comment }}</p>
+
+          {% if review.images.all %}
+            <div class="review-images">
+              {% for image in review.images.all %}
+                <img src="{{ image.image.url }}" alt="Review image" class="review-thumb">
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div>
+            <form method="post" action="{% url 'store:review_helpful' review.pk %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-secondary">👍 Helpful ({{ review.helpful_count }})</button>
+            </form>
+          </div>
         </div>
-        {% endfor %}
-    {% else %}
-        <div class="alert alert-info">
-            No reviews yet. Be the first to review this product!
-        </div>
-    {% endif %}
-</div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">No reviews yet. Be the first to review this product!</div>
+  {% endif %}
+</section>
 {% endblock %}

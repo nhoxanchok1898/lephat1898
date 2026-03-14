@@ -28,6 +28,12 @@ class PaymentLog(Exception):
     pass
 
 
+def _adjust_order_inventory(order, delta):
+    """Apply inventory delta to all order items using unified stock helpers."""
+    for item in order.items.select_related('product').all():
+        item.product.adjust_available_stock(delta * item.quantity)
+
+
 def log_payment_event(event_type, data, success=True, error_message=''):
     """
     Log payment events for audit trail
@@ -189,11 +195,7 @@ def handle_payment_success(event_data):
         order.save()
         
         # Update inventory
-        for item in order.items.all():
-            product = item.product
-            if hasattr(product, 'stock_quantity'):
-                product.stock_quantity = max(0, product.stock_quantity - item.quantity)
-                product.save(update_fields=['stock_quantity'])
+        _adjust_order_inventory(order, -1)
         
         # Send confirmation email
         send_order_confirmation_email(order)
@@ -257,11 +259,7 @@ def handle_refund(event_data):
         order.save()
         
         # Restore inventory
-        for item in order.items.all():
-            product = item.product
-            if hasattr(product, 'stock_quantity'):
-                product.stock_quantity += item.quantity
-                product.save(update_fields=['stock_quantity'])
+        _adjust_order_inventory(order, 1)
         
         # Send refund email
         send_refund_confirmation_email(order)

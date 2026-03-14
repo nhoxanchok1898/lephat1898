@@ -1,7 +1,7 @@
 from django.core.paginator import Paginator
 from django.utils import timezone
 from datetime import timedelta
-from django.db.models import Count, Avg
+from django.db.models import Count, Avg, Q
 from .models import Product, SearchQuery
 
 
@@ -9,16 +9,20 @@ class ProductSearch:
     def __init__(self, products=None):
         # Accept an iterable or a queryset; default to all active products
         if products is None:
-            self.products = Product.objects.filter(is_active=True)
+            self.products = Product.with_effective_stock(
+                Product.objects.filter(is_active=True).select_related('brand', 'category')
+            )
         else:
             self.products = products
 
     def _as_queryset(self):
         if hasattr(self.products, 'filter'):
-            return self.products
+            return Product.with_effective_stock(self.products.select_related('brand', 'category'))
         # assume iterable of model instances
         ids = [p.id for p in self.products]
-        return Product.objects.filter(id__in=ids)
+        return Product.with_effective_stock(
+            Product.objects.filter(id__in=ids).select_related('brand', 'category')
+        )
 
     def search(self, query=None, query_text=None, page=1, per_page=10, filters=None, sort_by=None):
         # support both parameter names for compatibility
@@ -28,7 +32,7 @@ class ProductSearch:
         qs = self._as_queryset()
 
         if query:
-            qs = qs.filter(name__icontains=query) | qs.filter(description__icontains=query)
+            qs = qs.filter(Q(name__icontains=query) | Q(description__icontains=query))
 
         # apply filters
         filters = filters or {}
@@ -41,7 +45,7 @@ class ProductSearch:
         if 'price_max' in filters:
             qs = qs.filter(price__lte=filters['price_max'])
         if filters.get('in_stock'):
-            qs = qs.filter(stock_quantity__gt=0)
+            qs = qs.filter(effective_stock__gt=0)
         if filters.get('on_sale'):
             qs = qs.filter(is_on_sale=True)
 

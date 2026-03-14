@@ -19,3 +19,18 @@ def vnd(value):
     number = number.quantize(Decimal("1"))
     formatted = f"{number:,.0f}".replace(",", ".")
     return f"{formatted}₫"
+
+
+@register.filter
+def cart_quantity(cart):
+    """Return total quantity from the session-backed cart dictionary."""
+    if not isinstance(cart, dict):
+        return 0
+
+    total = 0
+    for value in cart.values():
+        try:
+            total += int(value)
+        except (TypeError, ValueError):
+            continue
+    return total

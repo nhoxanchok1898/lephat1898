@@ -1,9 +1,14 @@
+from pathlib import Path
+
+from django.conf import settings
 from django.utils.deprecation import MiddlewareMixin
 
 class ResponseLoggerMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
         try:
-            with open(r"C:\Users\letan\Desktop\lephat1898\tmp_final_response.txt", "w", encoding="utf-8") as f:
+            log_path = Path(settings.BASE_DIR) / "logs" / "last_response.txt"
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            with log_path.open("w", encoding="utf-8") as f:
                 f.write(f"PATH: {getattr(request, 'path', '')}\n")
                 f.write(f"STATUS: {getattr(response, 'status_code', '')}\n")
                 try:

@@ -45,28 +45,35 @@ Cần làm thêm 5 việc:
 - Lưu lại Internal Database URL
 
 ### 3️⃣ Tạo web service (5 phút)
-- New → Web Service
-- Connect GitHub repo: `nhoxanchok1898/lephat1898`
-- Build Command: `pip install -r requirements.txt && python manage.py collectstatic --noinput`
-- Start Command: `gunicorn paint_store.wsgi:application --bind 0.0.0.0:$PORT`
+- Cách nhanh nhất: dùng Blueprint với file `render.yaml` đã có sẵn trong repo
+- Trên Render: New → Blueprint → connect GitHub repo `nhoxanchok1898/lephat1898`
+- Render sẽ tự tạo web service + PostgreSQL từ `render.yaml`
+- Nếu không dùng Blueprint, tạo Web Service thủ công với:
+  - Build Command: `bash build.sh`
+  - Start Command: `gunicorn paint_store.wsgi:application --bind 0.0.0.0:$PORT --workers 3`
 
 ### 4️⃣ Setup Environment Variables (10 phút)
 Copy vào Render Environment tab:
 
 ```env
-DJANGO_SECRET_KEY=django-insecure-change-this-to-50-random-characters-for-production
+SECRET_KEY=django-insecure-change-this-to-50-random-characters-for-production
 DJANGO_SETTINGS_MODULE=paint_store.settings_production
 DEBUG=False
-ALLOWED_HOSTS=your-app.onrender.com
+SITE_URL=https://your-app.onrender.com
 PORT=10000
 DATABASE_URL=<copy-from-render-postgres>
-REDIS_URL=redis://red-xxxxx:6379
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
 EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_PASSWORD=your-app-password
+USE_MANIFEST_STATICFILES=1
 ```
+
+Ghi chú:
+- Nếu dùng Blueprint `render.yaml`, `SECRET_KEY` và `DATABASE_URL` được tạo/gắn tự động.
+- `ALLOWED_HOSTS` không bắt buộc khi chạy trên Render vì app tự nhận `RENDER_EXTERNAL_HOSTNAME`.
+- `REDIS_URL` là tùy chọn; nếu chưa có Redis, app sẽ fallback an toàn sang session database + local cache.
 
 ### 5️⃣ Deploy (10 phút)
 - Click "Create Web Service"
