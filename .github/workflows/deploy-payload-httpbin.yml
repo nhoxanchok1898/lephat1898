@@ -15,27 +15,16 @@ jobs:
           cat > render_payload.json <<'JSON'
 {"clearCache": true}
 JSON
-          cat render_payload.json
       - name: Send payload to httpbin
-        env:
-          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
         run: |
           set -euo pipefail
-          curl -v -X POST https://httpbin.org/post \
+          http_code=$(curl -sS -o /dev/null -w "%{http_code}" -X POST https://httpbin.org/post \
             -H "Accept: application/json" \
             -H "Content-Type: application/json" \
-            --data-binary @render_payload.json \
-            -D httpbin_headers.txt -o httpbin_body.txt 2>&1 | tee httpbin_stdout.txt || true
-          echo "CURL_EXIT=$?" > httpbin_status.txt
-          cat httpbin_status.txt
+            --data-binary @render_payload.json)
+          echo "HTTP_CODE=${http_code:-000}" > httpbin_status.txt
       - name: Upload httpbin artifacts
         uses: actions/upload-artifact@v4
         with:
           name: httpbin-debug
-          path: |
-            render_payload.json
-            httpbin_headers.txt
-            httpbin_body.txt
-            httpbin_stdout.txt
-            httpbin_status.txt
+          path: httpbin_status.txt

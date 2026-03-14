@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.test import override_settings
 from django.urls import reverse
 
 from store.models import Brand, Product
@@ -68,3 +69,8 @@ class SmokeHttpStatusTests(TestCase):
         resp = self.client.get(reverse("my_account_root"))
         self.assertEqual(resp.status_code, 302)
         self.assertIn(reverse("login"), resp.url)
+
+    @override_settings(DEBUG=False)
+    def test_sentry_debug_hidden_when_debug_disabled(self):
+        resp = self.client.get("/sentry-debug/")
+        self.assertEqual(resp.status_code, 404)

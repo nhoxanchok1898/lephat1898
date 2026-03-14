@@ -15,7 +15,9 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.conf import settings
 from django.contrib.auth import views as auth_views
+from django.http import Http404
 from django.urls import path, include
 from home import views as home_views
 from store import wishlist_views
@@ -32,7 +34,9 @@ from store.sitemaps import ProductSitemap, StaticViewSitemap
 
 
 def trigger_error(request):
-    # Endpoint to force an exception for testing Sentry integration
+    # Keep the Sentry smoke endpoint out of production traffic.
+    if not settings.DEBUG:
+        raise Http404("Not found")
     division_by_zero = 1 / 0
 
 

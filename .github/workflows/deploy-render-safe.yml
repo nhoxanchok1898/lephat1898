@@ -25,12 +25,8 @@ jobs:
             echo "Missing Render secrets" >&2
             exit 1
           fi
-          echo "Checking Render service: $RENDER_SERVICE_ID"
-          resp=$(curl -sS -w "\nHTTP_CODE:%{http_code}\n" -H "Authorization: Bearer $RENDER_API_KEY" "https://api.render.com/v1/services/$RENDER_SERVICE_ID") || true
-          http_code=$(echo "$resp" | awk -F'HTTP_CODE:' '/HTTP_CODE/{print $2}' | tr -d '\r' || true)
-          body=$(echo "$resp" | sed -e 's/HTTP_CODE:.*//')
-          echo "$body" > validation_body.json || true
-          echo "HTTP_CODE=$http_code" > validation_status.txt || true
+          http_code=$(curl -sS -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $RENDER_API_KEY" "https://api.render.com/v1/services/$RENDER_SERVICE_ID") || true
+          echo "HTTP_CODE=${http_code:-000}" > validation_status.txt || true
           if [ "$http_code" != "200" ]; then
             echo "valid=false" >> $GITHUB_OUTPUT
             echo "Service check HTTP $http_code" >&2
@@ -43,9 +39,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: render-validation
-          path: |
-            validation_body.json
-            validation_status.txt
+          path: validation_status.txt
 
   deploy-manual:
     name: Deploy to Render (manual)
@@ -59,7 +53,6 @@ jobs:
           cat > render_payload.json <<'JSON'
 {"clearCache": true}
 JSON
-          cat render_payload.json
       - name: Show curl command (dry-run)
         run: |
           echo "curl -v -X POST https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys -H 'Authorization: Bearer ****' -H 'Content-Type: application/json' --data-binary @render_payload.json"
@@ -72,32 +65,27 @@ JSON
           set +e
           RENDER_API_KEY_CLEAN=$(printf "%s" "$RENDER_API_KEY" | tr -d '\r' || true)
           RENDER_SERVICE_ID_CLEAN=$(printf "%s" "$RENDER_SERVICE_ID" | tr -d '\r' || true)
-          echo "Calling Render API for service=$RENDER_SERVICE_ID_CLEAN"
-          curl --retry 3 --retry-delay 5 --retry-connrefused -sS -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID_CLEAN/deploys" \
+          http_code=$(curl --retry 3 --retry-delay 5 --retry-connrefused -sS -o /dev/null -w "%{http_code}" -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID_CLEAN/deploys" \
             -H "Authorization: Bearer $RENDER_API_KEY_CLEAN" \
-            -H "Accept: application/json" \
-            -D deploy_response_headers.txt -o deploy_response_body.txt -w "\nHTTP_CODE:%{http_code}\n" 2>&1 | tee deploy_curl_stdout.txt || true
-          echo "CURL_EXIT=$?" > deploy_status.txt || true
+            -H "Accept: application/json")
+          curl_exit=$?
+          {
+            echo "SERVICE_ID_PRESENT=$([ -n "$RENDER_SERVICE_ID_CLEAN" ] && echo yes || echo no)"
+            echo "API_KEY_PRESENT=$([ -n "$RENDER_API_KEY_CLEAN" ] && echo yes || echo no)"
+            echo "HTTP_CODE=${http_code:-000}"
+            echo "CURL_EXIT=$curl_exit"
+          } > deploy_status.txt || true
           # restore errexit for subsequent steps
           set -e
 
-      - name: Ensure debug files exist
+      - name: Ensure debug status exists
         if: always()
         run: |
-          for f in render_payload.json deploy_response_headers.txt deploy_response_body.txt deploy_curl_stdout.txt deploy_status.txt; do
-            if [ ! -f "$f" ]; then
-              echo "MISSING: $f" > "$f"
-            fi
-          done
+          test -f deploy_status.txt || echo "MISSING: deploy_status.txt" > deploy_status.txt
 
       - name: Upload deploy artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: render-deploy-debug
-          path: |
-            render_payload.json
-            deploy_response_headers.txt
-            deploy_response_body.txt
-            deploy_curl_stdout.txt
-            deploy_status.txt
+          path: deploy_status.txt
