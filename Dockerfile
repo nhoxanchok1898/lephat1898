@@ -25,4 +25,4 @@ RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
-CMD ["gunicorn", "paint_store.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+CMD ["sh", "-c", "export DJANGO_SETTINGS_MODULE=paint_store.settings_production && exec gunicorn paint_store.wsgi:application --bind 0.0.0.0:8000 --workers 3"]
