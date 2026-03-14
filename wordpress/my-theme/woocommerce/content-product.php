@@ -17,10 +17,15 @@ if (function_exists('my_theme_is_placeholder_product_name') && my_theme_is_place
     return;
 }
 
-$brand_label = function_exists('my_theme_get_product_brand_label') ? my_theme_get_product_brand_label($product) : 'Sản phẩm';
-$line_label = function_exists('my_theme_get_product_line_label') ? my_theme_get_product_line_label($product) : '';
-$cat_label = function_exists('my_theme_get_product_primary_category_label') ? my_theme_get_product_primary_category_label($product) : '';
-$product_name = function_exists('my_theme_get_product_display_name') ? my_theme_get_product_display_name($product) : $product->get_name();
+$catalog_profile = function_exists('my_theme_get_product_catalog_profile')
+    ? my_theme_get_product_catalog_profile($product)
+    : [];
+$brand_label = isset($catalog_profile['brand_label']) ? (string) $catalog_profile['brand_label'] : 'Sản phẩm';
+$line_label = isset($catalog_profile['line_label']) ? (string) $catalog_profile['line_label'] : '';
+$cat_label = isset($catalog_profile['category_label']) ? (string) $catalog_profile['category_label'] : '';
+$product_name = isset($catalog_profile['display_name']) && (string) $catalog_profile['display_name'] !== ''
+    ? (string) $catalog_profile['display_name']
+    : $product->get_name();
 $brand_display = ($brand_label !== '' && $brand_label !== 'Sản phẩm') ? (string) $brand_label : '';
 $line_display = ($line_label !== '') ? (string) $line_label : '';
 $cat_display = ($cat_label !== '') ? (string) $cat_label : '';
@@ -35,42 +40,29 @@ if ($line_display !== '' && $cat_display !== '') {
         $line_display = '';
     }
 }
-$excerpt = function_exists('my_theme_get_product_card_excerpt') ? trim((string) my_theme_get_product_card_excerpt($product, 18)) : '';
-$excerpt_class = 'product-card__excerpt' . ($excerpt === '' ? ' product-card__excerpt--empty' : '');
 $brand_class = 'product-card__brand' . ($brand_display === '' ? ' product-card__brand--empty' : '');
-$line_class = 'product-card__line' . ($line_display === '' ? ' product-card__line--empty' : '');
-$cat_class = 'product-card__taxonomy' . ($cat_display === '' ? ' product-card__taxonomy--empty' : '');
-$thumb_id = function_exists('my_theme_get_preferred_product_image_id')
-    ? (int) my_theme_get_preferred_product_image_id($product)
-    : (int) $product->get_image_id();
-$thumb_class = 'product-card__thumb';
-if ($thumb_id > 0) {
-    $thumb_meta = wp_get_attachment_metadata($thumb_id);
-    $thumb_w = isset($thumb_meta['width']) ? (int) $thumb_meta['width'] : 0;
-    $thumb_h = isset($thumb_meta['height']) ? (int) $thumb_meta['height'] : 0;
-    if ($thumb_w > 0 && $thumb_h > 0) {
-        if ($thumb_w < 320 || $thumb_h < 320) {
-            $thumb_class .= ' product-card__thumb--small-source';
-        }
-        $thumb_ratio = $thumb_h > 0 ? ((float) $thumb_w / (float) $thumb_h) : 1.0;
-        if ($thumb_ratio > 1.8 || $thumb_ratio < 0.55) {
-            $thumb_class .= ' product-card__thumb--extreme-ratio';
-        }
-    }
+$meta_secondary_parts = [];
+if ($line_display !== '') {
+    $meta_secondary_parts[] = $line_display;
 }
-if ($thumb_id <= 0) {
-    $thumb_class .= ' product-card__thumb--fallback';
+if ($cat_display !== '') {
+    $meta_secondary_parts[] = $cat_display;
 }
-
-$swatches_html = '';
-if (function_exists('my_theme_render_product_colour_swatches')) {
-    ob_start();
-    my_theme_render_product_colour_swatches($product, ['context' => 'loop', 'limit' => 5]);
-    $swatches_html = trim((string) ob_get_clean());
-}
-$pack_price_map = function_exists('my_theme_get_pack_price_map_for_display')
-    ? my_theme_get_pack_price_map_for_display($product)
+$meta_secondary = implode(' · ', $meta_secondary_parts);
+$in_stock = $product->is_in_stock();
+$stock_label = $in_stock ? 'Còn hàng' : 'Hết hàng';
+$stock_class = 'product-card__stock ' . ($in_stock ? 'is-in' : 'is-out');
+$media_state = function_exists('my_theme_get_product_card_media_state')
+    ? my_theme_get_product_card_media_state($product)
     : [];
+$thumb_id = isset($media_state['thumb_id']) ? (int) $media_state['thumb_id'] : 0;
+$thumb_class = isset($media_state['thumb_class']) ? (string) $media_state['thumb_class'] : 'product-card__thumb';
+$has_placeholder_thumb = !empty($media_state['has_placeholder']);
+$pack_price_map = function_exists('my_theme_get_pack_price_display_map')
+    ? my_theme_get_pack_price_display_map($product)
+    : (function_exists('my_theme_get_pack_price_map_for_display')
+        ? my_theme_get_pack_price_map_for_display($product)
+        : []);
 $actions_class = 'product-card__actions' . (!empty($pack_price_map) ? ' product-card__actions--pack' : ' product-card__actions--simple');
 ?>
 <li <?php wc_product_class('product-card', $product); ?>>
@@ -81,7 +73,7 @@ $actions_class = 'product-card__actions' . (!empty($pack_price_map) ? ' product-
       title="<?php echo esc_attr($product_name); ?>">
         <?php if ($product->is_on_sale()) : ?><span class="product-card__badge">Giảm giá</span><?php endif; ?>
         <?php
-        if ($thumb_id > 0) {
+        if ($thumb_id > 0 && !$has_placeholder_thumb) {
             echo wp_get_attachment_image($thumb_id, 'medium_large', false, [
                 'loading' => 'lazy',
                 'decoding' => 'async',
@@ -96,14 +88,14 @@ $actions_class = 'product-card__actions' . (!empty($pack_price_map) ? ' product-
     </a>
 
     <div class="product-card__body">
-        <div class="<?php echo esc_attr($brand_class); ?>"<?php echo ($brand_display === '') ? ' aria-hidden="true"' : ''; ?>><?php echo esc_html($brand_display); ?></div>
-        <div class="<?php echo esc_attr($line_class); ?>"<?php echo ($line_display === '') ? ' aria-hidden="true"' : ''; ?>><?php echo esc_html($line_display); ?></div>
+        <div class="product-card__meta-top">
+            <div class="<?php echo esc_attr($brand_class); ?>"<?php echo ($brand_display === '') ? ' aria-hidden="true"' : ''; ?>><?php echo esc_html($brand_display); ?></div>
+            <span class="<?php echo esc_attr($stock_class); ?>"><?php echo esc_html($stock_label); ?></span>
+        </div>
         <h2 class="woocommerce-loop-product__title"><a href="<?php the_permalink(); ?>"><?php echo esc_html($product_name); ?></a></h2>
-        <div class="<?php echo esc_attr($cat_class); ?>"<?php echo ($cat_display === '') ? ' aria-hidden="true"' : ''; ?>><?php echo esc_html($cat_display); ?></div>
-        <p class="<?php echo esc_attr($excerpt_class); ?>"<?php echo ($excerpt === '') ? ' aria-hidden="true"' : ''; ?>><?php echo ($excerpt !== '') ? esc_html($excerpt) : '&nbsp;'; ?></p>
+        <div class="product-card__meta-secondary<?php echo $meta_secondary === '' ? ' product-card__meta-secondary--empty' : ''; ?>"<?php echo $meta_secondary === '' ? ' aria-hidden="true"' : ''; ?>><?php echo $meta_secondary !== '' ? esc_html($meta_secondary) : '&nbsp;'; ?></div>
         <?php if (function_exists('my_theme_render_loop_price')) { my_theme_render_loop_price($product); } else { woocommerce_template_loop_price(); } ?>
         <?php if (function_exists('my_theme_render_loop_pack_summary')) { my_theme_render_loop_pack_summary($product); } ?>
-        <div class="product-card__swatches"<?php echo ($swatches_html === '') ? ' aria-hidden="true"' : ''; ?>><?php echo $swatches_html; ?></div>
     </div>
 
     <div class="<?php echo esc_attr($actions_class); ?>">

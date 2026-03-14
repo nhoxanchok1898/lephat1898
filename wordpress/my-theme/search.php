@@ -19,6 +19,39 @@ if (!$is_valid_scope) {
     $selected_scope = '';
 }
 $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop');
+$shop_search_url = ($query_text !== '') ? add_query_arg('q', $query_text, $shop_url) : $shop_url;
+$search_visible_ids = function_exists('my_theme_get_catalog_visible_product_ids')
+    ? my_theme_get_catalog_visible_product_ids(false)
+    : [];
+$search_visible_ids = array_values(array_filter(array_map('intval', (array) $search_visible_ids), function ($id) {
+    return $id > 0;
+}));
+$matched_product_ids = ($query_text !== '' && function_exists('my_theme_get_search_matched_product_ids'))
+    ? my_theme_get_search_matched_product_ids($query_text, $search_visible_ids, 3)
+    : [];
+$matched_product_ids = array_values(array_filter(array_map('intval', (array) $matched_product_ids), function ($id) {
+    return $id > 0;
+}));
+$matched_product_map = (!empty($matched_product_ids) && function_exists('my_theme_get_product_object_map'))
+    ? my_theme_get_product_object_map($matched_product_ids)
+    : [];
+$matched_products = [];
+foreach ($matched_product_ids as $matched_product_id) {
+    if (!isset($matched_product_map[$matched_product_id]) || !$matched_product_map[$matched_product_id] instanceof WC_Product) {
+        continue;
+    }
+    $matched_products[] = $matched_product_map[$matched_product_id];
+}
+$matched_category_ids = ($query_text !== '' && function_exists('my_theme_get_search_matched_product_cat_ids'))
+    ? my_theme_get_search_matched_product_cat_ids($query_text, $search_visible_ids, 1)
+    : [];
+$matched_category_ids = array_values(array_filter(array_map('intval', (array) $matched_category_ids), function ($id) {
+    return $id > 0;
+}));
+$matched_category = !empty($matched_category_ids) ? get_term((int) $matched_category_ids[0], 'product_cat') : null;
+$matched_category_url = ($matched_category instanceof WP_Term)
+    ? add_query_arg('category', (int) $matched_category->term_id, $shop_url)
+    : '';
 $suggested_links = [
     ['label' => 'Kho sản phẩm', 'url' => $shop_url],
     ['label' => 'Hướng dẫn mua hàng', 'url' => home_url('/huong-dan-mua-hang')],
@@ -78,6 +111,77 @@ $scope_url = function ($scope = '') use ($query_text) {
       </div>
     </section>
 
+    <?php if ($query_text !== '' && (!empty($matched_products) || $matched_category instanceof WP_Term)) : ?>
+      <section class="page-section search-intent-panel" aria-label="Đi thẳng vào kết quả sản phẩm phù hợp">
+        <div class="section-heading search-intent-panel__head">
+          <div>
+            <p class="eyebrow eyebrow-muted">Nếu bạn đang tìm hàng theo mã hoặc nhóm nhu cầu</p>
+            <h2 class="section-title">Đi thẳng vào kho sản phẩm sẽ nhanh hơn</h2>
+            <p class="section-sub">Trang tìm kiếm toàn site phù hợp để xem cả bài viết lẫn sản phẩm. Nếu bạn đang chốt hàng, các lối đi nhanh dưới đây sẽ đưa bạn vào đúng kết quả trong shop.</p>
+          </div>
+          <div class="search-intent-panel__actions">
+            <a class="btn btn-primary btn-sm" href="<?php echo esc_url($shop_search_url); ?>">Mở kết quả trong shop</a>
+            <?php if ($matched_category_url !== '') : ?>
+              <a class="btn btn-outline btn-sm" href="<?php echo esc_url($matched_category_url); ?>">Vào nhóm <?php echo esc_html((string) $matched_category->name); ?></a>
+            <?php endif; ?>
+          </div>
+        </div>
+
+        <?php if (!empty($matched_products)) : ?>
+          <div class="search-intent-panel__grid">
+            <?php foreach ($matched_products as $matched_product) : ?>
+              <?php
+              $matched_profile = function_exists('my_theme_get_product_catalog_profile')
+                  ? my_theme_get_product_catalog_profile($matched_product)
+                  : [];
+              $matched_name = isset($matched_profile['display_name']) && (string) $matched_profile['display_name'] !== ''
+                  ? (string) $matched_profile['display_name']
+                  : $matched_product->get_name();
+              $matched_line = isset($matched_profile['line_label'])
+                  ? trim((string) $matched_profile['line_label'])
+                  : '';
+              $matched_brand_label = isset($matched_profile['brand_label'])
+                  ? trim((string) $matched_profile['brand_label'])
+                  : '';
+              if ($matched_brand_label === 'Sản phẩm') {
+                  $matched_brand_label = '';
+              }
+              $matched_price_html = function_exists('my_theme_get_loop_price_html')
+                  ? my_theme_get_loop_price_html($matched_product, 'search-intent-card__price product-card__price')
+                  : '<div class="search-intent-card__price product-card__price"><span class="product-card__price-contact">Liên hệ báo giá</span></div>';
+              ?>
+              <article class="search-intent-card">
+                <a class="search-intent-card__thumb" href="<?php echo esc_url($matched_product->get_permalink()); ?>">
+                  <?php
+                  echo function_exists('my_theme_get_product_thumbnail_markup')
+                      ? my_theme_get_product_thumbnail_markup($matched_product, 'woocommerce_thumbnail', [
+                          'loading' => 'lazy',
+                          'decoding' => 'async',
+                          'alt' => $matched_name,
+                      ])
+                      : $matched_product->get_image('woocommerce_thumbnail', ['loading' => 'lazy', 'decoding' => 'async', 'alt' => $matched_name]);
+                  ?>
+                </a>
+                <div class="search-intent-card__body">
+                  <div class="search-intent-card__meta">
+                    <?php if ($matched_brand_label !== '') : ?><span class="chip chip--soft"><?php echo esc_html($matched_brand_label); ?></span><?php endif; ?>
+                    <?php if ($matched_line !== '') : ?><span class="chip chip--soft"><?php echo esc_html($matched_line); ?></span><?php endif; ?>
+                  </div>
+                  <h3><a href="<?php echo esc_url($matched_product->get_permalink()); ?>"><?php echo esc_html((string) $matched_name); ?></a></h3>
+                  <?php if ($matched_price_html !== '') : ?>
+                    <?php echo wp_kses_post($matched_price_html); ?>
+                  <?php endif; ?>
+                </div>
+                <div class="search-intent-card__actions">
+                  <a class="btn btn-primary w-100" href="<?php echo esc_url($matched_product->get_permalink()); ?>">Xem sản phẩm</a>
+                </div>
+              </article>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
+      </section>
+    <?php endif; ?>
+
     <?php
     if (function_exists('my_theme_render_quick_answers')) {
         my_theme_render_quick_answers([
@@ -94,6 +198,15 @@ $scope_url = function ($scope = '') use ($query_text) {
             'title' => 'Sản phẩm bạn vừa xem',
             'aria_label' => 'Sản phẩm bạn vừa xem gần đây',
             'class' => 'related-products-block--recently-viewed related-products-block--search',
+        ]);
+    }
+
+    if (function_exists('my_theme_render_service_compass')) {
+        my_theme_render_service_compass([
+            'class' => 'service-compass--search',
+            'eyebrow' => 'Nếu tìm chưa ra đúng ý',
+            'title' => 'Từ trang tìm kiếm, bạn có thể đi tiếp theo 3 đường rõ ràng',
+            'subtitle' => 'Vào kho sản phẩm nếu đang tìm theo mã. Xem giải pháp nếu đang tìm theo nhu cầu thi công. Hoặc gửi mô tả hiện trạng để đội kỹ thuật điều hướng lại.',
         ]);
     }
     ?>
@@ -177,7 +290,7 @@ $scope_url = function ($scope = '') use ($query_text) {
           <h2>Không tìm thấy kết quả phù hợp</h2>
           <p>Thử từ khóa ngắn gọn hơn hoặc chuyển sang tìm sản phẩm trong kho hàng.</p>
           <div class="empty-state__actions">
-            <a class="btn btn-primary" href="<?php echo esc_url($shop_url); ?>">Xem kho sản phẩm</a>
+            <a class="btn btn-primary" href="<?php echo esc_url($shop_search_url); ?>"><?php echo ($query_text !== '') ? 'Tìm trong kho sản phẩm' : 'Xem kho sản phẩm'; ?></a>
             <a class="btn btn-outline" href="<?php echo esc_url(home_url('/lien-he')); ?>">Nhận tư vấn nhanh</a>
           </div>
           <div class="search-scope" aria-label="Gợi ý điều hướng">
@@ -188,6 +301,17 @@ $scope_url = function ($scope = '') use ($query_text) {
         </div>
       <?php endif; ?>
     </section>
+
+    <?php
+    if (function_exists('my_theme_render_lead_capture_form')) {
+        echo my_theme_render_lead_capture_form([
+            'source' => 'search-page',
+            'title' => 'Tìm kiếm chưa ra đúng thứ bạn cần?',
+            'subtitle' => 'Gửi từ khóa đang tìm, bề mặt, diện tích hoặc thương hiệu đang cân nhắc. Đội kỹ thuật sẽ hướng bạn sang đúng sản phẩm hoặc landing phù hợp hơn.',
+            'button' => 'Gửi nhu cầu tìm kiếm',
+        ]);
+    }
+    ?>
   </div>
 </main>
 <?php get_footer(); ?>

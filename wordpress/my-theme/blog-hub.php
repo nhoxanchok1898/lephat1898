@@ -10,78 +10,77 @@ $current_page = max(1, (int) $current_page);
 $blog_url = trailingslashit(home_url('/blog'));
 $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop');
 $placeholder_post_ids = function_exists('my_theme_get_placeholder_blog_post_ids') ? my_theme_get_placeholder_blog_post_ids() : [];
-
-$resolve_page_permalink = function ($path = '', $template_file = '') {
-    $path = trim((string) $path, '/');
-    if ($path !== '') {
-        $page = get_page_by_path($path);
-        if ($page instanceof WP_Post) {
-            return (string) get_permalink($page);
-        }
-    }
-
-    $template_file = trim((string) $template_file);
-    if ($template_file !== '') {
-        $pages = get_pages([
-            'meta_key' => '_wp_page_template',
-            'meta_value' => $template_file,
-            'number' => 1,
-        ]);
-        if (!empty($pages) && $pages[0] instanceof WP_Post) {
-            return (string) get_permalink($pages[0]);
-        }
-    }
-
-    return '';
-};
-
-$posts_query = new WP_Query([
-    'post_type' => 'post',
-    'post_status' => 'publish',
-    'posts_per_page' => 12,
-    'paged' => $current_page,
-    'ignore_sticky_posts' => true,
-    'post__not_in' => $placeholder_post_ids,
-    'suppress_filters' => true,
-]);
+$blog_cache_version = (string) get_option('my_theme_blog_cache_version', '1');
+$cards_cache_key = 'my_theme_blog_hub_cards_v1_' . md5($blog_cache_version . '|' . $current_page . '|' . implode(',', array_map('intval', (array) $placeholder_post_ids)));
 
 $published_total = function_exists('my_theme_get_public_blog_post_count')
     ? my_theme_get_public_blog_post_count()
     : 0;
+$cards_payload = get_transient($cards_cache_key);
 $cards = [];
+$max_num_pages = 0;
 
-if ($posts_query->have_posts()) {
-    while ($posts_query->have_posts()) {
-        $posts_query->the_post();
-        $title = trim((string) get_the_title());
-        if ($title === '' || (function_exists('my_theme_is_placeholder_blog_post') && my_theme_is_placeholder_blog_post(get_post()))) {
-            continue;
+if (is_array($cards_payload)) {
+    $cards = isset($cards_payload['cards']) && is_array($cards_payload['cards']) ? $cards_payload['cards'] : [];
+    $max_num_pages = isset($cards_payload['max_num_pages']) ? max(0, (int) $cards_payload['max_num_pages']) : 0;
+} else {
+    $posts_query = new WP_Query([
+        'post_type' => 'post',
+        'post_status' => 'publish',
+        'posts_per_page' => 12,
+        'paged' => $current_page,
+        'ignore_sticky_posts' => true,
+        'post__not_in' => $placeholder_post_ids,
+        'suppress_filters' => true,
+    ]);
+
+    if ($posts_query->have_posts()) {
+        while ($posts_query->have_posts()) {
+            $posts_query->the_post();
+            $title = trim((string) get_the_title());
+            if ($title === '' || (function_exists('my_theme_is_placeholder_blog_post') && my_theme_is_placeholder_blog_post(get_post()))) {
+                continue;
+            }
+
+            $excerpt = trim((string) get_the_excerpt());
+            if ($excerpt === '') {
+                $excerpt = wp_trim_words(wp_strip_all_tags((string) get_the_content()), 24);
+            }
+
+            $cards[] = [
+                'title' => $title,
+                'excerpt' => $excerpt,
+                'url' => get_permalink(),
+                'date' => get_the_date(),
+                'thumb' => get_the_post_thumbnail(null, 'medium_large'),
+                'thumb_label' => 'Bài viết',
+                'cta_label' => 'Đọc tiếp',
+            ];
         }
-
-        $excerpt = trim((string) get_the_excerpt());
-        if ($excerpt === '') {
-            $excerpt = wp_trim_words(wp_strip_all_tags((string) get_the_content()), 24);
-        }
-
-        $cards[] = [
-            'title' => $title,
-            'excerpt' => $excerpt,
-            'url' => get_permalink(),
-            'date' => get_the_date(),
-            'thumb' => get_the_post_thumbnail(null, 'medium_large'),
-            'thumb_label' => 'Bài viết',
-            'cta_label' => 'Đọc tiếp',
-        ];
+        wp_reset_postdata();
     }
-    wp_reset_postdata();
+
+    $max_num_pages = (int) $posts_query->max_num_pages;
+    set_transient($cards_cache_key, [
+        'cards' => $cards,
+        'max_num_pages' => $max_num_pages,
+    ], 30 * MINUTE_IN_SECONDS);
 }
 
-$guide_url = $resolve_page_permalink('huong-dan-mua-hang', 'page-huong-dan-mua-hang.php');
-$faq_url = $resolve_page_permalink('faq', 'page-faq.php');
+$guide_url = function_exists('my_theme_get_page_permalink_by_path_or_template')
+    ? my_theme_get_page_permalink_by_path_or_template('huong-dan-mua-hang', 'page-huong-dan-mua-hang.php')
+    : '';
+$faq_url = function_exists('my_theme_get_page_permalink_by_path_or_template')
+    ? my_theme_get_page_permalink_by_path_or_template('faq', 'page-faq.php')
+    : '';
 if ($faq_url === '') {
-    $faq_url = $resolve_page_permalink('cau-hoi-thuong-gap', 'page-faq.php');
+    $faq_url = function_exists('my_theme_get_page_permalink_by_path_or_template')
+        ? my_theme_get_page_permalink_by_path_or_template('cau-hoi-thuong-gap', 'page-faq.php')
+        : '';
 }
-$contact_url = $resolve_page_permalink('lien-he', 'page-lien-he.php');
+$contact_url = function_exists('my_theme_get_page_permalink_by_path_or_template')
+    ? my_theme_get_page_permalink_by_path_or_template('lien-he', 'page-lien-he.php')
+    : '';
 
 $fallback_resources = [];
 foreach ([
@@ -93,7 +92,7 @@ foreach ([
     ],
     [
         'title' => 'Câu hỏi thường gặp khi chọn sơn và nhận hàng',
-        'excerpt' => 'Tổng hợp các câu hỏi phổ biến về phối màu, hóa đơn, đổi trả và hỗ trợ kỹ thuật.',
+        'excerpt' => 'Tổng hợp các câu hỏi phổ biến về phối màu, hóa đơn, giao nhận và hỗ trợ kỹ thuật.',
         'url' => $faq_url,
         'label' => 'FAQ',
     ],
@@ -248,14 +247,14 @@ foreach ([
           <?php endif; ?>
         </div>
 
-        <?php if ((int) $posts_query->max_num_pages > 1) : ?>
+        <?php if ($max_num_pages > 1) : ?>
           <nav class="pagination-wrapper pagination-wrapper--posts" aria-label="Phân trang bài viết">
             <?php
             echo paginate_links([
                 'base' => $blog_url . '%_%',
                 'format' => 'page/%#%/',
                 'current' => $current_page,
-                'total' => (int) $posts_query->max_num_pages,
+                'total' => $max_num_pages,
                 'mid_size' => 1,
                 'prev_text' => 'Trước',
                 'next_text' => 'Sau',

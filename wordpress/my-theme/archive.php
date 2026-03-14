@@ -58,6 +58,25 @@ $archive_suggestions = [
       </div>
     </section>
 
+    <?php
+    if (function_exists('my_theme_render_service_compass')) {
+        my_theme_render_service_compass([
+            'class' => 'service-compass--archive',
+            'eyebrow' => 'Đọc theo chủ đề rồi đi tiếp',
+            'title' => 'Nếu archive này chưa đủ để chốt vật tư, hãy rẽ theo 3 hướng rõ ràng',
+            'subtitle' => 'Mở kho sản phẩm nếu bạn đã có mã hoặc hãng. Vào giải pháp nếu còn đang đi theo bề mặt. Hoặc gửi nhu cầu thực tế để đội kỹ thuật điều hướng lại.',
+        ]);
+    }
+
+    if (function_exists('my_theme_render_recently_viewed_products')) {
+        my_theme_render_recently_viewed_products([
+            'title' => 'Các mã bạn vừa xem trước khi mở chủ đề này',
+            'aria_label' => 'Các mã bạn vừa xem trước khi mở chủ đề này',
+            'class' => 'related-products-block--recently-viewed related-products-block--archive',
+        ]);
+    }
+    ?>
+
     <section class="page-section blog-shell archive-shell__listing">
       <?php if (have_posts()) : ?>
         <?php $rendered_posts = 0; ?>
@@ -142,6 +161,17 @@ $archive_suggestions = [
         </div>
       <?php endif; ?>
     </section>
+
+    <?php
+    if (function_exists('my_theme_render_lead_capture_form')) {
+        echo my_theme_render_lead_capture_form([
+            'source' => 'archive-page',
+            'title' => 'Đọc xong chủ đề này nhưng vẫn chưa chốt được mã?',
+            'subtitle' => 'Gửi bề mặt, diện tích hoặc thương hiệu đang cân nhắc. Đội kỹ thuật sẽ hướng bạn từ nội dung tư vấn sang đúng nhóm sản phẩm hoặc giải pháp phù hợp.',
+            'button' => 'Gửi nhu cầu từ trang chủ đề',
+        ]);
+    }
+    ?>
   </div>
 </main>
 <?php get_footer(); ?>

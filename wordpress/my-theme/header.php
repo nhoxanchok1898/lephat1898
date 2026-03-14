@@ -3,18 +3,23 @@
 <head>
   <meta charset="<?php bloginfo('charset'); ?>">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <?php if (!function_exists('has_site_icon') || !has_site_icon()) : ?>
+    <?php $theme_favicon_url = get_theme_file_uri('assets/logo-phat-tan.svg'); ?>
+    <link rel="icon" href="<?php echo esc_url($theme_favicon_url); ?>" sizes="any">
+    <link rel="shortcut icon" href="<?php echo esc_url($theme_favicon_url); ?>">
+  <?php endif; ?>
   <?php wp_head(); ?>
 </head>
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
 <?php
-$header_business = function_exists('my_theme_get_business_profile') ? my_theme_get_business_profile() : [];
-$header_phone_display = isset($header_business['phone_display']) ? (string) $header_business['phone_display'] : '0944 857 999';
-$header_phone_href = isset($header_business['phone_href']) ? (string) $header_business['phone_href'] : 'tel:0944857999';
-$header_email = isset($header_business['email']) ? (string) $header_business['email'] : 'lephat1898@gmail.com';
-$header_hours_display = isset($header_business['hours_display']) ? (string) $header_business['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00';
-$header_service_areas = isset($header_business['service_areas_display']) ? (string) $header_business['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai';
-$header_zalo_url = isset($header_business['zalo_url']) ? (string) $header_business['zalo_url'] : 'https://zalo.me/0944857999';
+$header_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
+$header_phone_display = isset($header_snapshot['phone_display']) ? (string) $header_snapshot['phone_display'] : '0944 857 999';
+$header_phone_href = isset($header_snapshot['phone_href']) ? (string) $header_snapshot['phone_href'] : 'tel:0944857999';
+$header_email = isset($header_snapshot['email']) ? (string) $header_snapshot['email'] : 'lephat1898@gmail.com';
+$header_hours_display = isset($header_snapshot['hours_display']) ? (string) $header_snapshot['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00';
+$header_service_areas = isset($header_snapshot['service_areas_display']) ? (string) $header_snapshot['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai';
+$header_zalo_url = isset($header_snapshot['zalo_url']) ? (string) $header_snapshot['zalo_url'] : 'https://zalo.me/0944857999';
 ?>
 <a class="skip-link" href="#main-content">Bỏ qua menu, đến nội dung chính</a>
 <div id="top"></div>
@@ -36,20 +41,24 @@ $header_zalo_url = isset($header_business['zalo_url']) ? (string) $header_busine
   <div class="container header-main">
     <a class="brand" href="<?php echo esc_url(home_url('/')); ?>">
       <span class="brand-mark">
-        <img src="<?php echo esc_url(get_theme_file_uri('assets/logo-phat-tan.svg')); ?>" alt="Logo Phát Tấn">
+        <img src="<?php echo esc_url(get_theme_file_uri('assets/logo-phat-tan.svg')); ?>" alt="Logo Phát Tấn" width="52" height="52" loading="eager" decoding="async" fetchpriority="high">
       </span>
-      <span class="brand-name">Đại Lý Sơn Phát Tấn</span>
+      <span class="brand-copy">
+        <span class="brand-name">Đại Lý Sơn Phát Tấn</span>
+        <span class="brand-tagline">Sơn nước, chống thấm, epoxy và vật liệu hoàn thiện chính hãng</span>
+      </span>
     </a>
 
     <?php
       $shop_url = function_exists('my_theme_get_shop_url') ? my_theme_get_shop_url() : home_url('/shop');
+      $calculator_url = function_exists('my_theme_get_paint_calculator_url') ? my_theme_get_paint_calculator_url() : home_url('/tinh-son');
       $cart_url = function_exists('my_theme_get_cart_url_safe') ? my_theme_get_cart_url_safe() : $shop_url;
       $account_url = function_exists('my_theme_get_account_url') ? my_theme_get_account_url() : wp_login_url();
       $account_login_url = function_exists('my_theme_get_account_login_url') ? my_theme_get_account_login_url() : add_query_arg('login', '1', $account_url);
       $shop_q = isset($_GET['q']) ? sanitize_text_field(wp_unslash($_GET['q'])) : '';
       $header_search_supports_assist = !(function_exists('my_theme_is_core_woocommerce_page') && my_theme_is_core_woocommerce_page());
     ?>
-    <div class="header-search-wrap" data-search-assist-root="header">
+    <div class="header-search-wrap"<?php echo $header_search_supports_assist ? ' data-search-assist-root="header"' : ''; ?>>
       <form class="header-search" method="get" action="<?php echo esc_url($shop_url); ?>" role="search" aria-label="Tìm kiếm sản phẩm">
         <label class="visually-hidden" for="header-search-q">Tìm kiếm sản phẩm</label>
         <input id="header-search-q" type="search" name="q" value="<?php echo esc_attr($shop_q); ?>" placeholder="Tìm sơn kim loại, sơn epoxy, bột trét..." autocomplete="off" />
@@ -69,7 +78,7 @@ $header_zalo_url = isset($header_business['zalo_url']) ? (string) $header_busine
           $cart_count = max(0, (int) WC()->cart->get_cart_contents_count());
       }
       ?>
-      <a class="utility-pill utility-pill--primary" href="<?php echo esc_url(home_url('/lien-he')); ?>">Nhận báo giá</a>
+      <a class="utility-pill utility-pill--primary" href="<?php echo esc_url($calculator_url); ?>">Tính sơn</a>
       <a class="utility-pill utility-pill--cart" href="<?php echo esc_url($cart_url); ?>">
         <span>Giỏ hàng</span>
         <?php if ($cart_count > 0) : ?><span class="utility-pill__count"><?php echo esc_html((string) $cart_count); ?></span><?php endif; ?>
@@ -107,12 +116,10 @@ $header_zalo_url = isset($header_business['zalo_url']) ? (string) $header_busine
   </div>
 </header>
 <?php
-$show_catalog_dock = !is_admin()
-    && function_exists('is_front_page')
-    && is_front_page();
+$show_catalog_dock = false;
 
 $catalog_support_links = [
-    ['label' => 'Tính sơn', 'url' => home_url('/#tinh-son')],
+    ['label' => 'Tính sơn', 'url' => function_exists('my_theme_get_paint_calculator_url') ? my_theme_get_paint_calculator_url() : home_url('/tinh-son')],
     ['label' => 'Giải pháp', 'url' => home_url('/giai-phap')],
     ['label' => 'Sơn nội thất', 'url' => home_url('/giai-phap-son-noi-that')],
     ['label' => 'Sơn ngoại thất', 'url' => home_url('/giai-phap-son-ngoai-that')],
@@ -173,25 +180,27 @@ if ($show_catalog_dock && function_exists('my_theme_get_catalog_visible_product_
 
             $dock_ordered_brand_options = array_slice($dock_ordered_brand_options, 0, 12, true);
 
-            $dock_all_terms = get_terms([
-                'taxonomy' => 'product_cat',
-                'hide_empty' => true,
-                'parent' => 0,
-                'object_ids' => $dock_visible_ids,
-            ]);
-            if (!is_wp_error($dock_all_terms) && !empty($dock_all_terms)) {
-                $dock_all_terms = array_values(array_filter($dock_all_terms, function ($term) {
-                    return $term instanceof WP_Term && (string) $term->slug !== 'uncategorized';
-                }));
-                if (function_exists('my_theme_sort_product_category_terms')) {
-                    $dock_all_terms = my_theme_sort_product_category_terms($dock_all_terms);
-                }
-                $dock_all_terms = array_slice($dock_all_terms, 0, 12);
+            $dock_category_groups = function_exists('my_theme_get_visible_product_category_groups')
+                ? my_theme_get_visible_product_category_groups($dock_visible_ids)
+                : [
+                    'lookup' => [],
+                    'by_parent' => [],
+                ];
+            $dock_all_terms = isset($dock_category_groups['by_parent'][0]) && is_array($dock_category_groups['by_parent'][0])
+                ? array_slice($dock_category_groups['by_parent'][0], 0, 12)
+                : [];
+            if (!empty($dock_all_terms)) {
                 foreach ($dock_all_terms as $dock_term) {
+                    $dock_term_id = isset($dock_term['term_id']) ? (int) $dock_term['term_id'] : 0;
+                    $dock_term_name = isset($dock_term['name']) ? (string) $dock_term['name'] : '';
+                    $dock_term_count = isset($dock_term['count']) ? max(0, (int) $dock_term['count']) : 0;
+                    if ($dock_term_id <= 0 || $dock_term_name === '') {
+                        continue;
+                    }
                     $catalog_dock_data['all_items'][] = [
-                        'label' => (string) $dock_term->name,
-                        'count' => max(0, (int) $dock_term->count),
-                        'url' => add_query_arg('category', (int) $dock_term->term_id, $dock_shop_url),
+                        'label' => $dock_term_name,
+                        'count' => $dock_term_count,
+                        'url' => add_query_arg('category', $dock_term_id, $dock_shop_url),
                     ];
                 }
             }
@@ -258,28 +267,30 @@ if ($show_catalog_dock && function_exists('my_theme_get_catalog_visible_product_
                 }
 
                 if (empty($dock_brand_items) && !empty($dock_brand_ids)) {
-                    $dock_brand_terms = get_terms([
-                        'taxonomy' => 'product_cat',
-                        'hide_empty' => true,
-                        'parent' => 0,
-                        'object_ids' => $dock_brand_ids,
-                    ]);
-                    if (!is_wp_error($dock_brand_terms) && !empty($dock_brand_terms)) {
-                        $dock_brand_terms = array_values(array_filter($dock_brand_terms, function ($term) {
-                            return $term instanceof WP_Term && (string) $term->slug !== 'uncategorized';
-                        }));
-                        if (function_exists('my_theme_sort_product_category_terms')) {
-                            $dock_brand_terms = my_theme_sort_product_category_terms($dock_brand_terms);
-                        }
-                        $dock_brand_terms = array_slice($dock_brand_terms, 0, 10);
+                    $dock_brand_category_groups = function_exists('my_theme_get_visible_product_category_groups')
+                        ? my_theme_get_visible_product_category_groups($dock_brand_ids)
+                        : [
+                            'lookup' => [],
+                            'by_parent' => [],
+                        ];
+                    $dock_brand_terms = isset($dock_brand_category_groups['by_parent'][0]) && is_array($dock_brand_category_groups['by_parent'][0])
+                        ? array_slice($dock_brand_category_groups['by_parent'][0], 0, 10)
+                        : [];
+                    if (!empty($dock_brand_terms)) {
                         foreach ($dock_brand_terms as $dock_term) {
+                            $dock_term_id = isset($dock_term['term_id']) ? (int) $dock_term['term_id'] : 0;
+                            $dock_term_name = isset($dock_term['name']) ? (string) $dock_term['name'] : '';
+                            $dock_term_count = isset($dock_term['count']) ? max(0, (int) $dock_term['count']) : 0;
+                            if ($dock_term_id <= 0 || $dock_term_name === '') {
+                                continue;
+                            }
                             $dock_brand_items[] = [
-                                'label' => (string) $dock_term->name,
-                                'count' => max(0, (int) $dock_term->count),
+                                'label' => $dock_term_name,
+                                'count' => $dock_term_count,
                                 'url' => add_query_arg(
                                     [
                                         'brand' => $dock_brand_slug,
-                                        'category' => (int) $dock_term->term_id,
+                                        'category' => $dock_term_id,
                                     ],
                                     $dock_shop_url
                                 ),

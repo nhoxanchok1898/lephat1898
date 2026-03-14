@@ -2,6 +2,8 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 172px;
+  max-width: 100%;
 }
 
 .my-theme-admin-qa-col__chips {
@@ -43,8 +45,23 @@
 }
 
 .my-theme-admin-qa-col__meta {
+  display: block;
   color: #667085;
   font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.wp-admin.post-type-product .wp-list-table th.column-my_theme_catalog_qa,
+.wp-admin.post-type-product .wp-list-table td.column-my_theme_catalog_qa {
+  width: 190px;
+  min-width: 190px;
+  white-space: normal;
+}
+
+.wp-admin.post-type-product .wp-list-table td.column-my_theme_catalog_qa {
+  vertical-align: top;
 }
 
 .my-theme-qa-readiness {

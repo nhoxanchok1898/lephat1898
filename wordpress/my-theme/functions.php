@@ -7,6 +7,10 @@ $my_theme_modules = [
     'inc/woocommerce.php',
     'inc/performance.php',
     'inc/product-performance.php',
+    'inc/archive-support-layouts.php',
+    'inc/product-family-layouts.php',
+    'inc/product-support-layouts.php',
+    'inc/search-assist.php',
     'inc/translations.php',
     'inc/customer-leads.php',
 ];
@@ -93,6 +97,290 @@ add_filter('woocommerce_sale_flash', function () {
     return '<span class="onsale">Giảm giá</span>';
 });
 
+if (!function_exists('my_theme_get_global_sale_config')) {
+    function my_theme_get_global_sale_config()
+    {
+        $config = [
+            'enabled' => true,
+            'percent' => 10.0,
+            'label' => 'Khuyến mãi toàn site',
+        ];
+
+        return apply_filters('my_theme_global_sale_config', $config);
+    }
+}
+
+if (!function_exists('my_theme_global_sale_is_enabled')) {
+    function my_theme_global_sale_is_enabled()
+    {
+        $config = my_theme_get_global_sale_config();
+        return !empty($config['enabled']) && (float) ($config['percent'] ?? 0) > 0;
+    }
+}
+
+if (!function_exists('my_theme_get_global_sale_percent')) {
+    function my_theme_get_global_sale_percent()
+    {
+        $config = my_theme_get_global_sale_config();
+        return max(0.0, min(95.0, (float) ($config['percent'] ?? 0)));
+    }
+}
+
+if (!function_exists('my_theme_get_global_sale_price_from_regular')) {
+    function my_theme_get_global_sale_price_from_regular($regular_price = 0.0)
+    {
+        $regular_price = (float) $regular_price;
+        if ($regular_price <= 0 || !my_theme_global_sale_is_enabled()) {
+            return 0.0;
+        }
+
+        $percent = my_theme_get_global_sale_percent();
+        if ($percent <= 0) {
+            return 0.0;
+        }
+
+        $sale_price = round($regular_price * ((100 - $percent) / 100), 0);
+        if ($sale_price <= 0 || $sale_price >= $regular_price) {
+            return 0.0;
+        }
+
+        return (float) $sale_price;
+    }
+}
+
+if (!function_exists('my_theme_get_product_raw_regular_price')) {
+    function my_theme_get_product_raw_regular_price($product)
+    {
+        if (!$product instanceof WC_Product) {
+            return 0.0;
+        }
+
+        $regular_price = (float) $product->get_regular_price('edit');
+        if ($regular_price > 0) {
+            return $regular_price;
+        }
+
+        return (float) $product->get_price('edit');
+    }
+}
+
+if (!function_exists('my_theme_get_product_raw_sale_price')) {
+    function my_theme_get_product_raw_sale_price($product)
+    {
+        if (!$product instanceof WC_Product) {
+            return 0.0;
+        }
+
+        return (float) $product->get_sale_price('edit');
+    }
+}
+
+if (!function_exists('my_theme_product_has_manual_sale_price')) {
+    function my_theme_product_has_manual_sale_price($product)
+    {
+        if (!$product instanceof WC_Product) {
+            return false;
+        }
+
+        $regular_price = my_theme_get_product_raw_regular_price($product);
+        $sale_price = my_theme_get_product_raw_sale_price($product);
+
+        return $regular_price > 0 && $sale_price > 0 && $sale_price < $regular_price;
+    }
+}
+
+if (!function_exists('my_theme_get_product_effective_sale_price')) {
+    function my_theme_get_product_effective_sale_price($product)
+    {
+        if (!$product instanceof WC_Product) {
+            return 0.0;
+        }
+
+        $regular_price = my_theme_get_product_raw_regular_price($product);
+        if ($regular_price <= 0) {
+            return 0.0;
+        }
+
+        if (my_theme_product_has_manual_sale_price($product)) {
+            $sale_price = my_theme_get_product_raw_sale_price($product);
+            return ($sale_price > 0 && $sale_price < $regular_price) ? $sale_price : 0.0;
+        }
+
+        return my_theme_get_global_sale_price_from_regular($regular_price);
+    }
+}
+
+if (!function_exists('my_theme_get_runtime_price_override')) {
+    function my_theme_get_runtime_price_override($product)
+    {
+        if (!$product instanceof WC_Product) {
+            return null;
+        }
+
+        $registry = isset($GLOBALS['my_theme_runtime_price_overrides']) && is_array($GLOBALS['my_theme_runtime_price_overrides'])
+            ? $GLOBALS['my_theme_runtime_price_overrides']
+            : [];
+        $override_key = spl_object_hash($product);
+        $override = isset($registry[$override_key]) && is_array($registry[$override_key])
+            ? $registry[$override_key]
+            : null;
+        if (!is_array($override)) {
+            return null;
+        }
+
+        $override_price = isset($override['price']) ? (float) $override['price'] : 0.0;
+        if ($override_price <= 0) {
+            return null;
+        }
+
+        $override_regular = isset($override['regular_price']) ? (float) $override['regular_price'] : 0.0;
+        if ($override_regular <= 0) {
+            $override_regular = $override_price;
+        }
+
+        return [
+            'price' => $override_price,
+            'regular_price' => max($override_price, $override_regular),
+        ];
+    }
+}
+
+if (!function_exists('my_theme_apply_runtime_price_override')) {
+    function my_theme_apply_runtime_price_override($product, $price = 0.0, $regular_price = 0.0)
+    {
+        if (!$product instanceof WC_Product) {
+            return;
+        }
+
+        if (!isset($GLOBALS['my_theme_runtime_price_overrides']) || !is_array($GLOBALS['my_theme_runtime_price_overrides'])) {
+            $GLOBALS['my_theme_runtime_price_overrides'] = [];
+        }
+
+        $override_key = spl_object_hash($product);
+        $price = (float) $price;
+        if ($price <= 0) {
+            unset($GLOBALS['my_theme_runtime_price_overrides'][$override_key]);
+            return;
+        }
+
+        $regular_price = max($price, (float) $regular_price);
+        $GLOBALS['my_theme_runtime_price_overrides'][$override_key] = [
+            'price' => $price,
+            'regular_price' => $regular_price,
+        ];
+    }
+}
+
+add_filter('woocommerce_product_get_sale_price', function ($sale_price, $product) {
+    if (!$product instanceof WC_Product) {
+        return $sale_price;
+    }
+
+    $runtime_override = my_theme_get_runtime_price_override($product);
+    if (is_array($runtime_override)) {
+        return $runtime_override['regular_price'] > $runtime_override['price']
+            ? (string) $runtime_override['price']
+            : '';
+    }
+
+    $effective_sale_price = my_theme_get_product_effective_sale_price($product);
+    if ($effective_sale_price > 0) {
+        return (string) $effective_sale_price;
+    }
+
+    return $sale_price;
+}, 99, 2);
+
+add_filter('woocommerce_product_variation_get_sale_price', function ($sale_price, $product) {
+    if (!$product instanceof WC_Product) {
+        return $sale_price;
+    }
+
+    $runtime_override = my_theme_get_runtime_price_override($product);
+    if (is_array($runtime_override)) {
+        return $runtime_override['regular_price'] > $runtime_override['price']
+            ? (string) $runtime_override['price']
+            : '';
+    }
+
+    $effective_sale_price = my_theme_get_product_effective_sale_price($product);
+    if ($effective_sale_price > 0) {
+        return (string) $effective_sale_price;
+    }
+
+    return $sale_price;
+}, 99, 2);
+
+add_filter('woocommerce_product_get_price', function ($price, $product) {
+    if (!$product instanceof WC_Product) {
+        return $price;
+    }
+
+    $runtime_override = my_theme_get_runtime_price_override($product);
+    if (is_array($runtime_override)) {
+        return (string) $runtime_override['price'];
+    }
+
+    $effective_sale_price = my_theme_get_product_effective_sale_price($product);
+    if ($effective_sale_price > 0) {
+        return (string) $effective_sale_price;
+    }
+
+    return $price;
+}, 99, 2);
+
+add_filter('woocommerce_product_variation_get_price', function ($price, $product) {
+    if (!$product instanceof WC_Product) {
+        return $price;
+    }
+
+    $runtime_override = my_theme_get_runtime_price_override($product);
+    if (is_array($runtime_override)) {
+        return (string) $runtime_override['price'];
+    }
+
+    $effective_sale_price = my_theme_get_product_effective_sale_price($product);
+    if ($effective_sale_price > 0) {
+        return (string) $effective_sale_price;
+    }
+
+    return $price;
+}, 99, 2);
+
+add_filter('woocommerce_product_get_regular_price', function ($regular_price, $product) {
+    if (!$product instanceof WC_Product) {
+        return $regular_price;
+    }
+
+    $runtime_override = my_theme_get_runtime_price_override($product);
+    if (is_array($runtime_override)) {
+        return (string) $runtime_override['regular_price'];
+    }
+
+    return $regular_price;
+}, 99, 2);
+
+add_filter('woocommerce_product_variation_get_regular_price', function ($regular_price, $product) {
+    if (!$product instanceof WC_Product) {
+        return $regular_price;
+    }
+
+    $runtime_override = my_theme_get_runtime_price_override($product);
+    if (is_array($runtime_override)) {
+        return (string) $runtime_override['regular_price'];
+    }
+
+    return $regular_price;
+}, 99, 2);
+
+add_filter('woocommerce_product_is_on_sale', function ($is_on_sale, $product) {
+    if ($is_on_sale) {
+        return true;
+    }
+
+    return ($product instanceof WC_Product) ? my_theme_product_has_active_sale($product) : $is_on_sale;
+}, 99, 2);
+
 // Woo adds "first/last" loop classes for float layout; remove them for CSS Grid cards.
 add_filter('woocommerce_post_class', function ($classes) {
     if (!is_array($classes) || empty($classes)) {
@@ -130,6 +418,103 @@ add_filter('the_title', function ($title, $id) {
     return $title;
 }, 10, 2);
 
+if (!function_exists('my_theme_render_wc_admin_help_tabs_safe')) {
+    function my_theme_render_wc_admin_help_tabs_safe($screen = null)
+    {
+        if (!function_exists('wc_get_screen_ids')) {
+            return;
+        }
+
+        if (!$screen instanceof WP_Screen && function_exists('get_current_screen')) {
+            $screen = get_current_screen();
+        }
+        if (!$screen instanceof WP_Screen || !method_exists($screen, 'add_help_tab')) {
+            return;
+        }
+
+        $screen_id = isset($screen->id) ? (string) $screen->id : '';
+        $wc_screen_ids = array_map('strval', (array) wc_get_screen_ids());
+        if ($screen_id === '' || !in_array($screen_id, $wc_screen_ids, true)) {
+            return;
+        }
+
+        $screen->add_help_tab([
+            'id' => 'woocommerce_support_tab',
+            'title' => __('Help &amp; Support', 'woocommerce'),
+            'content' =>
+                '<h2>' . __('Help &amp; Support', 'woocommerce') . '</h2>' .
+                '<p>' . sprintf(
+                    __('Should you need help understanding, using, or extending WooCommerce, <a href="%s">please read our documentation</a>. You will find all kinds of resources including snippets, tutorials and much more.', 'woocommerce'),
+                    'https://woocommerce.com/documentation/plugins/woocommerce/?utm_source=helptab&utm_medium=product&utm_content=docs&utm_campaign=woocommerceplugin'
+                ) . '</p>' .
+                '<p>' . sprintf(
+                    __('For further assistance with WooCommerce core, use the <a href="%1$s">community forum</a>. For help with premium extensions sold on WooCommerce.com, <a href="%2$s">open a support request at WooCommerce.com</a>.', 'woocommerce'),
+                    'https://wordpress.org/support/plugin/woocommerce',
+                    'https://woocommerce.com/my-account/create-a-ticket/?utm_source=helptab&utm_medium=product&utm_content=tickets&utm_campaign=woocommerceplugin'
+                ) . '</p>' .
+                '<p>' . __('Before asking for help, we recommend checking the system status page to identify any problems with your configuration.', 'woocommerce') . '</p>' .
+                '<p><a href="' . admin_url('admin.php?page=wc-status') . '" class="button button-primary">' . __('System status', 'woocommerce') . '</a> <a href="https://wordpress.org/support/plugin/woocommerce" class="button">' . __('Community forum', 'woocommerce') . '</a> <a href="https://woocommerce.com/my-account/create-a-ticket/?utm_source=helptab&utm_medium=product&utm_content=tickets&utm_campaign=woocommerceplugin" class="button">' . __('WooCommerce.com support', 'woocommerce') . '</a></p>',
+        ]);
+
+        $screen->add_help_tab([
+            'id' => 'woocommerce_bugs_tab',
+            'title' => __('Found a bug?', 'woocommerce'),
+            'content' =>
+                '<h2>' . __('Found a bug?', 'woocommerce') . '</h2>' .
+                '<p>' . sprintf(
+                    __('If you find a bug within WooCommerce core you can create a ticket via <a href="%1$s">GitHub issues</a>. Ensure you read the <a href="%2$s">contribution guide</a> prior to submitting your report. To help us solve your issue, please be as descriptive as possible and include your <a href="%3$s">system status report</a>.', 'woocommerce'),
+                    'https://github.com/woocommerce/woocommerce/issues?state=open',
+                    'https://github.com/woocommerce/woocommerce/blob/trunk/.github/CONTRIBUTING.md',
+                    admin_url('admin.php?page=wc-status')
+                ) . '</p>' .
+                '<p><a href="https://github.com/woocommerce/woocommerce/issues/new?assignees=&labels=&template=1-bug-report.yml" class="button button-primary">' . __('Report a bug', 'woocommerce') . '</a> <a href="' . admin_url('admin.php?page=wc-status') . '" class="button">' . __('System status', 'woocommerce') . '</a></p>',
+        ]);
+
+        if (method_exists($screen, 'set_help_sidebar')) {
+            $screen->set_help_sidebar(
+                '<p><strong>' . __('For more information:', 'woocommerce') . '</strong></p>' .
+                '<p><a href="https://woocommerce.com/?utm_source=helptab&utm_medium=product&utm_content=about&utm_campaign=woocommerceplugin" target="_blank">' . __('About WooCommerce', 'woocommerce') . '</a></p>' .
+                '<p><a href="https://wordpress.org/plugins/woocommerce/" target="_blank">' . __('WordPress.org project', 'woocommerce') . '</a></p>' .
+                '<p><a href="https://github.com/woocommerce/woocommerce/" target="_blank">' . __('GitHub project', 'woocommerce') . '</a></p>' .
+                '<p><a href="https://woocommerce.com/product-category/themes/?utm_source=helptab&utm_medium=product&utm_content=wcthemes&utm_campaign=woocommerceplugin" target="_blank">' . __('Official themes', 'woocommerce') . '</a></p>' .
+                '<p><a href="https://woocommerce.com/product-category/woocommerce-extensions/?utm_source=helptab&utm_medium=product&utm_content=wcextensions&utm_campaign=woocommerceplugin" target="_blank">' . __('Official extensions', 'woocommerce') . '</a></p>'
+            );
+        }
+    }
+}
+
+if (!function_exists('my_theme_replace_broken_wc_admin_help_callback')) {
+    function my_theme_replace_broken_wc_admin_help_callback($screen = null)
+    {
+        global $wp_filter;
+        $hook = isset($wp_filter['current_screen']) ? $wp_filter['current_screen'] : null;
+
+        static $did_replace = false;
+        if ($did_replace) {
+            return;
+        }
+        $did_replace = true;
+
+        if ($hook instanceof WP_Hook && is_array($hook->callbacks)) {
+            foreach ($hook->callbacks as $priority => $callbacks) {
+                foreach ((array) $callbacks as $callback) {
+                    $fn = isset($callback['function']) ? $callback['function'] : null;
+                    if (!is_array($fn) || !isset($fn[0], $fn[1])) {
+                        continue;
+                    }
+                    if (!($fn[0] instanceof WC_Admin_Help) || $fn[1] !== 'add_tabs') {
+                        continue;
+                    }
+                    remove_action('current_screen', $fn, (int) $priority);
+                }
+            }
+        }
+
+        my_theme_render_wc_admin_help_tabs_safe($screen);
+    }
+}
+add_action('current_screen', 'my_theme_replace_broken_wc_admin_help_callback', 1);
+
 add_filter('wc_empty_cart_message', function () {
     return 'Giỏ hàng của bạn đang trống.';
 });
@@ -164,11 +549,12 @@ add_filter('woocommerce_structured_data_product', function ($markup, $product) {
         return $markup;
     }
 
-    if (function_exists('my_theme_get_product_display_name')) {
-        $display_name = trim((string) my_theme_get_product_display_name($product));
-        if ($display_name !== '') {
-            $markup['name'] = $display_name;
-        }
+    $catalog_profile = function_exists('my_theme_get_product_catalog_profile')
+        ? my_theme_get_product_catalog_profile($product)
+        : [];
+    $display_name = isset($catalog_profile['display_name']) ? trim((string) $catalog_profile['display_name']) : '';
+    if ($display_name !== '') {
+        $markup['name'] = $display_name;
     }
 
     $description = trim((string) wp_strip_all_tags($product->get_description()));
@@ -179,6 +565,53 @@ add_filter('woocommerce_structured_data_product', function ($markup, $product) {
     }
     if ($description !== '') {
         $markup['description'] = wp_strip_all_tags($description);
+    }
+
+    if ($product->is_type('simple') && !empty($markup['offers']) && is_array($markup['offers'])) {
+        $display_price = function_exists('my_theme_get_default_loop_price')
+            ? (float) my_theme_get_default_loop_price($product)
+            : (float) $product->get_price();
+        $currency = function_exists('get_woocommerce_currency')
+            ? (string) get_woocommerce_currency()
+            : 'VND';
+
+        if ($display_price > 0) {
+            $formatted_price = wc_format_decimal($display_price, wc_get_price_decimals());
+            $is_offer_list = array_keys($markup['offers']) === range(0, count($markup['offers']) - 1);
+
+            if ($is_offer_list) {
+                foreach ($markup['offers'] as $offer_index => $offer_markup) {
+                    if (!is_array($offer_markup)) {
+                        continue;
+                    }
+
+                    $offer_type = isset($offer_markup['@type']) ? (string) $offer_markup['@type'] : '';
+                    if ($offer_type === 'AggregateOffer') {
+                        $markup['offers'][$offer_index]['lowPrice'] = $formatted_price;
+                        $markup['offers'][$offer_index]['highPrice'] = $formatted_price;
+                        $markup['offers'][$offer_index]['priceCurrency'] = $currency;
+                        unset($markup['offers'][$offer_index]['price']);
+                        continue;
+                    }
+
+                    $markup['offers'][$offer_index]['price'] = $formatted_price;
+                    $markup['offers'][$offer_index]['priceCurrency'] = $currency;
+                    unset($markup['offers'][$offer_index]['lowPrice'], $markup['offers'][$offer_index]['highPrice']);
+                }
+            } else {
+                $offer_type = isset($markup['offers']['@type']) ? (string) $markup['offers']['@type'] : '';
+                if ($offer_type === 'AggregateOffer') {
+                    $markup['offers']['lowPrice'] = $formatted_price;
+                    $markup['offers']['highPrice'] = $formatted_price;
+                    $markup['offers']['priceCurrency'] = $currency;
+                    unset($markup['offers']['price']);
+                } else {
+                    $markup['offers']['price'] = $formatted_price;
+                    $markup['offers']['priceCurrency'] = $currency;
+                    unset($markup['offers']['lowPrice'], $markup['offers']['highPrice']);
+                }
+            }
+        }
     }
 
     return $markup;
@@ -207,8 +640,11 @@ add_filter('wc_add_to_cart_message_html', function ($message, $products) {
         return $message;
     }
 
-    $name = function_exists('my_theme_get_product_display_name')
-        ? my_theme_get_product_display_name($product)
+    $catalog_profile = function_exists('my_theme_get_product_catalog_profile')
+        ? my_theme_get_product_catalog_profile($product)
+        : [];
+    $name = isset($catalog_profile['display_name']) && (string) $catalog_profile['display_name'] !== ''
+        ? (string) $catalog_profile['display_name']
         : $product->get_name();
     $cart_link = '<a href="' . esc_url(wc_get_cart_url()) . '" tabindex="1" class="button wc-forward">Xem giỏ hàng</a>';
     return $cart_link . ' &ldquo;' . esc_html($name) . '&rdquo; đã được thêm vào giỏ hàng.';
@@ -233,11 +669,16 @@ if (!function_exists('my_theme_add_gallery_link_labels')) {
         }
 
         $product_name = '';
-        if ($current_product instanceof WC_Product && function_exists('my_theme_get_product_display_name')) {
-            $product_name = trim((string) my_theme_get_product_display_name($current_product));
-        }
-        if ($product_name === '' && $current_product instanceof WC_Product) {
-            $product_name = trim((string) $current_product->get_name());
+        if ($current_product instanceof WC_Product) {
+            $catalog_profile = function_exists('my_theme_get_product_catalog_profile')
+                ? my_theme_get_product_catalog_profile($current_product)
+                : [];
+            $product_name = isset($catalog_profile['display_name'])
+                ? trim((string) $catalog_profile['display_name'])
+                : '';
+            if ($product_name === '') {
+                $product_name = trim((string) $current_product->get_name());
+            }
         }
 
         $label = ($product_name !== '') ? ('Xem ảnh sản phẩm ' . $product_name) : 'Xem ảnh sản phẩm';
@@ -278,22 +719,30 @@ add_filter('wp_nav_menu_objects', function ($items, $args) {
     if (isset($args->theme_location) && $args->theme_location === 'primary') {
         $items = array_filter($items, function ($item) {
             $title = trim(wp_strip_all_tags($item->title));
-            if ($title === 'Bài viết') {
-                return false;
-            }
-            if ($title === 'Giỏ hàng') {
-                return false;
-            }
-            if ($title === 'Thanh toán') {
-                return false;
-            }
-            if ($title === 'Liên hệ') {
-                return false;
-            }
-            return true;
+            return !in_array($title, [
+                'Bài viết',
+                'Blog',
+                'Tính sơn',
+                'FAQ',
+                'Hỗ trợ nhanh',
+                'Hướng dẫn mua hàng',
+                'Giới thiệu',
+                'Giới thiệu đại lý',
+                'Giá thợ',
+                'Giải pháp',
+                'Thương hiệu',
+                'Danh mục sơn',
+                'Danh mục sản phẩm',
+                'Chính sách đổi trả',
+                'Vận chuyển & giao hàng',
+                'Giỏ hàng',
+                'Thanh toán',
+                'Liên hệ',
+            ], true);
         });
         // Loại bỏ mục bị lặp trong menu chính.
         $seen = [];
+        $seen_urls = [];
         $filtered = [];
         foreach ($items as $item) {
             $title = trim(wp_strip_all_tags($item->title));
@@ -303,6 +752,22 @@ add_filter('wp_nav_menu_objects', function ($items, $args) {
                     continue;
                 }
                 $seen[$key] = true;
+            }
+
+            if ((int) $item->menu_item_parent === 0) {
+                $item_url = isset($item->url) ? trim((string) $item->url) : '';
+                if ($item_url !== '') {
+                    $url_parts = wp_parse_url($item_url);
+                    $path = isset($url_parts['path']) ? untrailingslashit((string) $url_parts['path']) : '';
+                    $query = isset($url_parts['query']) ? trim((string) $url_parts['query']) : '';
+                    $url_key = $path === '' ? '/' : $path;
+                    if ($query === '' && isset($seen_urls[$url_key])) {
+                        continue;
+                    }
+                    if ($query === '') {
+                        $seen_urls[$url_key] = true;
+                    }
+                }
             }
             $filtered[] = $item;
         }
@@ -412,13 +877,76 @@ if (!function_exists('my_theme_get_public_blog_post_count')) {
     }
 }
 
-add_action('save_post_post', function () {
+if (!function_exists('my_theme_bump_blog_cache_version')) {
+    function my_theme_bump_blog_cache_version()
+    {
+        update_option('my_theme_blog_cache_version', (string) time(), false);
+    }
+}
+
+if (!function_exists('my_theme_get_page_permalink_by_path_or_template')) {
+    function my_theme_get_page_permalink_by_path_or_template($path = '', $template_file = '')
+    {
+        $path = trim((string) $path, '/');
+        $template_file = trim((string) $template_file);
+        $cache_key = md5($path . '|' . $template_file);
+
+        static $cache = [];
+        if (array_key_exists($cache_key, $cache)) {
+            return (string) $cache[$cache_key];
+        }
+
+        $permalink = '';
+        if ($path !== '') {
+            $page = get_page_by_path($path);
+            if ($page instanceof WP_Post) {
+                $permalink = (string) get_permalink($page);
+            }
+        }
+
+        if ($permalink === '' && $template_file !== '') {
+            $pages = get_pages([
+                'meta_key' => '_wp_page_template',
+                'meta_value' => $template_file,
+                'number' => 1,
+            ]);
+
+            if (!empty($pages) && $pages[0] instanceof WP_Post) {
+                $permalink = (string) get_permalink($pages[0]);
+            }
+        }
+
+        $cache[$cache_key] = $permalink;
+        return $permalink;
+    }
+}
+
+add_action('save_post_post', function ($post_id) {
+    if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) {
+        return;
+    }
     delete_transient('my_theme_placeholder_blog_post_ids_v1');
+    if (function_exists('my_theme_bump_blog_cache_version')) {
+        my_theme_bump_blog_cache_version();
+    }
 });
 
-add_action('deleted_post', function ($post_id) {
-    if (get_post_type($post_id) === 'post') {
+add_action('save_post_page', function ($post_id) {
+    if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) {
+        return;
+    }
+    if (function_exists('my_theme_bump_blog_cache_version')) {
+        my_theme_bump_blog_cache_version();
+    }
+});
+
+add_action('before_delete_post', function ($post_id) {
+    $post_type = get_post_type($post_id);
+    if ($post_type === 'post') {
         delete_transient('my_theme_placeholder_blog_post_ids_v1');
+    }
+    if (in_array($post_type, ['post', 'page'], true) && function_exists('my_theme_bump_blog_cache_version')) {
+        my_theme_bump_blog_cache_version();
     }
 });
 
@@ -569,7 +1097,8 @@ if (!function_exists('my_theme_clean_product_display_title')) {
 if (!function_exists('my_theme_strip_localized_product_prefix')) {
     function my_theme_strip_localized_product_prefix($title)
     {
-        $title = my_theme_clean_product_display_title($title);
+        $original_title = my_theme_clean_product_display_title($title);
+        $title = $original_title;
         if ($title === '') {
             return '';
         }
@@ -585,8 +1114,12 @@ if (!function_exists('my_theme_strip_localized_product_prefix')) {
         $brand_anchor = '/\b(Dulux[a-z0-9-]*|Maxilite[a-z0-9-]*|Weber[a-z0-9-]*|Jotun[a-z0-9-]*|Nippon[a-z0-9-]*|Kova[a-z0-9-]*|TOA[a-z0-9-]*|Sika[a-z0-9-]*|Apollo[a-z0-9-]*)\b/iu';
         if (preg_match($brand_anchor, $title, $m, PREG_OFFSET_CAPTURE)) {
             $offset = isset($m[0][1]) ? (int) $m[0][1] : 0;
-            if ($offset > 0) {
+            $brand_token = isset($m[0][0]) ? (string) $m[0][0] : '';
+            $trailing_text = $brand_token !== '' ? trim((string) substr($title, $offset + strlen($brand_token))) : '';
+            if ($offset > 0 && $trailing_text !== '') {
                 $title = trim((string) substr($title, $offset));
+            } elseif ($offset > 0) {
+                return $original_title;
             }
         }
 
@@ -595,26 +1128,84 @@ if (!function_exists('my_theme_strip_localized_product_prefix')) {
     }
 }
 
+if (!function_exists('my_theme_resolve_product')) {
+    function my_theme_resolve_product($prod = null)
+    {
+        if ($prod instanceof WC_Product) {
+            return $prod;
+        }
+
+        $product_id = 0;
+        if ($prod instanceof WP_Post) {
+            $product_id = (int) $prod->ID;
+        } elseif (is_numeric($prod)) {
+            $product_id = (int) $prod;
+        }
+
+        if ($product_id > 0 && function_exists('wc_get_product')) {
+            $resolved = wc_get_product($product_id);
+            if ($resolved instanceof WC_Product) {
+                return $resolved;
+            }
+        }
+
+        global $product;
+        if ($product instanceof WC_Product) {
+            return $product;
+        }
+
+        $current_id = get_the_ID();
+        if ($current_id && function_exists('wc_get_product')) {
+            $resolved = wc_get_product((int) $current_id);
+            if ($resolved instanceof WC_Product) {
+                return $resolved;
+            }
+        }
+
+        return null;
+    }
+}
+
 if (!function_exists('my_theme_get_product_display_name')) {
     function my_theme_get_product_display_name($prod = null)
     {
-        $product = ($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID());
+        $product = function_exists('my_theme_resolve_product')
+            ? my_theme_resolve_product($prod)
+            : (($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID()));
         if (!$product instanceof WC_Product) {
             return '';
         }
+
+        static $cache = [];
+        $product_id = (int) $product->get_id();
+        if ($product_id > 0 && array_key_exists($product_id, $cache)) {
+            return (string) $cache[$product_id];
+        }
+
         $raw_name = (string) $product->get_name();
         $display_name = my_theme_strip_localized_product_prefix($raw_name);
         if ($display_name !== '') {
+            if ($product_id > 0) {
+                $cache[$product_id] = $display_name;
+            }
             return $display_name;
         }
-        return my_theme_clean_product_display_title($raw_name);
+
+        $display_name = my_theme_clean_product_display_title($raw_name);
+        if ($product_id > 0) {
+            $cache[$product_id] = $display_name;
+        }
+
+        return $display_name;
     }
 }
 
 if (!function_exists('my_theme_get_accessible_product_name')) {
     function my_theme_get_accessible_product_name($prod = null)
     {
-        $product = ($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID());
+        $product = function_exists('my_theme_resolve_product')
+            ? my_theme_resolve_product($prod)
+            : (($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID()));
         if (!$product instanceof WC_Product) {
             return '';
         }
@@ -869,9 +1460,11 @@ if (!function_exists('my_theme_attachment_has_non_product_traits')) {
         }
 
         if (!$is_non_product) {
-            $meta = wp_get_attachment_metadata($attachment_id);
-            $width = is_array($meta) && isset($meta['width']) ? (int) $meta['width'] : 0;
-            $height = is_array($meta) && isset($meta['height']) ? (int) $meta['height'] : 0;
+            $meta = function_exists('my_theme_get_attachment_media_state')
+                ? my_theme_get_attachment_media_state($attachment_id)
+                : [];
+            $width = isset($meta['width']) ? (int) $meta['width'] : 0;
+            $height = isset($meta['height']) ? (int) $meta['height'] : 0;
             if ($width > 0 && $height > 0) {
                 $ratio = (float) $width / (float) $height;
                 if ($ratio > 2.8 || $ratio < 0.36) {
@@ -900,7 +1493,9 @@ if (!function_exists('my_theme_attachment_has_non_product_traits')) {
 if (!function_exists('my_theme_get_preferred_product_image_id')) {
     function my_theme_get_preferred_product_image_id($prod = null)
     {
-        $product = ($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID());
+        $product = function_exists('my_theme_resolve_product')
+            ? my_theme_resolve_product($prod)
+            : (($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID()));
         if (!$product instanceof WC_Product) {
             return 0;
         }
@@ -960,10 +1555,167 @@ if (!function_exists('my_theme_get_preferred_product_image_id')) {
     }
 }
 
+if (!function_exists('my_theme_get_attachment_media_state')) {
+    function my_theme_get_attachment_media_state($attachment_id = 0)
+    {
+        $attachment_id = (int) $attachment_id;
+        if ($attachment_id <= 0) {
+            return [
+                'width' => 0,
+                'height' => 0,
+                'ratio' => 0.0,
+                'is_small' => false,
+                'has_extreme_ratio' => false,
+            ];
+        }
+
+        static $cache = [];
+        if (isset($cache[$attachment_id])) {
+            return $cache[$attachment_id];
+        }
+
+        $meta = wp_get_attachment_metadata($attachment_id);
+        $width = is_array($meta) && isset($meta['width']) ? (int) $meta['width'] : 0;
+        $height = is_array($meta) && isset($meta['height']) ? (int) $meta['height'] : 0;
+        $ratio = ($width > 0 && $height > 0) ? ((float) $width / (float) $height) : 0.0;
+
+        $cache[$attachment_id] = [
+            'width' => $width,
+            'height' => $height,
+            'ratio' => $ratio,
+            'is_small' => ($width > 0 && $height > 0 && ($width < 320 || $height < 320)),
+            'has_extreme_ratio' => ($ratio > 1.8 || $ratio < 0.55),
+        ];
+
+        return $cache[$attachment_id];
+    }
+}
+
+if (!function_exists('my_theme_get_product_card_media_state')) {
+    function my_theme_get_product_card_media_state($prod = null)
+    {
+        $product = function_exists('my_theme_resolve_product')
+            ? my_theme_resolve_product($prod)
+            : (($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID()));
+        if (!$product instanceof WC_Product) {
+            return [
+                'thumb_id' => 0,
+                'thumb_class' => 'product-card__thumb product-card__thumb--fallback',
+                'has_placeholder' => true,
+            ];
+        }
+
+        static $cache = [];
+        $product_id = (int) $product->get_id();
+        if ($product_id > 0 && isset($cache[$product_id])) {
+            return $cache[$product_id];
+        }
+
+        $thumb_id = function_exists('my_theme_get_preferred_product_image_id')
+            ? (int) my_theme_get_preferred_product_image_id($product)
+            : (int) $product->get_image_id();
+        $thumb_class = 'product-card__thumb';
+        $has_placeholder = $thumb_id <= 0;
+
+        if ($thumb_id > 0) {
+            $thumb_state = function_exists('my_theme_get_attachment_media_state')
+                ? my_theme_get_attachment_media_state($thumb_id)
+                : [];
+            if (!empty($thumb_state)) {
+                if (!empty($thumb_state['is_small'])) {
+                    $thumb_class .= ' product-card__thumb--small-source';
+                }
+                if (!empty($thumb_state['has_extreme_ratio'])) {
+                    $thumb_class .= ' product-card__thumb--extreme-ratio';
+                }
+            }
+        }
+
+        if ($has_placeholder) {
+            $thumb_class .= ' product-card__thumb--fallback';
+        }
+
+        $media_state = [
+            'thumb_id' => $thumb_id,
+            'thumb_class' => $thumb_class,
+            'has_placeholder' => $has_placeholder,
+        ];
+
+        if ($product_id > 0) {
+            $cache[$product_id] = $media_state;
+        }
+
+        return $media_state;
+    }
+}
+
+if (!function_exists('my_theme_get_product_thumbnail_markup')) {
+    function my_theme_get_product_thumbnail_markup($prod = null, $size = 'medium_large', array $attrs = [], $show_note = false)
+    {
+        static $cache = [];
+
+        $product = function_exists('my_theme_resolve_product')
+            ? my_theme_resolve_product($prod)
+            : (($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID()));
+        if (!$product instanceof WC_Product) {
+            $markup = wc_placeholder_img($size);
+            if ($show_note) {
+                $markup .= '<span class="product-card__thumb-note">Ảnh sản phẩm đang cập nhật</span>';
+            }
+            return $markup;
+        }
+
+        $media_state = function_exists('my_theme_get_product_card_media_state')
+            ? my_theme_get_product_card_media_state($product)
+            : [];
+        $thumb_id = isset($media_state['thumb_id']) ? (int) $media_state['thumb_id'] : 0;
+        $has_placeholder = !empty($media_state['has_placeholder']) || $thumb_id <= 0;
+
+        $display_name = function_exists('my_theme_get_product_display_name')
+            ? trim((string) my_theme_get_product_display_name($product))
+            : trim((string) $product->get_name());
+        if ($display_name !== '') {
+            if (!isset($attrs['alt']) || trim((string) $attrs['alt']) === '') {
+                $attrs['alt'] = $display_name;
+            }
+            if (!isset($attrs['title']) || trim((string) $attrs['title']) === '') {
+                $attrs['title'] = $display_name;
+            }
+        }
+
+        $product_id = (int) $product->get_id();
+        $cache_key = $product_id . '|' . (string) $size . '|' . md5(wp_json_encode($attrs) . '|' . (int) $show_note);
+        if ($product_id > 0 && array_key_exists($cache_key, $cache)) {
+            return (string) $cache[$cache_key];
+        }
+
+        if (!$has_placeholder && $thumb_id > 0) {
+            $markup = (string) wp_get_attachment_image($thumb_id, $size, false, $attrs);
+            if ($product_id > 0) {
+                $cache[$cache_key] = $markup;
+            }
+            return $markup;
+        }
+
+        $markup = wc_placeholder_img($size);
+        if ($show_note) {
+            $markup .= '<span class="product-card__thumb-note">Ảnh sản phẩm đang cập nhật</span>';
+        }
+
+        if ($product_id > 0) {
+            $cache[$cache_key] = $markup;
+        }
+
+        return $markup;
+    }
+}
+
 if (!function_exists('my_theme_product_has_document_like_image')) {
     function my_theme_product_has_document_like_image($prod = null)
     {
-        $product = ($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID());
+        $product = function_exists('my_theme_resolve_product')
+            ? my_theme_resolve_product($prod)
+            : (($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID()));
         if (!$product instanceof WC_Product) {
             return false;
         }
@@ -1126,6 +1878,631 @@ if (!function_exists('my_theme_get_business_profile')) {
             'service_areas_display' => 'TP.HCM, Bình Dương, Đồng Nai',
             'logo_url' => get_theme_file_uri('assets/logo-phat-tan.svg'),
         ];
+    }
+}
+
+if (!function_exists('my_theme_get_store_snapshot')) {
+    function my_theme_get_store_snapshot()
+    {
+        static $snapshot = null;
+
+        if (is_array($snapshot)) {
+            return $snapshot;
+        }
+
+        $business = function_exists('my_theme_get_business_profile')
+            ? my_theme_get_business_profile()
+            : [];
+        $cache_version = (string) get_option('my_theme_filter_cache_version', '1');
+        $business_hash = md5(wp_json_encode($business));
+        $cache_key = 'my_theme_store_snapshot_v2_' . $cache_version . '_' . $business_hash;
+        $cached = get_transient($cache_key);
+        if (is_array($cached)) {
+            $snapshot = $cached;
+            return $snapshot;
+        }
+
+        $visible_ids = function_exists('my_theme_get_catalog_visible_product_ids')
+            ? my_theme_get_catalog_visible_product_ids(false)
+            : [];
+        $visible_ids = array_values(array_filter(array_map('intval', (array) $visible_ids), function ($id) {
+            return $id > 0;
+        }));
+
+        $brand_options = function_exists('my_theme_get_brand_filter_options')
+            ? my_theme_get_brand_filter_options($visible_ids)
+            : [];
+        $brand_options = is_array($brand_options) ? $brand_options : [];
+
+        $snapshot = [
+            'name' => isset($business['name']) ? (string) $business['name'] : get_bloginfo('name'),
+            'contact_name' => isset($business['contact_name']) ? (string) $business['contact_name'] : '',
+            'phone_display' => isset($business['phone_display']) ? (string) $business['phone_display'] : '0944 857 999',
+            'phone_digits' => isset($business['phone_digits']) ? (string) $business['phone_digits'] : '0944857999',
+            'phone_href' => isset($business['phone_href']) ? (string) $business['phone_href'] : 'tel:0944857999',
+            'phone_raw' => isset($business['phone_raw']) ? (string) $business['phone_raw'] : '+84944857999',
+            'email' => isset($business['email']) ? (string) $business['email'] : 'lephat1898@gmail.com',
+            'email_href' => isset($business['email_href']) ? (string) $business['email_href'] : 'mailto:lephat1898@gmail.com',
+            'zalo_url' => isset($business['zalo_url']) ? (string) $business['zalo_url'] : 'https://zalo.me/0944857999',
+            'hours_display' => isset($business['hours_display']) ? (string) $business['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00',
+            'hours_note' => isset($business['hours_note']) ? (string) $business['hours_note'] : 'Ngoài giờ vẫn nhận yêu cầu qua Zalo và phản hồi sớm trong khung tiếp theo.',
+            'service_areas_display' => isset($business['service_areas_display']) ? (string) $business['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai',
+            'address_full' => isset($business['address_full']) ? (string) $business['address_full'] : '392 TL10, Bình Trị Đông, Bình Tân, TP.HCM',
+            'maps_url' => isset($business['maps_url']) ? (string) $business['maps_url'] : '',
+            'logo_url' => isset($business['logo_url']) ? (string) $business['logo_url'] : '',
+            'catalog_count' => count($visible_ids),
+            'category_count' => function_exists('my_theme_count_visible_product_categories')
+                ? (int) my_theme_count_visible_product_categories($visible_ids)
+                : 0,
+            'brand_count' => count($brand_options),
+            'brand_preview' => array_slice($brand_options, 0, 6, true),
+        ];
+
+        set_transient($cache_key, $snapshot, 30 * MINUTE_IN_SECONDS);
+        return $snapshot;
+    }
+}
+
+if (!function_exists('my_theme_get_page_context_links')) {
+    function my_theme_get_page_context_links($page_slug = '')
+    {
+        $page_slug = sanitize_title((string) $page_slug);
+        $shop_url = function_exists('my_theme_get_shop_url') ? my_theme_get_shop_url() : home_url('/shop');
+        $calculator_url = function_exists('my_theme_get_paint_calculator_url') ? my_theme_get_paint_calculator_url() : home_url('/tinh-son');
+        $contact_url = home_url('/lien-he');
+        $guide_url = home_url('/huong-dan-mua-hang');
+        $solutions_url = home_url('/giai-phap');
+        $faq_url = home_url('/faq');
+        $cart_url = function_exists('my_theme_get_cart_url_safe') ? my_theme_get_cart_url_safe() : home_url('/gio-hang');
+
+        $defaults = [
+            ['label' => 'Mở kho sản phẩm', 'url' => $shop_url],
+            ['label' => 'Đi theo giải pháp', 'url' => $solutions_url],
+            ['label' => 'Tính sơn nhanh', 'url' => $calculator_url],
+            ['label' => 'Liên hệ kỹ thuật', 'url' => $contact_url],
+        ];
+
+        $map = [
+            'faq' => [
+                ['label' => 'Mở kho sản phẩm', 'url' => $shop_url],
+                ['label' => 'Xem hướng dẫn mua hàng', 'url' => $guide_url],
+                ['label' => 'Tính sơn nhanh', 'url' => $calculator_url],
+                ['label' => 'Liên hệ kỹ thuật', 'url' => $contact_url],
+            ],
+            'huong-dan-mua-hang' => [
+                ['label' => 'Mở kho sản phẩm', 'url' => $shop_url],
+                ['label' => 'Xem giỏ hàng', 'url' => $cart_url],
+                ['label' => 'Xem FAQ', 'url' => $faq_url],
+                ['label' => 'Liên hệ kỹ thuật', 'url' => $contact_url],
+            ],
+            'gioi-thieu' => [
+                ['label' => 'Mở kho sản phẩm', 'url' => $shop_url],
+                ['label' => 'Xem giải pháp', 'url' => $solutions_url],
+                ['label' => 'Xem FAQ', 'url' => $faq_url],
+                ['label' => 'Liên hệ cửa hàng', 'url' => $contact_url],
+            ],
+            'van-chuyen-giao-hang' => [
+                ['label' => 'Mở kho sản phẩm', 'url' => $shop_url],
+                ['label' => 'Xem hướng dẫn mua hàng', 'url' => $guide_url],
+                ['label' => 'Xem giải pháp', 'url' => $solutions_url],
+                ['label' => 'Liên hệ kỹ thuật', 'url' => $contact_url],
+            ],
+            'chinh-sach-doi-tra' => [
+                ['label' => 'Mở kho sản phẩm', 'url' => $shop_url],
+                ['label' => 'Xem hướng dẫn mua hàng', 'url' => $guide_url],
+                ['label' => 'Xem FAQ', 'url' => $faq_url],
+                ['label' => 'Liên hệ cửa hàng', 'url' => $contact_url],
+            ],
+            'gia-tho' => [
+                ['label' => 'Mở kho sản phẩm', 'url' => $shop_url],
+                ['label' => 'Xem giải pháp', 'url' => $solutions_url],
+                ['label' => 'Liên hệ báo giá', 'url' => $contact_url],
+                ['label' => 'Xem FAQ', 'url' => $faq_url],
+            ],
+            'lien-he' => [
+                ['label' => 'Mở kho sản phẩm', 'url' => $shop_url],
+                ['label' => 'Xem giải pháp', 'url' => $solutions_url],
+                ['label' => 'Tính sơn nhanh', 'url' => $calculator_url],
+                ['label' => 'Xem FAQ', 'url' => $faq_url],
+            ],
+        ];
+
+        return isset($map[$page_slug]) ? $map[$page_slug] : $defaults;
+    }
+}
+
+if (!function_exists('my_theme_get_home_brand_priority_slugs')) {
+    function my_theme_get_home_brand_priority_slugs()
+    {
+        return ['dulux', 'maxilite', 'weber', 'jotun', 'nippon', 'kova', 'toa', 'sika', 'apollo'];
+    }
+}
+
+if (!function_exists('my_theme_get_home_category_priority_slugs')) {
+    function my_theme_get_home_category_priority_slugs()
+    {
+        return [
+            'son-noi-that',
+            'son-ngoai-that',
+            'chong-tham',
+            'son-epoxy',
+            'son-kim-loai',
+            'keo-va-phu-gia',
+            'bot-tret',
+            'son-lot',
+        ];
+    }
+}
+
+if (!function_exists('my_theme_get_products_by_slugs')) {
+    function my_theme_get_products_by_slugs(array $slugs)
+    {
+        $product_ids = [];
+
+        foreach ($slugs as $slug) {
+            $slug = sanitize_title((string) $slug);
+            if ($slug === '') {
+                continue;
+            }
+
+            $post = get_page_by_path($slug, OBJECT, 'product');
+            if (!($post instanceof WP_Post)) {
+                continue;
+            }
+
+            if ((int) $post->ID > 0) {
+                $product_ids[] = (int) $post->ID;
+            }
+        }
+
+        $product_ids = function_exists('my_theme_preserve_product_id_order')
+            ? my_theme_preserve_product_id_order($product_ids)
+            : my_theme_normalize_product_id_list($product_ids);
+        if (empty($product_ids)) {
+            return [];
+        }
+
+        $product_map = function_exists('my_theme_get_product_object_map')
+            ? my_theme_get_product_object_map($product_ids)
+            : [];
+        $products = [];
+        foreach ($product_ids as $product_id) {
+            if (isset($product_map[$product_id]) && $product_map[$product_id] instanceof WC_Product) {
+                $products[] = $product_map[$product_id];
+            }
+        }
+
+        return $products;
+    }
+}
+
+if (!function_exists('my_theme_capture_markup')) {
+    function my_theme_capture_markup(callable $callback)
+    {
+        ob_start();
+        $callback();
+        return trim((string) ob_get_clean());
+    }
+}
+
+if (!function_exists('my_theme_render_landing_product_cards')) {
+    function my_theme_render_landing_product_cards(array $products, array $args = [])
+    {
+        $fallback_eyebrow = isset($args['fallback_eyebrow']) ? trim((string) $args['fallback_eyebrow']) : 'Sản phẩm gợi ý';
+        $show_category = array_key_exists('show_category', $args) ? (bool) $args['show_category'] : true;
+        $show_line = array_key_exists('show_line', $args) ? (bool) $args['show_line'] : true;
+        $show_excerpt = array_key_exists('show_excerpt', $args) ? (bool) $args['show_excerpt'] : true;
+        $show_pack_summary = array_key_exists('show_pack_summary', $args) ? (bool) $args['show_pack_summary'] : true;
+        $show_pack_prices = !empty($args['show_pack_prices']);
+        $excerpt_limit = isset($args['excerpt_limit']) ? max(8, (int) $args['excerpt_limit']) : 18;
+
+        foreach ($products as $product) {
+            if (!$product instanceof WC_Product) {
+                continue;
+            }
+
+            $catalog_profile = function_exists('my_theme_get_product_catalog_profile')
+                ? my_theme_get_product_catalog_profile($product)
+                : [];
+            $name = isset($catalog_profile['display_name']) && (string) $catalog_profile['display_name'] !== ''
+                ? (string) $catalog_profile['display_name']
+                : (string) $product->get_name();
+            $line = isset($catalog_profile['line_label'])
+                ? trim((string) $catalog_profile['line_label'])
+                : '';
+            $category = isset($catalog_profile['category_label'])
+                ? trim((string) $catalog_profile['category_label'])
+                : '';
+            $excerpt = ($show_excerpt && function_exists('my_theme_get_product_card_excerpt'))
+                ? (string) my_theme_get_product_card_excerpt($product, $excerpt_limit)
+                : '';
+            $price_html = function_exists('my_theme_get_loop_price_html')
+                ? my_theme_get_loop_price_html($product, 'landing-product-card__price product-card__price')
+                : '';
+            if ($price_html === '') {
+                $price_html = '<div class="landing-product-card__price product-card__price"><span class="product-card__price-contact">Liên hệ báo giá</span></div>';
+            }
+
+            $pack_summary = ($show_pack_summary && function_exists('my_theme_render_loop_pack_summary'))
+                ? my_theme_capture_markup(static function () use ($product) {
+                    my_theme_render_loop_pack_summary($product, true);
+                })
+                : '';
+            $pack_prices = ($show_pack_prices && function_exists('my_theme_render_pack_price_list'))
+                ? my_theme_capture_markup(static function () use ($product) {
+                    my_theme_render_pack_price_list($product, 'related');
+                })
+                : '';
+            $eyebrow = ($show_category && $category !== '') ? $category : $fallback_eyebrow;
+            ?>
+            <article class="landing-product-card">
+              <a class="landing-product-card__thumb" href="<?php echo esc_url($product->get_permalink()); ?>">
+                <?php
+                echo function_exists('my_theme_get_product_thumbnail_markup')
+                    ? my_theme_get_product_thumbnail_markup($product, 'woocommerce_thumbnail', ['alt' => $name, 'loading' => 'lazy'])
+                    : $product->get_image('woocommerce_thumbnail', ['alt' => $name, 'loading' => 'lazy']);
+                ?>
+              </a>
+              <div class="landing-product-card__body">
+                <div class="landing-product-card__eyebrow"><?php echo esc_html($eyebrow); ?></div>
+                <h3 class="landing-product-card__title">
+                  <a href="<?php echo esc_url($product->get_permalink()); ?>"><?php echo esc_html($name); ?></a>
+                </h3>
+                <?php if ($show_line && $line !== '') : ?>
+                  <p class="landing-product-card__line"><?php echo esc_html($line); ?></p>
+                <?php endif; ?>
+                <?php if ($excerpt !== '') : ?>
+                  <p class="landing-product-card__excerpt"><?php echo esc_html($excerpt); ?></p>
+                <?php endif; ?>
+                <?php if ($pack_summary !== '') : ?>
+                  <div class="landing-product-card__packs"><?php echo $pack_summary; ?></div>
+                <?php endif; ?>
+                <?php if ($pack_prices !== '') : ?>
+                  <div class="landing-product-card__pack-prices"><?php echo $pack_prices; ?></div>
+                <?php endif; ?>
+              </div>
+              <div class="landing-product-card__actions">
+                <?php echo wp_kses_post($price_html); ?>
+                <a class="btn btn-primary w-100" href="<?php echo esc_url($product->get_permalink()); ?>">Xem sản phẩm</a>
+              </div>
+            </article>
+            <?php
+        }
+    }
+}
+
+if (!function_exists('my_theme_score_home_featured_product')) {
+    function my_theme_score_home_featured_product($product = null, $brand_slug = '')
+    {
+        $state = function_exists('my_theme_get_home_featured_product_sort_state')
+            ? my_theme_get_home_featured_product_sort_state($product, $brand_slug)
+            : [];
+        if (isset($state['score'])) {
+            return (int) $state['score'];
+        }
+
+        $product = ($product instanceof WC_Product) ? $product : (function_exists('wc_get_product') ? wc_get_product($product) : null);
+        if (!$product instanceof WC_Product) {
+            return -999999;
+        }
+
+        $product_id = (int) $product->get_id();
+        $sales_total = (int) get_post_meta($product_id, 'total_sales', true);
+        $price_value = function_exists('my_theme_get_default_loop_price')
+            ? (float) my_theme_get_default_loop_price($product)
+            : (float) $product->get_price();
+        $is_featured = method_exists($product, 'is_featured') && $product->is_featured();
+        $is_in_stock = method_exists($product, 'is_in_stock') && $product->is_in_stock();
+        $created_at = method_exists($product, 'get_date_created') ? $product->get_date_created() : null;
+        $created_ts = ($created_at instanceof WC_DateTime) ? (int) $created_at->getTimestamp() : 0;
+        $days_old = $created_ts > 0 ? max(0, (int) floor((time() - $created_ts) / DAY_IN_SECONDS)) : 9999;
+
+        $score = 0;
+        if ($is_featured) {
+            $score += 140;
+        }
+        if ($sales_total > 0) {
+            $score += min(90, $sales_total);
+            $score += min(24, (int) floor(log($sales_total + 1, 2) * 3));
+        }
+        if ($is_in_stock) {
+            $score += 18;
+        }
+        if ($price_value > 0) {
+            $score += 12;
+        }
+        if ($days_old <= 45) {
+            $score += 14;
+        } elseif ($days_old <= 120) {
+            $score += 9;
+        } elseif ($days_old <= 240) {
+            $score += 4;
+        }
+        $catalog_profile = function_exists('my_theme_get_product_catalog_profile')
+            ? my_theme_get_product_catalog_profile($product)
+            : [];
+        $product_brand_slug = isset($catalog_profile['brand_slug'])
+            ? sanitize_title((string) $catalog_profile['brand_slug'])
+            : '';
+        if ($brand_slug !== '' && $product_brand_slug === sanitize_title((string) $brand_slug)) {
+            $score += 8;
+        }
+
+        return (int) $score;
+    }
+}
+
+if (!function_exists('my_theme_get_home_featured_product_sort_state')) {
+    function my_theme_get_home_featured_product_sort_state($product = null, $brand_slug = '')
+    {
+        static $cache = [];
+
+        $product = ($product instanceof WC_Product) ? $product : (function_exists('wc_get_product') ? wc_get_product($product) : null);
+        if (!$product instanceof WC_Product) {
+            return [
+                'score' => -999999,
+                'sales_total' => 0,
+                'created_ts' => 0,
+                'name' => '',
+            ];
+        }
+
+        $product_id = (int) $product->get_id();
+        $brand_slug = sanitize_title((string) $brand_slug);
+        $cache_key = $product_id . ':' . $brand_slug;
+        if (isset($cache[$cache_key])) {
+            return $cache[$cache_key];
+        }
+
+        $sales_total = method_exists($product, 'get_total_sales')
+            ? (int) $product->get_total_sales()
+            : (int) get_post_meta($product_id, 'total_sales', true);
+        $price_value = function_exists('my_theme_get_default_loop_price')
+            ? (float) my_theme_get_default_loop_price($product)
+            : (float) $product->get_price();
+        $is_featured = method_exists($product, 'is_featured') && $product->is_featured();
+        $is_in_stock = method_exists($product, 'is_in_stock') && $product->is_in_stock();
+        $created_at = method_exists($product, 'get_date_created') ? $product->get_date_created() : null;
+        $created_ts = ($created_at instanceof WC_DateTime) ? (int) $created_at->getTimestamp() : 0;
+        $days_old = $created_ts > 0 ? max(0, (int) floor((time() - $created_ts) / DAY_IN_SECONDS)) : 9999;
+
+        $score = 0;
+        if ($is_featured) {
+            $score += 140;
+        }
+        if ($sales_total > 0) {
+            $score += min(90, $sales_total);
+            $score += min(24, (int) floor(log($sales_total + 1, 2) * 3));
+        }
+        if ($is_in_stock) {
+            $score += 18;
+        }
+        if ($price_value > 0) {
+            $score += 12;
+        }
+        if ($days_old <= 45) {
+            $score += 14;
+        } elseif ($days_old <= 120) {
+            $score += 9;
+        } elseif ($days_old <= 240) {
+            $score += 4;
+        }
+        $catalog_profile = function_exists('my_theme_get_product_catalog_profile')
+            ? my_theme_get_product_catalog_profile($product)
+            : [];
+        $product_brand_slug = isset($catalog_profile['brand_slug'])
+            ? sanitize_title((string) $catalog_profile['brand_slug'])
+            : '';
+        if ($brand_slug !== '' && $product_brand_slug === $brand_slug) {
+            $score += 8;
+        }
+
+        $cache[$cache_key] = [
+            'score' => (int) $score,
+            'sales_total' => max(0, (int) $sales_total),
+            'created_ts' => max(0, (int) $created_ts),
+            'name' => isset($catalog_profile['display_name']) && (string) $catalog_profile['display_name'] !== ''
+                ? (string) $catalog_profile['display_name']
+                : (string) $product->get_name(),
+        ];
+
+        return $cache[$cache_key];
+    }
+}
+
+if (!function_exists('my_theme_sort_home_featured_products')) {
+    function my_theme_sort_home_featured_products(array $products, $brand_slug = '')
+    {
+        $ranked_products = [];
+        foreach ($products as $product) {
+            if (!$product instanceof WC_Product) {
+                continue;
+            }
+
+            $ranked_products[] = [
+                'product' => $product,
+                'state' => function_exists('my_theme_get_home_featured_product_sort_state')
+                    ? my_theme_get_home_featured_product_sort_state($product, $brand_slug)
+                    : [
+                        'score' => my_theme_score_home_featured_product($product, $brand_slug),
+                        'sales_total' => 0,
+                        'created_ts' => 0,
+                        'name' => (string) $product->get_name(),
+                    ],
+            ];
+        }
+
+        usort($ranked_products, static function ($a, $b) {
+            $state_a = isset($a['state']) && is_array($a['state']) ? $a['state'] : [];
+            $state_b = isset($b['state']) && is_array($b['state']) ? $b['state'] : [];
+
+            $score_a = isset($state_a['score']) ? (int) $state_a['score'] : -999999;
+            $score_b = isset($state_b['score']) ? (int) $state_b['score'] : -999999;
+            if ($score_a !== $score_b) {
+                return ($score_a > $score_b) ? -1 : 1;
+            }
+
+            $sales_a = isset($state_a['sales_total']) ? (int) $state_a['sales_total'] : 0;
+            $sales_b = isset($state_b['sales_total']) ? (int) $state_b['sales_total'] : 0;
+            if ($sales_a !== $sales_b) {
+                return ($sales_a > $sales_b) ? -1 : 1;
+            }
+
+            $created_a = isset($state_a['created_ts']) ? (int) $state_a['created_ts'] : 0;
+            $created_b = isset($state_b['created_ts']) ? (int) $state_b['created_ts'] : 0;
+            if ($created_a !== $created_b) {
+                return ($created_a > $created_b) ? -1 : 1;
+            }
+
+            return strnatcasecmp((string) ($state_a['name'] ?? ''), (string) ($state_b['name'] ?? ''));
+        });
+
+        return array_values(array_filter(array_map(static function ($entry) {
+            $product = isset($entry['product']) ? $entry['product'] : null;
+            return ($product instanceof WC_Product) ? $product : null;
+        }, $ranked_products)));
+    }
+}
+
+if (!function_exists('my_theme_get_catalog_ranked_product_ids')) {
+    function my_theme_get_catalog_ranked_product_ids($product_ids, $limit = 0)
+    {
+        static $request_cache = [];
+
+        $product_ids = my_theme_normalize_product_id_list($product_ids);
+        if (empty($product_ids)) {
+            return [];
+        }
+
+        $limit = max(0, (int) $limit);
+        $cache_version = (string) get_option('my_theme_filter_cache_version', '1');
+        $digest = md5(implode(',', $product_ids));
+        $request_key = $cache_version . ':' . $digest;
+        if (!isset($request_cache[$request_key])) {
+            $transient_key = 'my_theme_catalog_ranked_ids_v2_' . $cache_version . '_' . $digest;
+            $cached = get_transient($transient_key);
+            if (is_array($cached)) {
+                $request_cache[$request_key] = function_exists('my_theme_preserve_product_id_order')
+                    ? my_theme_preserve_product_id_order($cached)
+                    : my_theme_normalize_product_id_list($cached);
+            } else {
+                $posts = get_posts([
+                    'post_type' => 'product',
+                    'post_status' => 'publish',
+                    'posts_per_page' => -1,
+                    'post__in' => $product_ids,
+                    'orderby' => 'post__in',
+                    'suppress_filters' => true,
+                    'no_found_rows' => true,
+                    'ignore_sticky_posts' => true,
+                    'update_post_meta_cache' => true,
+                    'update_post_term_cache' => false,
+                ]);
+
+                $post_map = [];
+                foreach ((array) $posts as $post) {
+                    if ($post instanceof WP_Post && $post->ID > 0) {
+                        $post_map[(int) $post->ID] = $post;
+                    }
+                }
+
+                $featured_lookup = [];
+                if (function_exists('wc_get_featured_product_ids')) {
+                    foreach ((array) wc_get_featured_product_ids() as $featured_id) {
+                        $featured_id = (int) $featured_id;
+                        if ($featured_id > 0) {
+                            $featured_lookup[$featured_id] = true;
+                        }
+                    }
+                }
+
+                $rank_product_map = function_exists('my_theme_get_product_object_map')
+                    ? my_theme_get_product_object_map($product_ids)
+                    : [];
+                $scored = [];
+                $now_ts = time();
+                foreach ($product_ids as $product_id) {
+                    $product_id = (int) $product_id;
+                    if ($product_id <= 0) {
+                        continue;
+                    }
+
+                    $post = isset($post_map[$product_id]) ? $post_map[$product_id] : null;
+                    $product = isset($rank_product_map[$product_id]) ? $rank_product_map[$product_id] : null;
+                    $sales_total = (int) get_post_meta($product_id, 'total_sales', true);
+                    $price_value = ($product instanceof WC_Product && function_exists('my_theme_get_default_loop_price'))
+                        ? (float) my_theme_get_default_loop_price($product)
+                        : (float) get_post_meta($product_id, '_price', true);
+                    $stock_status = (string) get_post_meta($product_id, '_stock_status', true);
+                    $created_raw = $post instanceof WP_Post ? (string) $post->post_date_gmt : '';
+                    $created_ts = $created_raw !== '' ? (int) strtotime($created_raw . ' GMT') : 0;
+                    $days_old = $created_ts > 0 ? max(0, (int) floor(($now_ts - $created_ts) / DAY_IN_SECONDS)) : 9999;
+
+                    $score = 0;
+                    if (isset($featured_lookup[$product_id])) {
+                        $score += 140;
+                    }
+                    if ($sales_total > 0) {
+                        $score += min(90, $sales_total);
+                        $score += min(24, (int) floor(log($sales_total + 1, 2) * 3));
+                    }
+                    if ($stock_status === 'instock') {
+                        $score += 18;
+                    }
+                    if ($price_value > 0) {
+                        $score += 12;
+                    }
+                    if ($days_old <= 45) {
+                        $score += 14;
+                    } elseif ($days_old <= 120) {
+                        $score += 9;
+                    } elseif ($days_old <= 240) {
+                        $score += 4;
+                    }
+
+                    $scored[] = [
+                        'id' => $product_id,
+                        'score' => $score,
+                        'sales_total' => max(0, $sales_total),
+                        'created_ts' => max(0, $created_ts),
+                        'name' => $post instanceof WP_Post ? (string) $post->post_title : '',
+                    ];
+                }
+
+                usort($scored, static function (array $a, array $b): int {
+                    $score_cmp = ((int) ($b['score'] ?? 0)) <=> ((int) ($a['score'] ?? 0));
+                    if ($score_cmp !== 0) {
+                        return $score_cmp;
+                    }
+
+                    $sales_cmp = ((int) ($b['sales_total'] ?? 0)) <=> ((int) ($a['sales_total'] ?? 0));
+                    if ($sales_cmp !== 0) {
+                        return $sales_cmp;
+                    }
+
+                    $created_cmp = ((int) ($b['created_ts'] ?? 0)) <=> ((int) ($a['created_ts'] ?? 0));
+                    if ($created_cmp !== 0) {
+                        return $created_cmp;
+                    }
+
+                    return strnatcasecmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
+                });
+
+                $request_cache[$request_key] = array_values(array_filter(array_map(static function ($entry) {
+                    return isset($entry['id']) ? (int) $entry['id'] : 0;
+                }, $scored)));
+                if (function_exists('my_theme_preserve_product_id_order')) {
+                    $request_cache[$request_key] = my_theme_preserve_product_id_order($request_cache[$request_key]);
+                }
+                set_transient($transient_key, $request_cache[$request_key], 30 * MINUTE_IN_SECONDS);
+            }
+        }
+
+        if ($limit > 0) {
+            return array_slice($request_cache[$request_key], 0, $limit);
+        }
+
+        return $request_cache[$request_key];
     }
 }
 
@@ -1542,15 +2919,15 @@ if (!function_exists('my_theme_render_solution_pathways')) {
 if (!function_exists('my_theme_render_service_compass')) {
     function my_theme_render_service_compass(array $args = [])
     {
-        $business = function_exists('my_theme_get_business_profile') ? my_theme_get_business_profile() : [];
+        $store_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
         $shop_url = function_exists('my_theme_get_shop_url') ? my_theme_get_shop_url() : home_url('/shop');
         $solutions_url = home_url('/giai-phap');
         $contact_url = home_url('/lien-he');
-        $phone_href = isset($business['phone_href']) ? (string) $business['phone_href'] : 'tel:0944857999';
-        $phone_display = isset($business['phone_display']) ? (string) $business['phone_display'] : '0944 857 999';
-        $zalo_url = isset($business['zalo_url']) ? (string) $business['zalo_url'] : 'https://zalo.me/0944857999';
-        $hours_display = isset($business['hours_display']) ? (string) $business['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00';
-        $service_areas = isset($business['service_areas_display']) ? (string) $business['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai';
+        $phone_href = isset($store_snapshot['phone_href']) ? (string) $store_snapshot['phone_href'] : 'tel:0944857999';
+        $phone_display = isset($store_snapshot['phone_display']) ? (string) $store_snapshot['phone_display'] : '0944 857 999';
+        $zalo_url = isset($store_snapshot['zalo_url']) ? (string) $store_snapshot['zalo_url'] : 'https://zalo.me/0944857999';
+        $hours_display = isset($store_snapshot['hours_display']) ? (string) $store_snapshot['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00';
+        $service_areas = isset($store_snapshot['service_areas_display']) ? (string) $store_snapshot['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai';
 
         $title = isset($args['title']) ? trim((string) $args['title']) : 'Chọn cách đi nhanh nhất để chốt vật tư';
         $subtitle = isset($args['subtitle']) ? trim((string) $args['subtitle']) : 'Web đã tách sẵn 3 đường đi: tự mở kho sản phẩm, đi theo nhóm giải pháp hoặc gửi ảnh hiện trạng để đội kỹ thuật điều hướng lại.';
@@ -1987,6 +3364,60 @@ if (!function_exists('my_theme_get_group_knowledge_bundle')) {
     }
 }
 
+if (!function_exists('my_theme_render_group_knowledge_sections')) {
+    function my_theme_render_group_knowledge_sections($group_key = '', array $args = [])
+    {
+        $group_key = sanitize_key((string) $group_key);
+        if ($group_key === '') {
+            return;
+        }
+
+        $bundle = function_exists('my_theme_get_group_knowledge_bundle')
+            ? (array) my_theme_get_group_knowledge_bundle($group_key)
+            : [];
+        if (empty($bundle)) {
+            return;
+        }
+
+        $quick_answers = isset($bundle['quick_answers']) && is_array($bundle['quick_answers'])
+            ? $bundle['quick_answers']
+            : [];
+        $article_slugs = isset($bundle['article_slugs']) && is_array($bundle['article_slugs'])
+            ? $bundle['article_slugs']
+            : [];
+        if (empty($quick_answers) && empty($article_slugs)) {
+            return;
+        }
+
+        $catalog = function_exists('my_theme_get_visual_story_group_catalog')
+            ? my_theme_get_visual_story_group_catalog()
+            : [];
+        $group_meta = isset($catalog[$group_key]) && is_array($catalog[$group_key]) ? $catalog[$group_key] : [];
+        $group_label = isset($group_meta['label']) ? trim((string) $group_meta['label']) : 'giải pháp này';
+        $group_label_lower = function_exists('mb_strtolower')
+            ? mb_strtolower($group_label, 'UTF-8')
+            : strtolower($group_label);
+
+        if (!empty($quick_answers) && function_exists('my_theme_render_quick_answers')) {
+            my_theme_render_quick_answers([
+                'cards' => $quick_answers,
+                'class' => isset($args['quick_class']) ? trim((string) $args['quick_class']) : 'quick-answers--solution',
+                'eyebrow' => isset($args['quick_eyebrow']) ? trim((string) $args['quick_eyebrow']) : 'FAQ ngắn trước khi chốt',
+                'title' => isset($args['quick_title']) ? trim((string) $args['quick_title']) : 'Một vài câu hỏi nên chốt trước khi chọn ' . $group_label_lower,
+                'subtitle' => isset($args['quick_subtitle']) ? trim((string) $args['quick_subtitle']) : 'Các câu hỏi ngắn dưới đây giúp bạn tự đối chiếu nhanh hiện trạng, cách dùng và dữ liệu nên gửi trước khi chốt vật tư.',
+            ]);
+        }
+
+        if (!empty($article_slugs) && function_exists('my_theme_render_article_recommendations')) {
+            my_theme_render_article_recommendations($article_slugs, [
+                'class' => isset($args['article_class']) ? trim((string) $args['article_class']) : 'article-recommendations--solution',
+                'title' => isset($args['article_title']) ? trim((string) $args['article_title']) : 'Bài nên đọc thêm về ' . $group_label_lower,
+                'subtitle' => isset($args['article_subtitle']) ? trim((string) $args['article_subtitle']) : 'Nếu bạn vẫn còn đang so giữa nhiều hệ vật tư hoặc nhiều cách xử lý bề mặt, nên đọc nhanh vài bài nền tảng này trước khi chốt đơn.',
+            ]);
+        }
+    }
+}
+
 if (!function_exists('my_theme_get_shop_filter_url')) {
     function my_theme_get_shop_filter_url(array $args = [])
     {
@@ -2030,8 +3461,18 @@ if (!function_exists('my_theme_get_group_companion_cards')) {
         $brand_slug = '';
         $brand_label = '';
         if ($product instanceof WC_Product) {
-            $brand_slug = function_exists('my_theme_get_product_brand_slug') ? sanitize_title((string) my_theme_get_product_brand_slug($product)) : '';
-            $brand_label = function_exists('my_theme_get_product_brand_label') ? trim((string) my_theme_get_product_brand_label($product)) : '';
+            $catalog_profile = function_exists('my_theme_get_product_catalog_profile')
+                ? my_theme_get_product_catalog_profile($product)
+                : [];
+            $brand_slug = isset($catalog_profile['brand_slug'])
+                ? sanitize_title((string) $catalog_profile['brand_slug'])
+                : '';
+            $brand_label = isset($catalog_profile['brand_label'])
+                ? trim((string) $catalog_profile['brand_label'])
+                : '';
+            if ($brand_label === 'Sản phẩm') {
+                $brand_label = '';
+            }
         }
 
         $catalog = function_exists('my_theme_get_visual_story_group_catalog') ? my_theme_get_visual_story_group_catalog() : [];
@@ -2380,92 +3821,198 @@ if (!function_exists('my_theme_get_single_product_compare_cards')) {
             return $term_id > 0;
         }));
 
+        $cache_version = (string) get_option('my_theme_filter_cache_version', '1');
+        $compare_cache_key = 'my_theme_single_compare_cards_v3_' . $cache_version . '_' . md5(
+            $current_id . '|' . $current_brand . '|' . $current_line . '|' . $current_group . '|' . implode(',', $current_cat_ids) . '|' . $limit
+        );
+        $compare_card_ids = get_transient($compare_cache_key);
+
+        if (!is_array($compare_card_ids)) {
+            $candidate_ids = [];
+
+            if ($current_line !== '' && function_exists('my_theme_filter_product_ids_by_line_slug')) {
+                $line_ids = my_theme_filter_product_ids_by_line_slug($visible_ids, $current_line, $current_brand);
+                foreach ((array) $line_ids as $candidate_id) {
+                    $candidate_id = (int) $candidate_id;
+                    if ($candidate_id > 0 && $candidate_id !== $current_id) {
+                        $candidate_ids[$candidate_id] = $candidate_id;
+                    }
+                }
+            }
+
+            if ($current_brand !== '' && function_exists('my_theme_filter_product_ids_by_brand_slug') && count($candidate_ids) < 72) {
+                $brand_ids = my_theme_filter_product_ids_by_brand_slug($visible_ids, $current_brand);
+                foreach ((array) $brand_ids as $candidate_id) {
+                    $candidate_id = (int) $candidate_id;
+                    if ($candidate_id > 0 && $candidate_id !== $current_id) {
+                        $candidate_ids[$candidate_id] = $candidate_id;
+                    }
+                    if (count($candidate_ids) >= 96) {
+                        break;
+                    }
+                }
+            }
+
+            if (!empty($current_cat_ids) && count($candidate_ids) < 48) {
+                $category_matches = get_posts([
+                    'post_type' => 'product',
+                    'post_status' => 'publish',
+                    'posts_per_page' => 72,
+                    'fields' => 'ids',
+                    'post__in' => $visible_ids,
+                    'post__not_in' => [$current_id],
+                    'orderby' => 'date',
+                    'order' => 'DESC',
+                    'no_found_rows' => true,
+                    'ignore_sticky_posts' => true,
+                    'update_post_meta_cache' => false,
+                    'update_post_term_cache' => false,
+                    'tax_query' => [
+                        [
+                            'taxonomy' => 'product_cat',
+                            'field' => 'term_id',
+                            'terms' => $current_cat_ids,
+                            'operator' => 'IN',
+                        ],
+                    ],
+                ]);
+                foreach ((array) $category_matches as $candidate_id) {
+                    $candidate_id = (int) $candidate_id;
+                    if ($candidate_id > 0 && $candidate_id !== $current_id) {
+                        $candidate_ids[$candidate_id] = $candidate_id;
+                    }
+                }
+            }
+
+            if (count($candidate_ids) < 36) {
+                foreach (array_slice($visible_ids, 0, 96) as $candidate_id) {
+                    $candidate_id = (int) $candidate_id;
+                    if ($candidate_id > 0 && $candidate_id !== $current_id) {
+                        $candidate_ids[$candidate_id] = $candidate_id;
+                    }
+                    if (count($candidate_ids) >= 96) {
+                        break;
+                    }
+                }
+            }
+
+            $candidate_ids = array_values($candidate_ids);
+            $product_map = function_exists('my_theme_get_product_object_map')
+                ? my_theme_get_product_object_map($candidate_ids)
+                : [];
+            if (empty($product_map)) {
+                set_transient($compare_cache_key, [], 30 * MINUTE_IN_SECONDS);
+                return [];
+            }
+
+            $scored = [];
+            $current_cat_lookup = array_fill_keys($current_cat_ids, true);
+            foreach ($product_map as $candidate_id => $candidate) {
+                $candidate_id = (int) $candidate_id;
+                if ($candidate_id <= 0 || $candidate_id === $current_id || !$candidate instanceof WC_Product) {
+                    continue;
+                }
+
+                $score = 0;
+                $candidate_brand = function_exists('my_theme_get_product_brand_slug')
+                    ? sanitize_title((string) my_theme_get_product_brand_slug($candidate))
+                    : '';
+                $candidate_line = function_exists('my_theme_get_product_line_slug')
+                    ? sanitize_title((string) my_theme_get_product_line_slug($candidate))
+                    : '';
+                $candidate_group = function_exists('my_theme_get_visual_story_group_key_for_object')
+                    ? sanitize_key((string) my_theme_get_visual_story_group_key_for_object($candidate))
+                    : '';
+
+                if ($current_brand !== '' && $candidate_brand === $current_brand) {
+                    $score += 34;
+                }
+                if ($current_line !== '' && $candidate_line === $current_line) {
+                    $score += 42;
+                }
+                if ($current_group !== '' && $candidate_group === $current_group) {
+                    $score += 26;
+                }
+
+                if (!empty($current_cat_lookup)) {
+                    $candidate_cat_ids = wc_get_product_term_ids($candidate_id, 'product_cat');
+                    foreach ((array) $candidate_cat_ids as $candidate_cat_id) {
+                        $candidate_cat_id = (int) $candidate_cat_id;
+                        if ($candidate_cat_id > 0 && isset($current_cat_lookup[$candidate_cat_id])) {
+                            $score += 18;
+                            break;
+                        }
+                    }
+                }
+
+                $candidate_price = function_exists('my_theme_get_default_loop_price')
+                    ? (float) my_theme_get_default_loop_price($candidate)
+                    : (float) $candidate->get_price();
+                if ($candidate_price > 0) {
+                    $score += 8;
+                }
+
+                if ($score <= 0) {
+                    continue;
+                }
+
+                $scored[] = [
+                    'score' => $score,
+                    'product_id' => $candidate_id,
+                    'name' => (string) $candidate->get_name(),
+                ];
+            }
+
+            if (empty($scored)) {
+                set_transient($compare_cache_key, [], 30 * MINUTE_IN_SECONDS);
+                return [];
+            }
+
+            usort($scored, static function (array $a, array $b): int {
+                $score_cmp = ((int) ($b['score'] ?? 0)) <=> ((int) ($a['score'] ?? 0));
+                if ($score_cmp !== 0) {
+                    return $score_cmp;
+                }
+
+                return strnatcasecmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
+            });
+
+            $compare_card_ids = array_values(array_filter(array_map(static function ($entry) {
+                return isset($entry['product_id']) ? (int) $entry['product_id'] : 0;
+            }, array_slice($scored, 0, $limit))));
+            set_transient($compare_cache_key, $compare_card_ids, 30 * MINUTE_IN_SECONDS);
+        }
+
         $product_map = function_exists('my_theme_get_product_object_map')
-            ? my_theme_get_product_object_map($visible_ids)
+            ? my_theme_get_product_object_map($compare_card_ids)
             : [];
         if (empty($product_map)) {
             return [];
         }
 
-        $scored = [];
-        foreach ($product_map as $candidate_id => $candidate) {
-            $candidate_id = (int) $candidate_id;
-            if ($candidate_id <= 0 || $candidate_id === $current_id || !$candidate instanceof WC_Product) {
-                continue;
-            }
-
-            $score = 0;
-            $candidate_brand = function_exists('my_theme_get_product_brand_slug')
-                ? sanitize_title((string) my_theme_get_product_brand_slug($candidate))
-                : '';
-            $candidate_line = function_exists('my_theme_get_product_line_slug')
-                ? sanitize_title((string) my_theme_get_product_line_slug($candidate))
-                : '';
-            $candidate_group = function_exists('my_theme_get_visual_story_group_key_for_object')
-                ? sanitize_key((string) my_theme_get_visual_story_group_key_for_object($candidate))
-                : '';
-
-            if ($current_brand !== '' && $candidate_brand === $current_brand) {
-                $score += 34;
-            }
-            if ($current_line !== '' && $candidate_line === $current_line) {
-                $score += 42;
-            }
-            if ($current_group !== '' && $candidate_group === $current_group) {
-                $score += 26;
-            }
-
-            $candidate_cat_ids = wc_get_product_term_ids($candidate_id, 'product_cat');
-            $candidate_cat_ids = array_values(array_filter(array_map('intval', (array) $candidate_cat_ids), static function ($term_id) {
-                return $term_id > 0;
-            }));
-            if (!empty($current_cat_ids) && !empty($candidate_cat_ids) && array_intersect($current_cat_ids, $candidate_cat_ids)) {
-                $score += 18;
-            }
-
-            if ($candidate->get_price() !== '') {
-                $score += 8;
-            }
-
-            if ($score <= 0) {
-                continue;
-            }
-
-            $scored[] = [
-                'score' => $score,
-                'product' => $candidate,
-            ];
-        }
-
-        if (empty($scored)) {
-            return [];
-        }
-
-        usort($scored, static function (array $a, array $b): int {
-            $score_cmp = ((int) ($b['score'] ?? 0)) <=> ((int) ($a['score'] ?? 0));
-            if ($score_cmp !== 0) {
-                return $score_cmp;
-            }
-
-            $a_product = $a['product'] ?? null;
-            $b_product = $b['product'] ?? null;
-            $a_name = $a_product instanceof WC_Product ? (string) $a_product->get_name() : '';
-            $b_name = $b_product instanceof WC_Product ? (string) $b_product->get_name() : '';
-            return strnatcasecmp($a_name, $b_name);
-        });
-
         $cards = [];
-        foreach (array_slice($scored, 0, $limit) as $entry) {
-            $candidate = $entry['product'];
+        foreach ($compare_card_ids as $candidate_id) {
+            $candidate_id = (int) $candidate_id;
+            if ($candidate_id <= 0 || !isset($product_map[$candidate_id])) {
+                continue;
+            }
+
+            $candidate = $product_map[$candidate_id];
             if (!$candidate instanceof WC_Product) {
                 continue;
             }
 
-            $brand_label = function_exists('my_theme_get_product_brand_label')
-                ? trim((string) my_theme_get_product_brand_label($candidate))
+            $catalog_profile = function_exists('my_theme_get_product_catalog_profile')
+                ? my_theme_get_product_catalog_profile($candidate)
+                : [];
+            $brand_label = isset($catalog_profile['brand_label'])
+                ? trim((string) $catalog_profile['brand_label'])
                 : '';
-            $line_label = function_exists('my_theme_get_product_line_label')
-                ? trim((string) my_theme_get_product_line_label($candidate))
+            if ($brand_label === 'Sản phẩm') {
+                $brand_label = '';
+            }
+            $line_label = isset($catalog_profile['line_label'])
+                ? trim((string) $catalog_profile['line_label'])
                 : '';
             $package_text = function_exists('my_theme_get_package_summary_text')
                 ? trim((string) my_theme_get_package_summary_text($candidate))
@@ -2476,11 +4023,17 @@ if (!function_exists('my_theme_get_single_product_compare_cards')) {
             }
 
             $cards[] = [
-                'title' => (string) $candidate->get_name(),
+                'title' => isset($catalog_profile['display_name']) && (string) $catalog_profile['display_name'] !== ''
+                    ? (string) $catalog_profile['display_name']
+                    : (string) $candidate->get_name(),
                 'url' => get_permalink($candidate->get_id()),
-                'image' => $candidate->get_image('woocommerce_thumbnail', ['loading' => 'lazy']),
+                'image' => function_exists('my_theme_get_product_thumbnail_markup')
+                    ? my_theme_get_product_thumbnail_markup($candidate, 'woocommerce_thumbnail', ['loading' => 'lazy'])
+                    : $candidate->get_image('woocommerce_thumbnail', ['loading' => 'lazy']),
                 'meta' => implode(' • ', $meta_bits),
-                'price_html' => (string) $candidate->get_price_html(),
+                'price_html' => function_exists('my_theme_get_loop_price_html')
+                    ? (string) my_theme_get_loop_price_html($candidate, 'product-compare-card__price product-card__price')
+                    : '<div class="product-compare-card__price product-card__price"><span class="product-card__price-contact">Liên hệ báo giá</span></div>',
                 'excerpt' => function_exists('my_theme_get_product_card_excerpt')
                     ? trim((string) my_theme_get_product_card_excerpt($candidate, 18))
                     : '',
@@ -2617,9 +4170,7 @@ if (!function_exists('my_theme_render_single_product_buying_guide')) {
                       <?php endif; ?>
                     </div>
                     <div class="product-compare-card__foot">
-                      <div class="product-compare-card__price">
-                        <?php echo !empty($card['price_html']) ? wp_kses_post((string) $card['price_html']) : 'Liên hệ báo giá'; ?>
-                      </div>
+                      <?php echo !empty($card['price_html']) ? wp_kses_post((string) $card['price_html']) : '<div class="product-compare-card__price product-card__price"><span class="product-card__price-contact">Liên hệ báo giá</span></div>'; ?>
                       <a class="btn btn-outline btn-sm" href="<?php echo esc_url((string) ($card['url'] ?? '#')); ?>">Xem mã này</a>
                     </div>
                   </article>
@@ -3049,20 +4600,28 @@ add_action('wp_head', function () {
     if (function_exists('is_product') && is_product()) {
         $product = wc_get_product(get_queried_object_id());
         if ($product instanceof WC_Product) {
-            $price = $product->get_price();
+            $price = function_exists('my_theme_get_default_loop_price')
+                ? (float) my_theme_get_default_loop_price($product)
+                : (float) $product->get_price();
             $currency = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'VND';
             $permalink = get_permalink($product->get_id());
-            $product_name = function_exists('my_theme_get_product_display_name')
-                ? my_theme_get_product_display_name($product)
+            $catalog_profile = function_exists('my_theme_get_product_catalog_profile')
+                ? my_theme_get_product_catalog_profile($product)
+                : [];
+            $product_name = isset($catalog_profile['display_name']) && (string) $catalog_profile['display_name'] !== ''
+                ? (string) $catalog_profile['display_name']
                 : $product->get_name();
-            $brand_label = function_exists('my_theme_get_product_brand_label')
-                ? trim((string) my_theme_get_product_brand_label($product))
+            $brand_label = isset($catalog_profile['brand_label'])
+                ? trim((string) $catalog_profile['brand_label'])
                 : '';
-            $category_label = function_exists('my_theme_get_product_primary_category_label')
-                ? trim((string) my_theme_get_product_primary_category_label($product))
+            if ($brand_label === 'Sản phẩm') {
+                $brand_label = '';
+            }
+            $category_label = isset($catalog_profile['category_label'])
+                ? trim((string) $catalog_profile['category_label'])
                 : '';
 
-            if ($price !== '') {
+            if ($price > 0) {
                 echo '<meta property="product:price:amount" content="' . esc_attr(wc_format_decimal($price, wc_get_price_decimals())) . '">' . "\n";
                 echo '<meta property="product:price:currency" content="' . esc_attr($currency) . '">' . "\n";
             }
@@ -3176,6 +4735,34 @@ add_filter('redirect_canonical', function ($redirect_url) {
     return $redirect_url;
 }, 10, 2);
 
+if (!function_exists('my_theme_get_paint_calculator_url')) {
+    function my_theme_get_paint_calculator_url()
+    {
+        $calculator_page = get_page_by_path('tinh-son', OBJECT, 'page');
+        if ($calculator_page instanceof WP_Post) {
+            return (string) get_permalink($calculator_page);
+        }
+
+        return home_url('/tinh-son');
+    }
+}
+
+if (!function_exists('my_theme_get_support_menu_links')) {
+    function my_theme_get_support_menu_links()
+    {
+        return [
+            ['label' => 'Tính sơn', 'url' => my_theme_get_paint_calculator_url()],
+            ['label' => 'Hướng dẫn mua hàng', 'url' => home_url('/huong-dan-mua-hang')],
+            ['label' => 'FAQ', 'url' => home_url('/faq')],
+            ['label' => 'Liên hệ kỹ thuật', 'url' => home_url('/lien-he')],
+            ['label' => 'Vận chuyển', 'url' => home_url('/van-chuyen-giao-hang')],
+            ['label' => 'Giới thiệu', 'url' => home_url('/gioi-thieu')],
+            ['label' => 'Giá thợ', 'url' => home_url('/gia-tho')],
+            ['label' => 'Blog', 'url' => trailingslashit(home_url('/blog'))],
+        ];
+    }
+}
+
 add_action('template_redirect', function () {
     if (!function_exists('my_theme_is_virtual_blog_request') || !my_theme_is_virtual_blog_request()) {
         return;
@@ -3219,6 +4806,17 @@ add_filter('body_class', function ($classes) {
 
     return array_values(array_unique($classes));
 });
+
+add_filter('body_class', function ($classes) {
+    if (is_admin()) {
+        return $classes;
+    }
+
+    $classes = is_array($classes) ? $classes : [];
+    $classes[] = 'design-alt-horizon';
+
+    return array_values(array_unique($classes));
+}, 30);
 
 if (!function_exists('my_theme_slug_list_has_any')) {
     function my_theme_slug_list_has_any($slugs, $targets)
@@ -3337,11 +4935,74 @@ if (!function_exists('my_theme_get_search_intent_category_slugs')) {
 }
 
 if (!function_exists('my_theme_get_search_matched_product_cat_ids')) {
-    function my_theme_get_search_matched_product_cat_ids($raw_query)
+    function my_theme_get_search_matched_product_cat_ids($raw_query, $product_ids = null, $limit = 0)
     {
+        static $request_cache = [];
+        static $ancestor_cache = [];
+
         $query_norm = my_theme_normalize_search_text($raw_query);
         if ($query_norm === '') {
             return [];
+        }
+
+        $limit = max(0, (int) $limit);
+        $has_product_scope = is_array($product_ids);
+        $visible_product_ids = $has_product_scope
+            ? my_theme_normalize_product_id_list($product_ids)
+            : [];
+        if ($has_product_scope && empty($visible_product_ids)) {
+            return [];
+        }
+
+        $scope_digest = !empty($visible_product_ids)
+            ? md5(implode(',', $visible_product_ids))
+            : ($has_product_scope ? 'none' : 'all');
+        $cache_version = (string) get_option('my_theme_filter_cache_version', '1');
+        $request_key = $cache_version . ':' . $query_norm . ':' . $scope_digest;
+        if (array_key_exists($request_key, $request_cache)) {
+            return ($limit > 0)
+                ? array_slice($request_cache[$request_key], 0, $limit)
+                : $request_cache[$request_key];
+        }
+        $cache_key = 'my_theme_search_matched_cat_ids_v2_' . $cache_version . '_' . md5($query_norm . '|' . $scope_digest);
+        $cached = get_transient($cache_key);
+        if (is_array($cached)) {
+            $request_cache[$request_key] = array_values(array_filter(array_map('intval', $cached)));
+            return ($limit > 0)
+                ? array_slice($request_cache[$request_key], 0, $limit)
+                : $request_cache[$request_key];
+        }
+
+        $allowed_term_ids = [];
+        if (!empty($visible_product_ids) && function_exists('my_theme_get_visible_product_category_groups')) {
+            $visible_groups = my_theme_get_visible_product_category_groups($visible_product_ids);
+            $visible_lookup = isset($visible_groups['lookup']) && is_array($visible_groups['lookup'])
+                ? $visible_groups['lookup']
+                : [];
+
+            foreach ($visible_lookup as $visible_term_id => $term_data) {
+                $visible_term_id = (int) $visible_term_id;
+                if ($visible_term_id <= 0) {
+                    continue;
+                }
+
+                $allowed_term_ids[$visible_term_id] = true;
+                if (!isset($ancestor_cache[$visible_term_id])) {
+                    $ancestor_cache[$visible_term_id] = array_values(array_filter(array_map('intval', (array) get_ancestors($visible_term_id, 'product_cat', 'taxonomy'))));
+                }
+                foreach ($ancestor_cache[$visible_term_id] as $ancestor_id) {
+                    $ancestor_id = (int) $ancestor_id;
+                    if ($ancestor_id > 0) {
+                        $allowed_term_ids[$ancestor_id] = true;
+                    }
+                }
+            }
+
+            if (empty($allowed_term_ids)) {
+                $request_cache[$request_key] = [];
+                set_transient($cache_key, [], 30 * MINUTE_IN_SECONDS);
+                return [];
+            }
         }
 
         // Prioritize explicit user intent (e.g. "son kim loai") to keep results accurate.
@@ -3353,23 +5014,38 @@ if (!function_exists('my_theme_get_search_matched_product_cat_ids')) {
                 if (!$term instanceof WP_Term || empty($term->term_id)) {
                     continue;
                 }
+                if (!empty($allowed_term_ids) && !isset($allowed_term_ids[(int) $term->term_id])) {
+                    continue;
+                }
                 if ((int) $term->count <= 0) {
                     continue;
                 }
                 $intent_ids[] = (int) $term->term_id;
             }
             if (!empty($intent_ids)) {
-                return array_values(array_unique($intent_ids));
+                $request_cache[$request_key] = array_values(array_unique($intent_ids));
+                set_transient($cache_key, $request_cache[$request_key], 30 * MINUTE_IN_SECONDS);
+                return ($limit > 0)
+                    ? array_slice($request_cache[$request_key], 0, $limit)
+                    : $request_cache[$request_key];
             }
         }
 
-        $terms = get_terms([
+        $term_query_args = [
             'taxonomy'   => 'product_cat',
             'hide_empty' => true,
             'orderby'    => 'name',
             'order'      => 'ASC',
-        ]);
+        ];
+        if (!empty($allowed_term_ids)) {
+            $term_query_args['include'] = array_values(array_map('intval', array_keys($allowed_term_ids)));
+            $term_query_args['hide_empty'] = false;
+        }
+
+        $terms = get_terms($term_query_args);
         if (is_wp_error($terms) || empty($terms)) {
+            $request_cache[$request_key] = [];
+            set_transient($cache_key, [], 30 * MINUTE_IN_SECONDS);
             return [];
         }
 
@@ -3399,6 +5075,9 @@ if (!function_exists('my_theme_get_search_matched_product_cat_ids')) {
         $scores = [];
         foreach ($terms as $term) {
             if (empty($term->term_id)) {
+                continue;
+            }
+            if (!empty($allowed_term_ids) && !isset($allowed_term_ids[(int) $term->term_id])) {
                 continue;
             }
             if (!empty($term->slug) && $term->slug === 'uncategorized') {
@@ -3449,6 +5128,8 @@ if (!function_exists('my_theme_get_search_matched_product_cat_ids')) {
         }
 
         if (empty($scores)) {
+            $request_cache[$request_key] = [];
+            set_transient($cache_key, [], 30 * MINUTE_IN_SECONDS);
             return [];
         }
 
@@ -3464,7 +5145,262 @@ if (!function_exists('my_theme_get_search_matched_product_cat_ids')) {
             }
         }
 
-        return $matched;
+        $request_cache[$request_key] = $matched;
+        set_transient($cache_key, $matched, 30 * MINUTE_IN_SECONDS);
+        return ($limit > 0) ? array_slice($matched, 0, $limit) : $matched;
+    }
+}
+
+if (!function_exists('my_theme_get_search_intent_filtered_product_ids')) {
+    function my_theme_get_search_intent_filtered_product_ids($product_ids, $category_slug = '')
+    {
+        static $request_cache = [];
+
+        $source_product_ids = function_exists('my_theme_preserve_product_id_order')
+            ? my_theme_preserve_product_id_order($product_ids)
+            : my_theme_normalize_product_id_list($product_ids);
+        $product_ids = my_theme_normalize_product_id_list($source_product_ids);
+        $category_slug = sanitize_title((string) $category_slug);
+        if ($category_slug === '' || empty($product_ids) || !taxonomy_exists('product_cat')) {
+            return $source_product_ids;
+        }
+
+        $cache_version = (string) get_option('my_theme_filter_cache_version', '1');
+        $digest = md5(implode(',', $product_ids));
+        $source_digest = md5(implode(',', $source_product_ids));
+        $request_key = $cache_version . ':' . $category_slug . ':' . $source_digest;
+        if (array_key_exists($request_key, $request_cache)) {
+            return $request_cache[$request_key];
+        }
+
+        $cache_key = 'my_theme_search_intent_filtered_ids_v1_' . $cache_version . '_' . md5($category_slug . '|' . $digest);
+        $cached = get_transient($cache_key);
+        if (is_array($cached)) {
+            $request_cache[$request_key] = function_exists('my_theme_filter_product_ids_by_source_order')
+                ? my_theme_filter_product_ids_by_source_order($source_product_ids, $cached)
+                : my_theme_normalize_product_id_list($cached);
+            return $request_cache[$request_key];
+        }
+
+        $term = get_term_by('slug', $category_slug, 'product_cat');
+        if (!$term instanceof WP_Term || empty($term->term_id)) {
+            $request_cache[$request_key] = $source_product_ids;
+            set_transient($cache_key, $product_ids, 30 * MINUTE_IN_SECONDS);
+            return $request_cache[$request_key];
+        }
+
+        $term_ids = [(int) $term->term_id];
+        $child_ids = get_term_children((int) $term->term_id, 'product_cat');
+        if (!is_wp_error($child_ids) && is_array($child_ids)) {
+            foreach ($child_ids as $child_id) {
+                $child_id = (int) $child_id;
+                if ($child_id > 0) {
+                    $term_ids[] = $child_id;
+                }
+            }
+        }
+        $term_ids = array_values(array_unique(array_filter($term_ids)));
+
+        $matched_ids = get_posts([
+            'post_type' => 'product',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'post__in' => $product_ids,
+            'no_found_rows' => true,
+            'ignore_sticky_posts' => true,
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
+            'tax_query' => [
+                [
+                    'taxonomy' => 'product_cat',
+                    'field' => 'term_id',
+                    'terms' => $term_ids,
+                    'operator' => 'IN',
+                ],
+            ],
+        ]);
+
+        $request_cache[$request_key] = function_exists('my_theme_filter_product_ids_by_source_order')
+            ? my_theme_filter_product_ids_by_source_order($source_product_ids, $matched_ids)
+            : my_theme_normalize_product_id_list($matched_ids);
+        set_transient($cache_key, my_theme_normalize_product_id_list($matched_ids), 30 * MINUTE_IN_SECONDS);
+        return $request_cache[$request_key];
+    }
+}
+
+if (!function_exists('my_theme_get_search_matched_product_ids')) {
+    function my_theme_get_search_matched_product_ids($raw_query, $product_ids = null, $limit = 48)
+    {
+        $query_norm = my_theme_normalize_search_text($raw_query);
+        if ($query_norm === '') {
+            return [];
+        }
+
+        if ($product_ids === null) {
+            $product_ids = function_exists('my_theme_get_catalog_visible_product_ids')
+                ? my_theme_get_catalog_visible_product_ids(false)
+                : [];
+        }
+
+        $product_ids = my_theme_normalize_product_id_list($product_ids);
+        if (empty($product_ids)) {
+            return [];
+        }
+
+        $limit = max(8, (int) $limit);
+        $cache_version = (string) get_option('my_theme_filter_cache_version', '1');
+        $digest = md5($query_norm . '|' . implode(',', $product_ids) . '|' . (string) $limit);
+        $cache_key = 'my_theme_search_product_match_v3_' . $cache_version . '_' . $digest;
+        $cached = get_transient($cache_key);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $stop_words = ['son', 'san', 'pham', 'gia', 'bao', 'loai', 'cho', 'cua', 'va', 'theo', 'hang'];
+        $tokens = array_values(array_filter(explode(' ', $query_norm), function ($token) use ($stop_words) {
+            return strlen($token) >= 2 && !in_array($token, $stop_words, true);
+        }));
+
+        $brand_intent = function_exists('my_theme_detect_brand_slug_from_text')
+            ? my_theme_detect_brand_slug_from_text($query_norm)
+            : '';
+        $category_intent = function_exists('my_theme_guess_primary_category_slug')
+            ? my_theme_guess_primary_category_slug($query_norm)
+            : '';
+        $search_candidate_ids = $product_ids;
+        if ($brand_intent !== '' && function_exists('my_theme_filter_product_ids_by_brand_slug')) {
+            $brand_candidate_ids = my_theme_filter_product_ids_by_brand_slug($search_candidate_ids, $brand_intent);
+            if (!empty($brand_candidate_ids)) {
+                $search_candidate_ids = $brand_candidate_ids;
+            }
+        }
+        if ($category_intent !== '' && function_exists('my_theme_get_search_intent_filtered_product_ids')) {
+            $category_candidate_ids = my_theme_get_search_intent_filtered_product_ids($search_candidate_ids, $category_intent);
+            if (!empty($category_candidate_ids)) {
+                $search_candidate_ids = $category_candidate_ids;
+            }
+        }
+        $search_index = function_exists('my_theme_get_catalog_search_index')
+            ? my_theme_get_catalog_search_index($product_ids)
+            : [];
+        if (empty($search_index)) {
+            set_transient($cache_key, [], 30 * MINUTE_IN_SECONDS);
+            return [];
+        }
+
+        $scored = [];
+        foreach ($search_candidate_ids as $product_id) {
+            $product_id = (int) $product_id;
+            if ($product_id <= 0 || !isset($search_index[$product_id]) || !is_array($search_index[$product_id])) {
+                continue;
+            }
+
+            $entry = $search_index[$product_id];
+            $name = isset($entry['name']) ? (string) $entry['name'] : '';
+            $name_norm = isset($entry['name_norm']) ? (string) $entry['name_norm'] : '';
+            $haystack = isset($entry['haystack']) ? (string) $entry['haystack'] : '';
+            if ($haystack === '') {
+                continue;
+            }
+
+            $score = 0;
+            if ($query_norm === $name_norm) {
+                $score += 36;
+            } elseif ($name_norm !== '' && strpos($name_norm, $query_norm) !== false) {
+                $score += 28;
+            } elseif ($name_norm !== '' && strlen($name_norm) >= 4 && strpos($query_norm, $name_norm) !== false) {
+                $score += 20;
+            }
+
+            if (strpos($haystack, $query_norm) !== false) {
+                $score += 10;
+            }
+
+            if (!empty($tokens)) {
+                $token_hits = 0;
+                foreach ($tokens as $token) {
+                    if (strpos($haystack, $token) !== false) {
+                        $token_hits++;
+                    }
+                }
+                if ($token_hits === count($tokens)) {
+                    $score += 12;
+                } else {
+                    $score += ($token_hits * 3);
+                }
+            }
+
+            if ($brand_intent !== '' && isset($entry['brand_slug']) && (string) $entry['brand_slug'] === $brand_intent) {
+                $score += 10;
+            }
+
+            if ($category_intent !== '') {
+                $primary_slug = isset($entry['category_slug']) ? (string) $entry['category_slug'] : '';
+                $parent_slug = isset($entry['category_parent_slug']) ? (string) $entry['category_parent_slug'] : '';
+                if ($primary_slug === $category_intent || $parent_slug === $category_intent) {
+                    $score += 8;
+                }
+            }
+
+            if (!empty($entry['featured'])) {
+                $score += 6;
+            }
+            if (!empty($entry['stock'])) {
+                $score += 2;
+            }
+
+            $sales_total = isset($entry['sales_total']) ? (int) $entry['sales_total'] : 0;
+            if ($sales_total > 0) {
+                $score += min(10, (int) floor(log($sales_total + 1, 2)));
+            }
+
+            if ($score < 6) {
+                continue;
+            }
+
+            $created_ts = isset($entry['created_ts']) ? (int) $entry['created_ts'] : 0;
+            $scored[] = [
+                'id' => $product_id,
+                'score' => $score,
+                'sales' => $sales_total,
+                'featured' => !empty($entry['featured']) ? 1 : 0,
+                'stock' => !empty($entry['stock']) ? 1 : 0,
+                'created' => $created_ts,
+                'name' => $name,
+            ];
+        }
+
+        if (empty($scored)) {
+            set_transient($cache_key, [], 30 * MINUTE_IN_SECONDS);
+            return [];
+        }
+
+        usort($scored, function ($a, $b) {
+            foreach (['score', 'featured', 'sales', 'stock', 'created'] as $field) {
+                $value_a = isset($a[$field]) ? (int) $a[$field] : 0;
+                $value_b = isset($b[$field]) ? (int) $b[$field] : 0;
+                if ($value_a !== $value_b) {
+                    return ($value_a > $value_b) ? -1 : 1;
+                }
+            }
+            return strnatcasecmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
+        });
+
+        $matched_ids = [];
+        foreach ($scored as $item) {
+            $product_id = isset($item['id']) ? (int) $item['id'] : 0;
+            if ($product_id <= 0) {
+                continue;
+            }
+            $matched_ids[] = $product_id;
+            if (count($matched_ids) >= $limit) {
+                break;
+            }
+        }
+
+        set_transient($cache_key, $matched_ids, 30 * MINUTE_IN_SECONDS);
+        return $matched_ids;
     }
 }
 
@@ -3559,15 +5495,21 @@ if (!function_exists('my_theme_set_product_primary_category_by_guess')) {
 if (!function_exists('my_theme_get_catalog_visible_product_ids')) {
     function my_theme_get_catalog_visible_product_ids($strict_price = false)
     {
+        static $request_cache = [];
+
         if (!function_exists('wc_get_product')) {
             return [];
         }
 
         $strict_price = (bool) $strict_price;
         $cache_suffix = $strict_price ? 'priced' : 'shop';
+        if (array_key_exists($cache_suffix, $request_cache)) {
+            return $request_cache[$cache_suffix];
+        }
         $cache_key = 'my_theme_catalog_visible_ids_' . $cache_suffix . '_v2';
         $cached = get_transient($cache_key);
         if (is_array($cached)) {
+            $request_cache[$cache_suffix] = $cached;
             return $cached;
         }
 
@@ -3579,18 +5521,26 @@ if (!function_exists('my_theme_get_catalog_visible_product_ids')) {
             'orderby'        => 'date',
             'order'          => 'DESC',
             'no_found_rows'  => true,
+            'ignore_sticky_posts' => true,
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
         ]);
         if (empty($candidate_ids)) {
+            $request_cache[$cache_suffix] = [];
             set_transient($cache_key, [], 6 * HOUR_IN_SECONDS);
             return [];
         }
 
+        $product_map = function_exists('my_theme_get_product_object_map')
+            ? my_theme_get_product_object_map($candidate_ids)
+            : [];
         $visible_ids = [];
         foreach ($candidate_ids as $candidate_id) {
-            $product = wc_get_product((int) $candidate_id);
-            if (!$product instanceof WC_Product) {
+            $candidate_id = (int) $candidate_id;
+            if ($candidate_id <= 0 || !isset($product_map[$candidate_id]) || !$product_map[$candidate_id] instanceof WC_Product) {
                 continue;
             }
+            $product = $product_map[$candidate_id];
 
             if ($strict_price) {
                 if (!my_theme_is_catalog_ready_product($product, true)) {
@@ -3606,6 +5556,7 @@ if (!function_exists('my_theme_get_catalog_visible_product_ids')) {
         }
 
         $visible_ids = array_values(array_unique($visible_ids));
+        $request_cache[$cache_suffix] = $visible_ids;
         set_transient($cache_key, $visible_ids, 6 * HOUR_IN_SECONDS);
         return $visible_ids;
     }
@@ -3630,7 +5581,7 @@ if (!function_exists('my_theme_render_product_category_menu_item')) {
             return '';
         }
 
-        $cache_key = 'my_theme_catalog_menu_html_v3';
+        $cache_key = 'my_theme_catalog_menu_html_v4';
         $cached_html = get_transient($cache_key);
         if (is_string($cached_html) && $cached_html !== '') {
             return $cached_html;
@@ -3699,7 +5650,7 @@ if (!function_exists('my_theme_render_product_category_menu_item')) {
             return '';
         }
 
-        $html = '<li class="menu-item menu-item-catalog menu-item-has-children"><a href="' . esc_url($shop_url) . '">Danh mục sơn</a>' . $content . '</li>';
+        $html = '<li class="menu-item menu-item-catalog menu-item-has-children"><a href="' . esc_url($shop_url) . '">Danh mục sản phẩm</a>' . $content . '</li>';
         set_transient($cache_key, $html, 12 * HOUR_IN_SECONDS);
         return $html;
     }
@@ -3708,7 +5659,7 @@ if (!function_exists('my_theme_render_product_category_menu_item')) {
 if (!function_exists('my_theme_render_brand_menu_item')) {
     function my_theme_render_brand_menu_item()
     {
-        $cache_key = 'my_theme_brand_menu_html_v3';
+        $cache_key = 'my_theme_brand_menu_html_v4';
         $cached_html = get_transient($cache_key);
         if (is_string($cached_html) && $cached_html !== '') {
             return $cached_html;
@@ -3779,15 +5730,43 @@ if (!function_exists('my_theme_render_solution_menu_item')) {
     }
 }
 
+if (!function_exists('my_theme_render_support_menu_item')) {
+    function my_theme_render_support_menu_item()
+    {
+        $links = my_theme_get_support_menu_links();
+        if (empty($links)) {
+            return '';
+        }
+
+        $menu_url = home_url('/huong-dan-mua-hang');
+        $html = '<li class="menu-item menu-item-support menu-item-has-children"><a href="' . esc_url($menu_url) . '">Hỗ trợ nhanh</a><ul class="sub-menu">';
+
+        foreach ($links as $link) {
+            $label = isset($link['label']) ? trim((string) $link['label']) : '';
+            $url = isset($link['url']) ? trim((string) $link['url']) : '';
+            if ($label === '' || $url === '') {
+                continue;
+            }
+
+            $html .= '<li class="menu-item menu-item-support-link"><a href="' . esc_url($url) . '">' . esc_html($label) . '</a></li>';
+        }
+
+        $html .= '</ul></li>';
+        return $html;
+    }
+}
+
 if (!function_exists('my_theme_flush_catalog_menu_cache')) {
     function my_theme_flush_catalog_menu_cache()
     {
         delete_transient('my_theme_catalog_menu_html_v1');
         delete_transient('my_theme_catalog_menu_html_v2');
         delete_transient('my_theme_catalog_menu_html_v3');
+        delete_transient('my_theme_catalog_menu_html_v4');
         delete_transient('my_theme_brand_menu_html_v1');
         delete_transient('my_theme_brand_menu_html_v2');
         delete_transient('my_theme_brand_menu_html_v3');
+        delete_transient('my_theme_brand_menu_html_v4');
         update_option('my_theme_filter_cache_version', (string) time(), false);
     }
 }
@@ -3831,31 +5810,38 @@ add_filter('wp_nav_menu_items', function ($items, $args) {
         return $items;
     }
 
-    $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop');
-    $blog_url = trailingslashit(home_url('/blog'));
-    $calc_url = home_url('/#tinh-son');
-    if (function_exists('is_front_page') && is_front_page()) {
-        $calc_url = '#tinh-son';
+    $items_plain_text = function_exists('my_theme_normalize_search_text')
+        ? my_theme_normalize_search_text(wp_strip_all_tags((string) $items))
+        : strtolower(trim(wp_strip_all_tags((string) $items)));
+    $has_menu_label = function (array $labels) use ($items_plain_text) {
+        foreach ($labels as $label) {
+            $needle = function_exists('my_theme_normalize_search_text')
+                ? my_theme_normalize_search_text((string) $label)
+                : strtolower(trim((string) $label));
+            if ($needle !== '' && strpos($items_plain_text, $needle) !== false) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    if (
+        strpos($items, 'menu-item-catalog') === false
+        && !$has_menu_label(['Danh mục sản phẩm', 'Danh mục sơn'])
+    ) {
+        $items .= my_theme_render_product_category_menu_item();
     }
 
-    if (strpos($items, 'menu-item-calculator') === false) {
-        $items .= '<li class="menu-item menu-item-calculator"><a href="' . esc_url($calc_url) . '">Tính sơn</a></li>';
-    }
-
-    if (strpos($items, 'menu-item-solutions') === false) {
-        $items .= my_theme_render_solution_menu_item();
-    }
-
-    if (strpos($items, 'menu-item-blog') === false) {
-        $items .= '<li class="menu-item menu-item-blog"><a href="' . esc_url($blog_url) . '">Blog</a></li>';
-    }
-
-    if (strpos($items, 'menu-item-brands') === false) {
+    if (strpos($items, 'menu-item-brands') === false && !$has_menu_label(['Thương hiệu'])) {
         $items .= my_theme_render_brand_menu_item();
     }
 
-    if (strpos($items, 'menu-item-catalog') === false) {
-        $items .= my_theme_render_product_category_menu_item();
+    if (strpos($items, 'menu-item-solutions') === false && !$has_menu_label(['Giải pháp'])) {
+        $items .= my_theme_render_solution_menu_item();
+    }
+
+    if (strpos($items, 'menu-item-support') === false && !$has_menu_label(['Hỗ trợ nhanh'])) {
+        $items .= my_theme_render_support_menu_item();
     }
 
     return $items;
@@ -3864,9 +5850,8 @@ add_filter('wp_nav_menu_items', function ($items, $args) {
 // Fallback menu if user chưa cấu hình.
 function my_theme_fallback_menu() {
     $menu = [
-        ['label' => 'Trang chủ', 'url' => '#top'],
+        ['label' => 'Trang chủ', 'url' => home_url('/')],
         ['label' => 'Cửa hàng', 'url' => wc_get_page_permalink('shop')],
-        ['label' => 'Tính sơn', 'url' => home_url('/#tinh-son')],
         [
             'label' => 'Giải pháp',
             'url' => home_url('/giai-phap'),
@@ -3881,10 +5866,6 @@ function my_theme_fallback_menu() {
                 ['label' => 'Keo và ron', 'url' => home_url('/giai-phap-keo-va-ron')],
             ],
         ],
-        ['label' => 'Blog', 'url' => trailingslashit(home_url('/blog'))],
-        ['label' => 'Giới thiệu', 'url' => home_url('/gioi-thieu')],
-        ['label' => 'Giá thợ', 'url' => home_url('/gia-tho')],
-        ['label' => 'Liên hệ', 'url' => home_url('/lien-he')],
     ];
     echo '<ul id="primary-menu-list" class="menu main-menu">';
     foreach ($menu as $item) {
@@ -3900,6 +5881,9 @@ function my_theme_fallback_menu() {
         }
         echo '</li>';
     }
+    echo my_theme_render_product_category_menu_item();
+    echo my_theme_render_brand_menu_item();
+    echo my_theme_render_support_menu_item();
     echo '</ul>';
 }
 
@@ -3911,6 +5895,7 @@ if (!function_exists('my_theme_get_foundation_pages_config')) {
             ['title' => 'Chính sách đổi trả', 'slug' => 'chinh-sach-doi-tra', 'content' => 'Xem điều kiện đổi trả và quy trình hỗ trợ.', 'template' => 'page-chinh-sach-doi-tra.php'],
             ['title' => 'Câu hỏi thường gặp', 'slug' => 'faq', 'content' => 'Tổng hợp câu hỏi thường gặp về đặt hàng và thi công.', 'template' => 'page-faq.php'],
             ['title' => 'Hướng dẫn mua hàng', 'slug' => 'huong-dan-mua-hang', 'content' => 'Hướng dẫn đặt hàng nhanh tại Đại lý Sơn Phát Tấn.', 'template' => 'page-huong-dan-mua-hang.php'],
+            ['title' => 'Tính sơn', 'slug' => 'tinh-son', 'content' => '[paint_calculator]'],
             ['title' => 'Giới thiệu đại lý', 'slug' => 'gioi-thieu', 'content' => 'Thông tin về Đại lý Sơn Phát Tấn, kinh nghiệm và khu vực phục vụ.', 'template' => 'page-gioi-thieu.php'],
             ['title' => 'Vận chuyển & giao hàng', 'slug' => 'van-chuyen-giao-hang', 'content' => 'Thông tin phạm vi giao hàng, thời gian và phí vận chuyển.', 'template' => 'page-van-chuyen-giao-hang.php'],
             ['title' => 'Giá thợ / công trình', 'slug' => 'gia-tho', 'content' => 'Ưu đãi và điều kiện áp dụng giá thợ, giá công trình.', 'template' => 'page-gia-tho.php'],
@@ -3928,7 +5913,7 @@ if (!function_exists('my_theme_get_foundation_pages_config')) {
 if (!function_exists('my_theme_ensure_foundation_pages')) {
     function my_theme_ensure_foundation_pages($force = false)
     {
-        $version = '20260303-landing-pages-v4';
+        $version = '20260304-landing-pages-v5';
         if (!$force && get_option('my_theme_foundation_pages_version') === $version) {
             return;
         }
@@ -3986,6 +5971,10 @@ add_action('admin_init', function () {
     my_theme_ensure_foundation_pages(false);
 }, 5);
 
+add_action('init', function () {
+    my_theme_ensure_foundation_pages(false);
+}, 5);
+
 // Mô tả ngắn cho danh mục sản phẩm (shop/category).
 function my_theme_get_category_intro($cat_id = 0) {
     $default = 'Chọn sơn chính hãng theo bề mặt và mục đích sử dụng. Tư vấn định mức m² miễn phí.';
@@ -4025,6 +6014,17 @@ function my_theme_render_paint_calculator() {
     get_template_part('template-parts/paint-calculator');
 }
 
+if (!function_exists('my_theme_render_paint_calculator_shortcode')) {
+    function my_theme_render_paint_calculator_shortcode()
+    {
+        ob_start();
+        get_template_part('template-parts/paint-calculator');
+        return (string) ob_get_clean();
+    }
+}
+
+add_shortcode('paint_calculator', 'my_theme_render_paint_calculator_shortcode');
+
 if (!function_exists('my_theme_track_recently_viewed_product')) {
     function my_theme_track_recently_viewed_product()
     {
@@ -4038,7 +6038,10 @@ if (!function_exists('my_theme_track_recently_viewed_product')) {
             return;
         }
 
-        $product = wc_get_product($product_id);
+        global $product;
+        $product = ($product instanceof WC_Product && (int) $product->get_id() === $product_id)
+            ? $product
+            : wc_get_product($product_id);
         if (!$product instanceof WC_Product) {
             return;
         }
@@ -4082,15 +6085,33 @@ if (!function_exists('my_theme_get_recently_viewed_products')) {
             return [];
         }
 
-        $products = [];
+        $candidate_ids = [];
         foreach ($ids as $product_id) {
             if ($product_id <= 0 || in_array($product_id, $exclude_ids, true)) {
                 continue;
             }
-            $product = wc_get_product($product_id);
-            if (!$product instanceof WC_Product) {
+            $candidate_ids[] = (int) $product_id;
+            if (count($candidate_ids) >= 12) {
+                break;
+            }
+        }
+
+        $candidate_ids = function_exists('my_theme_preserve_product_id_order')
+            ? my_theme_preserve_product_id_order($candidate_ids)
+            : my_theme_normalize_product_id_list($candidate_ids);
+        if (empty($candidate_ids)) {
+            return [];
+        }
+
+        $product_map = function_exists('my_theme_get_product_object_map')
+            ? my_theme_get_product_object_map($candidate_ids)
+            : [];
+        $products = [];
+        foreach ($candidate_ids as $product_id) {
+            if (!isset($product_map[$product_id]) || !$product_map[$product_id] instanceof WC_Product) {
                 continue;
             }
+            $product = $product_map[$product_id];
             if (function_exists('my_theme_is_catalog_ready_product') && !my_theme_is_catalog_ready_product($product, true)) {
                 continue;
             }
@@ -4132,14 +6153,14 @@ if (!function_exists('my_theme_get_commerce_support_payload')) {
     function my_theme_get_commerce_support_payload($context = 'cart')
     {
         $context = sanitize_key((string) $context);
-        $business = function_exists('my_theme_get_business_profile') ? my_theme_get_business_profile() : [];
-        $phone_href = isset($business['phone_href']) ? (string) $business['phone_href'] : 'tel:0944857999';
-        $phone_display = isset($business['phone_display']) ? (string) $business['phone_display'] : '0944 857 999';
-        $zalo_url = isset($business['zalo_url']) ? (string) $business['zalo_url'] : 'https://zalo.me/0944857999';
-        $hours_display = isset($business['hours_display']) ? (string) $business['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00';
-        $service_areas = isset($business['service_areas_display']) ? (string) $business['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai';
-        $cart_url = function_exists('wc_get_cart_url') ? wc_get_cart_url() : home_url('/cart');
-        $checkout_url = function_exists('wc_get_checkout_url') ? wc_get_checkout_url() : home_url('/checkout');
+        $store_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
+        $phone_href = isset($store_snapshot['phone_href']) ? (string) $store_snapshot['phone_href'] : 'tel:0944857999';
+        $phone_display = isset($store_snapshot['phone_display']) ? (string) $store_snapshot['phone_display'] : '0944 857 999';
+        $zalo_url = isset($store_snapshot['zalo_url']) ? (string) $store_snapshot['zalo_url'] : 'https://zalo.me/0944857999';
+        $hours_display = isset($store_snapshot['hours_display']) ? (string) $store_snapshot['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00';
+        $service_areas = isset($store_snapshot['service_areas_display']) ? (string) $store_snapshot['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai';
+        $cart_url = function_exists('my_theme_get_cart_url_safe') ? my_theme_get_cart_url_safe() : home_url('/gio-hang');
+        $checkout_url = function_exists('my_theme_get_checkout_url_safe') ? my_theme_get_checkout_url_safe() : home_url('/thanh-toan');
         $shop_url = function_exists('my_theme_get_shop_url') ? my_theme_get_shop_url() : home_url('/shop');
         $contact_url = home_url('/lien-he');
         $faq_url = home_url('/faq');
@@ -4235,6 +6256,36 @@ if (!function_exists('my_theme_get_commerce_support_payload')) {
                 ],
                 'meta' => [$hours_display, $service_areas, 'Hỗ trợ hóa đơn và chứng từ khi cần'],
             ],
+            'account' => [
+                'eyebrow' => 'Tài khoản & hỗ trợ',
+                'title' => 'Dùng tài khoản để theo dõi đơn và chốt hỗ trợ kỹ thuật gọn hơn',
+                'subtitle' => 'Đăng nhập hoặc đăng ký để lưu thông tin nhận hàng, xem lại đơn cũ và rút ngắn bước xác nhận khi đặt lại vật tư cho công trình.',
+                'checklist' => [
+                    'Nếu thường xuyên đặt lại vật tư, nên lưu sẵn số điện thoại và địa chỉ nhận hàng để checkout nhanh hơn ở các lần sau.',
+                    'Nếu bạn chỉ cần hỏi kỹ thuật hoặc xin báo giá, vẫn có thể dùng Zalo hoặc form liên hệ mà không cần chờ tạo tài khoản xong.',
+                    'Với đơn công trình cần hóa đơn hoặc giao nhiều đợt, tài khoản giúp đối chiếu lịch sử đơn hàng và thông tin nhận hàng gọn hơn.',
+                ],
+                'cards' => [
+                    [
+                        'question' => 'Có cần có tài khoản mới đặt được hàng không?',
+                        'answer' => 'Không bắt buộc cho mọi trường hợp, nhưng tài khoản giúp lưu thông tin nhận hàng và theo dõi đơn cũ thuận tiện hơn nếu bạn mua lặp lại.',
+                    ],
+                    [
+                        'question' => 'Tài khoản này hữu ích nhất khi nào?',
+                        'answer' => 'Khi bạn là thợ, chủ nhà hoặc công trình hay đặt lại cùng nhóm vật tư và muốn rút ngắn bước nhập thông tin mỗi lần mua.',
+                    ],
+                    [
+                        'question' => 'Nếu vẫn chưa chắc mã vật tư thì nên làm gì?',
+                        'answer' => 'Hãy nhắn Zalo kỹ thuật hoặc gửi yêu cầu báo giá để được điều hướng trước, rồi mới quay lại tạo đơn hoặc dùng tài khoản để theo dõi tiếp.',
+                    ],
+                ],
+                'actions' => [
+                    ['label' => 'Mở kho sản phẩm', 'url' => $shop_url, 'class' => 'btn btn-primary btn-sm'],
+                    ['label' => 'Gửi yêu cầu báo giá', 'url' => $contact_url, 'class' => 'btn btn-outline btn-sm'],
+                    ['label' => 'Xem FAQ', 'url' => $faq_url, 'class' => 'btn btn-accent btn-sm'],
+                ],
+                'meta' => [$hours_display, $service_areas, 'Theo dõi đơn cũ và đặt lại vật tư nhanh hơn'],
+            ],
         ];
 
         return isset($payloads[$context]) ? $payloads[$context] : [];
@@ -4244,6 +6295,9 @@ if (!function_exists('my_theme_get_commerce_support_payload')) {
 if (!function_exists('my_theme_render_commerce_support')) {
     function my_theme_render_commerce_support($context = 'cart')
     {
+        // Product-first UX: tạm tắt toàn bộ khối hỗ trợ dài để giao diện tập trung vào sản phẩm.
+        return;
+
         $payload = my_theme_get_commerce_support_payload($context);
         if (empty($payload)) {
             return;
@@ -4327,6 +6381,59 @@ if (!function_exists('my_theme_render_commerce_support')) {
     }
 }
 
+if (!function_exists('my_theme_render_checkout_snapshot_panel')) {
+    function my_theme_render_checkout_snapshot_panel()
+    {
+        // Product-first UX: tắt snapshot phụ ở checkout để giảm nhiễu.
+        return;
+
+        if (!function_exists('is_checkout') || !is_checkout()) {
+            return;
+        }
+        if (function_exists('is_order_received_page') && is_order_received_page()) {
+            return;
+        }
+        if (!function_exists('WC') || !WC()->cart || WC()->cart->is_empty()) {
+            return;
+        }
+
+        $cart = WC()->cart;
+        $item_count = max(0, (int) $cart->get_cart_contents_count());
+        $subtotal_text = trim(wp_strip_all_tags((string) $cart->get_cart_subtotal()));
+        $needs_shipping = $cart->needs_shipping();
+        $store_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
+        $hours_display = isset($store_snapshot['hours_display']) ? (string) $store_snapshot['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00';
+        $service_areas = isset($store_snapshot['service_areas_display']) ? (string) $store_snapshot['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai';
+        $phone_display = isset($store_snapshot['phone_display']) ? (string) $store_snapshot['phone_display'] : '0944 857 999';
+        $phone_href = isset($store_snapshot['phone_href']) ? (string) $store_snapshot['phone_href'] : 'tel:0944857999';
+        $cart_url = function_exists('my_theme_get_cart_url_safe') ? my_theme_get_cart_url_safe() : home_url('/gio-hang');
+        $shop_url = function_exists('my_theme_get_shop_url') ? my_theme_get_shop_url() : home_url('/shop');
+        ?>
+        <section class="page-section checkout-snapshot" aria-label="Tóm tắt trước khi thanh toán">
+          <div class="section-heading checkout-snapshot__head">
+            <div>
+              <p class="eyebrow eyebrow-muted">Rà nhanh trước khi bấm đặt hàng</p>
+              <h2 class="section-title">Thông tin đang được chốt ở bước này</h2>
+              <p class="section-sub">Giữ số điện thoại sẵn sàng, ghi rõ địa chỉ và ghi chú giao hàng nếu cần chia đợt hoặc xuất hóa đơn.</p>
+            </div>
+            <div class="checkout-snapshot__actions">
+              <a class="btn btn-outline btn-sm" href="<?php echo esc_url($cart_url); ?>">Quay lại giỏ hàng</a>
+              <a class="btn btn-primary btn-sm" href="<?php echo esc_url($phone_href); ?>">Gọi <?php echo esc_html($phone_display); ?></a>
+              <a class="btn btn-accent btn-sm" href="<?php echo esc_url($shop_url); ?>">Mở thêm sản phẩm</a>
+            </div>
+          </div>
+          <div class="shop-summary__insight" aria-label="Thông tin checkout nhanh">
+            <span class="chip chip--soft"><?php echo esc_html((string) $item_count); ?> sản phẩm đang chờ chốt</span>
+            <?php if ($subtotal_text !== '') : ?><span class="chip chip--soft">Tạm tính: <?php echo esc_html($subtotal_text); ?></span><?php endif; ?>
+            <span class="chip chip--soft"><?php echo esc_html($needs_shipping ? 'Có bước giao hàng và xác nhận người nhận' : 'Không cần bước giao hàng riêng'); ?></span>
+            <span class="chip chip--soft"><?php echo esc_html($hours_display); ?></span>
+            <span class="chip chip--soft"><?php echo esc_html($service_areas); ?></span>
+          </div>
+        </section>
+        <?php
+    }
+}
+
 // Ép nút "Proceed to checkout" hiển thị tiếng Việt bằng hook WooCommerce.
 add_action('init', function () {
     remove_action('woocommerce_proceed_to_checkout', 'woocommerce_button_proceed_to_checkout', 20);
@@ -4334,10 +6441,10 @@ add_action('init', function () {
 });
 
 function my_theme_button_proceed_to_checkout() {
-    if (!function_exists('wc_get_checkout_url')) {
+    $checkout_url = function_exists('my_theme_get_checkout_url_safe') ? my_theme_get_checkout_url_safe() : '';
+    if ($checkout_url === '') {
         return;
     }
-    $checkout_url = wc_get_checkout_url();
     echo '<a href="' . esc_url($checkout_url) . '" class="checkout-button button alt wc-forward">' . esc_html('Thanh toán') . '</a>';
 }
 
@@ -4364,15 +6471,8 @@ add_filter('the_content', function ($content) {
         return $content;
     }
 
-    $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop');
-    $cart_url = function_exists('wc_get_cart_url') ? wc_get_cart_url() : home_url('/cart');
-    $support_html = '';
-    if (function_exists('my_theme_render_commerce_support')) {
-        ob_start();
-        my_theme_render_commerce_support('checkout');
-        $support_html = (string) ob_get_clean();
-    }
-
+    $shop_url = function_exists('my_theme_get_shop_url') ? my_theme_get_shop_url() : home_url('/shop');
+    $cart_url = function_exists('my_theme_get_cart_url_safe') ? my_theme_get_cart_url_safe() : home_url('/gio-hang');
     return ''
         . '<section class="empty-state empty-state--checkout" aria-label="Chưa có sản phẩm để thanh toán">'
         . '<h2>Chưa có sản phẩm để thanh toán</h2>'
@@ -4381,8 +6481,7 @@ add_filter('the_content', function ($content) {
         . '<a class="btn btn-primary" href="' . esc_url($shop_url) . '">Quay lại cửa hàng</a>'
         . '<a class="btn btn-outline" href="' . esc_url($cart_url) . '">Xem giỏ hàng</a>'
         . '</div>'
-        . '</section>'
-        . $support_html;
+        . '</section>';
 }, 20);
 
 // Never cache cart/checkout HTML to avoid stale totals/items.
@@ -4432,30 +6531,7 @@ add_action('woocommerce_before_checkout_form', function () {
         wc_print_notice('Vui lòng chuyển khoản 100% trước khi giao hàng.', 'notice');
     }
 }, 5);
-add_action('woocommerce_before_checkout_form', function () {
-    if (function_exists('is_order_received_page') && is_order_received_page()) {
-        return;
-    }
-    if (function_exists('my_theme_render_commerce_support')) {
-        my_theme_render_commerce_support('checkout');
-    }
-}, 8);
-
-add_action('woocommerce_before_checkout_form', function () {
-    if (function_exists('is_order_received_page') && is_order_received_page()) {
-        return;
-    }
-    if (function_exists('WC') && WC()->cart && WC()->cart->is_empty()) {
-        return;
-    }
-    if (function_exists('my_theme_render_cart_companion_paths')) {
-        my_theme_render_cart_companion_paths([
-            'title' => 'Nếu cần bổ sung vật tư, nên rà lại trước khi chốt đơn',
-            'subtitle' => 'Bạn đang ở bước cuối. Nếu vẫn còn thiếu lớp lót, bột trét, keo phụ trợ hoặc nhóm vật tư liên quan, có thể mở nhanh từ đây rồi quay lại thanh toán.',
-            'class' => 'product-companion-paths--checkout',
-        ]);
-    }
-}, 9);
+// Keep checkout minimal: only notices and native WooCommerce payment form.
 
 // Đảm bảo người dùng đăng ký chỉ có quyền khách hàng, admin mới có quyền chỉnh sửa.
 add_action('user_register', function ($user_id) {
@@ -4588,6 +6664,426 @@ add_filter('menu_order', function ($menu_order) {
     }
 
     return $ordered;
+});
+
+add_action('load-post.php', function () {
+    if (!is_admin()) {
+        return;
+    }
+
+    $action = isset($_GET['action']) ? sanitize_key((string) $_GET['action']) : '';
+    if ($action !== 'trash') {
+        return;
+    }
+
+    $post_id = isset($_GET['post']) ? absint($_GET['post']) : 0;
+    if ($post_id <= 0 || get_post_status($post_id) !== 'trash') {
+        return;
+    }
+
+    if (!current_user_can('delete_post', $post_id)) {
+        return;
+    }
+
+    $post = get_post($post_id);
+    if (!$post instanceof WP_Post) {
+        return;
+    }
+
+    $redirect_args = [
+        'trashed' => 1,
+        'ids'     => $post_id,
+    ];
+    $redirect_url = admin_url('edit.php');
+    if ($post->post_type !== 'post' && $post->post_type !== '') {
+        $redirect_args['post_type'] = $post->post_type;
+    }
+
+    wp_safe_redirect(add_query_arg($redirect_args, $redirect_url));
+    exit;
+});
+
+if (!function_exists('my_theme_get_product_brand_taxonomy')) {
+    function my_theme_get_product_brand_taxonomy()
+    {
+        foreach (['pa_brand', 'product_brand', 'brand'] as $candidate) {
+            if (taxonomy_exists($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return '';
+    }
+}
+
+if (!function_exists('my_theme_get_product_brand_manage_terms_capability')) {
+    function my_theme_get_product_brand_manage_terms_capability()
+    {
+        $taxonomy = my_theme_get_product_brand_taxonomy();
+        if ($taxonomy !== '') {
+            $taxonomy_object = get_taxonomy($taxonomy);
+            if ($taxonomy_object && isset($taxonomy_object->cap->manage_terms) && is_string($taxonomy_object->cap->manage_terms) && $taxonomy_object->cap->manage_terms !== '') {
+                return $taxonomy_object->cap->manage_terms;
+            }
+        }
+
+        return 'manage_woocommerce';
+    }
+}
+
+if (!function_exists('my_theme_get_product_brand_admin_list_slug')) {
+    function my_theme_get_product_brand_admin_list_slug($brand_slug = '')
+    {
+        $brand_slug = sanitize_title((string) $brand_slug);
+        $args = ['post_type' => 'product'];
+        if ($brand_slug !== '') {
+            $args['my_theme_brand_filter'] = $brand_slug;
+        }
+
+        return add_query_arg($args, 'edit.php');
+    }
+}
+
+if (!function_exists('my_theme_get_product_brand_admin_term_slug')) {
+    function my_theme_get_product_brand_admin_term_slug($focus = '')
+    {
+        $taxonomy = my_theme_get_product_brand_taxonomy();
+        if ($taxonomy === '') {
+            return '';
+        }
+
+        $args = [
+            'taxonomy'  => $taxonomy,
+            'post_type' => 'product',
+        ];
+
+        $focus = sanitize_key((string) $focus);
+        if ($focus !== '') {
+            $args['my_theme_focus'] = $focus;
+        }
+
+        return add_query_arg($args, 'edit-tags.php');
+    }
+}
+
+if (!function_exists('my_theme_get_product_brand_admin_term_url')) {
+    function my_theme_get_product_brand_admin_term_url($focus = '')
+    {
+        $slug = my_theme_get_product_brand_admin_term_slug($focus);
+        if ($slug === '') {
+            return '';
+        }
+
+        return admin_url($slug);
+    }
+}
+
+if (!function_exists('my_theme_get_product_brand_admin_menu_items')) {
+    function my_theme_get_product_brand_admin_menu_items()
+    {
+        $taxonomy = my_theme_get_product_brand_taxonomy();
+        if ($taxonomy !== '') {
+            $terms = get_terms([
+                'taxonomy'   => $taxonomy,
+                'hide_empty' => false,
+                'orderby'    => 'name',
+                'order'      => 'ASC',
+            ]);
+
+            if (!is_wp_error($terms) && !empty($terms)) {
+                $items = [];
+                foreach ($terms as $term) {
+                    if (!$term instanceof WP_Term || empty($term->slug) || empty($term->name)) {
+                        continue;
+                    }
+
+                    $linked_products = get_posts([
+                        'post_type'              => 'product',
+                        'post_status'            => 'any',
+                        'posts_per_page'         => 1,
+                        'fields'                 => 'ids',
+                        'no_found_rows'          => true,
+                        'ignore_sticky_posts'    => true,
+                        'update_post_meta_cache' => false,
+                        'update_post_term_cache' => false,
+                        'tax_query'              => [
+                            [
+                                'taxonomy' => $taxonomy,
+                                'field'    => 'term_id',
+                                'terms'    => [(int) $term->term_id],
+                            ],
+                        ],
+                    ]);
+                    if (empty($linked_products)) {
+                        continue;
+                    }
+
+                    $items[] = [
+                        'brand_slug' => sanitize_title((string) $term->slug),
+                        'label'      => (string) $term->name,
+                        'menu_slug'  => my_theme_get_product_brand_admin_list_slug((string) $term->slug),
+                    ];
+                }
+
+                if (!empty($items)) {
+                    return $items;
+                }
+            }
+        }
+
+        $brand_options = function_exists('my_theme_get_brand_filter_options')
+            ? my_theme_get_brand_filter_options()
+            : [];
+        if (!is_array($brand_options) || empty($brand_options)) {
+            return [];
+        }
+
+        uasort($brand_options, function ($a, $b) {
+            return strnatcasecmp((string) ($a['label'] ?? ''), (string) ($b['label'] ?? ''));
+        });
+
+        $items = [];
+        foreach ($brand_options as $slug => $meta) {
+            $slug = sanitize_title((string) $slug);
+            $label = trim((string) ($meta['label'] ?? ''));
+            if ($slug === '' || $label === '') {
+                continue;
+            }
+
+            $items[] = [
+                'brand_slug' => $slug,
+                'label'      => $label,
+                'menu_slug'  => my_theme_get_product_brand_admin_list_slug($slug),
+            ];
+        }
+
+        return $items;
+    }
+}
+
+add_action('admin_menu', function () {
+    if (!is_admin() || !my_theme_admin_can_manage_store()) {
+        return;
+    }
+
+    $parent_slug = 'edit.php?post_type=product';
+    $brand_term_slug = my_theme_get_product_brand_admin_term_slug();
+    $add_brand_slug = my_theme_get_product_brand_admin_term_slug('add');
+    $brand_items = my_theme_get_product_brand_admin_menu_items();
+
+    global $submenu;
+    if ($brand_term_slug !== '' && isset($submenu[$parent_slug]) && is_array($submenu[$parent_slug])) {
+        foreach ($submenu[$parent_slug] as &$item) {
+            $item_slug = isset($item[2]) ? (string) $item[2] : '';
+            if ($item_slug === $brand_term_slug) {
+                $item[0] = 'Tất cả hãng';
+                break;
+            }
+        }
+        unset($item);
+    }
+
+    if ($add_brand_slug !== '') {
+        add_submenu_page(
+            $parent_slug,
+            'Thêm hãng',
+            'Thêm hãng',
+            my_theme_get_product_brand_manage_terms_capability(),
+            $add_brand_slug
+        );
+    }
+
+    foreach ($brand_items as $item) {
+        add_submenu_page(
+            $parent_slug,
+            'Sản phẩm hãng ' . $item['label'],
+            $item['label'],
+            'edit_products',
+            $item['menu_slug']
+        );
+    }
+
+    if (!isset($submenu[$parent_slug]) || !is_array($submenu[$parent_slug])) {
+        return;
+    }
+
+    $priority_slugs = [
+        'edit.php?post_type=product',
+        'post-new.php?post_type=product',
+    ];
+    if ($brand_term_slug !== '') {
+        $priority_slugs[] = $brand_term_slug;
+    }
+    if ($add_brand_slug !== '') {
+        $priority_slugs[] = $add_brand_slug;
+    }
+    foreach ($brand_items as $item) {
+        if (!empty($item['menu_slug'])) {
+            $priority_slugs[] = (string) $item['menu_slug'];
+        }
+    }
+
+    $priority_lookup = array_fill_keys($priority_slugs, true);
+    $priority_items = [];
+    $other_items = [];
+    foreach ($submenu[$parent_slug] as $item) {
+        $item_slug = isset($item[2]) ? (string) $item[2] : '';
+        if ($item_slug !== '' && isset($priority_lookup[$item_slug])) {
+            $priority_items[$item_slug] = $item;
+            continue;
+        }
+        $other_items[] = $item;
+    }
+
+    $ordered = [];
+    foreach ($priority_slugs as $item_slug) {
+        if (isset($priority_items[$item_slug])) {
+            $ordered[] = $priority_items[$item_slug];
+        }
+    }
+
+    $submenu[$parent_slug] = array_values(array_merge($ordered, $other_items));
+}, 999);
+
+add_filter('parent_file', function ($parent_file) {
+    $taxonomy = isset($_GET['taxonomy']) ? sanitize_key((string) $_GET['taxonomy']) : '';
+    $post_type = isset($_GET['post_type']) ? sanitize_key((string) $_GET['post_type']) : '';
+    if ($post_type === 'product' && $taxonomy !== '' && $taxonomy === my_theme_get_product_brand_taxonomy()) {
+        return 'edit.php?post_type=product';
+    }
+
+    return $parent_file;
+});
+
+add_filter('submenu_file', function ($submenu_file, $parent_file) {
+    if ($parent_file !== 'edit.php?post_type=product') {
+        return $submenu_file;
+    }
+
+    $brand_slug = isset($_GET['my_theme_brand_filter']) ? sanitize_title((string) $_GET['my_theme_brand_filter']) : '';
+    if ($brand_slug !== '') {
+        return my_theme_get_product_brand_admin_list_slug($brand_slug);
+    }
+
+    $focus = isset($_GET['my_theme_focus']) ? sanitize_key((string) $_GET['my_theme_focus']) : '';
+    $taxonomy = isset($_GET['taxonomy']) ? sanitize_key((string) $_GET['taxonomy']) : '';
+    if ($focus === 'add' && $taxonomy !== '' && $taxonomy === my_theme_get_product_brand_taxonomy()) {
+        $add_brand_slug = my_theme_get_product_brand_admin_term_slug('add');
+        if ($add_brand_slug !== '') {
+            return $add_brand_slug;
+        }
+    }
+
+    return $submenu_file;
+}, 10, 2);
+
+add_action('restrict_manage_posts', function () {
+    global $typenow;
+    if ($typenow !== 'product' || !my_theme_admin_can_manage_store()) {
+        return;
+    }
+
+    $add_brand_url = my_theme_get_product_brand_admin_term_url('add');
+    if ($add_brand_url === '') {
+        return;
+    }
+
+    echo '<a class="button" style="margin-left:8px;" href="' . esc_url($add_brand_url) . '">Thêm hãng</a>';
+}, 30);
+
+add_action('pre_get_posts', function ($query) {
+    if (!is_admin() || !($query instanceof WP_Query) || !$query->is_main_query()) {
+        return;
+    }
+
+    $post_type = $query->get('post_type');
+    if (is_array($post_type)) {
+        if (!in_array('product', $post_type, true)) {
+            return;
+        }
+    } elseif ($post_type !== 'product') {
+        $requested_post_type = isset($_GET['post_type']) ? sanitize_key((string) $_GET['post_type']) : '';
+        if ($requested_post_type !== 'product') {
+            return;
+        }
+    }
+
+    $screen_base = isset($_GET['post_type']) ? sanitize_key((string) $_GET['post_type']) : '';
+    if ($screen_base !== '' && $screen_base !== 'product') {
+        return;
+    }
+
+    $brand_slug = isset($_GET['my_theme_brand_filter']) ? sanitize_title((string) $_GET['my_theme_brand_filter']) : '';
+    if ($brand_slug === '') {
+        return;
+    }
+
+    $brand_taxonomy = my_theme_get_product_brand_taxonomy();
+    if ($brand_taxonomy !== '') {
+        $term = get_term_by('slug', $brand_slug, $brand_taxonomy);
+        if ($term instanceof WP_Term && !empty($term->term_id)) {
+            $tax_query = $query->get('tax_query');
+            if (!is_array($tax_query)) {
+                $tax_query = [];
+            }
+            $tax_query[] = [
+                'taxonomy' => $brand_taxonomy,
+                'field'    => 'term_id',
+                'terms'    => [(int) $term->term_id],
+            ];
+            $query->set('tax_query', $tax_query);
+            return;
+        }
+    }
+
+    $product_ids = get_posts([
+        'post_type'              => 'product',
+        'post_status'            => 'any',
+        'posts_per_page'         => -1,
+        'fields'                 => 'ids',
+        'no_found_rows'          => true,
+        'ignore_sticky_posts'    => true,
+        'update_post_meta_cache' => false,
+        'update_post_term_cache' => false,
+    ]);
+    if (empty($product_ids)) {
+        $query->set('post__in', [0]);
+        return;
+    }
+
+    $matched_ids = [];
+    foreach ($product_ids as $product_id) {
+        if (sanitize_title((string) my_theme_get_product_brand_slug((int) $product_id)) === $brand_slug) {
+            $matched_ids[] = (int) $product_id;
+        }
+    }
+
+    $existing_post_in = $query->get('post__in');
+    if (is_array($existing_post_in) && !empty($existing_post_in)) {
+        $matched_ids = array_values(array_intersect(array_map('intval', $existing_post_in), $matched_ids));
+    }
+
+    if (empty($matched_ids)) {
+        $matched_ids = [0];
+    }
+
+    $query->set('post__in', $matched_ids);
+    $query->set('orderby', 'post__in');
+}, 15);
+
+add_action('admin_footer-edit-tags.php', function () {
+    if (!is_admin()) {
+        return;
+    }
+
+    $focus = isset($_GET['my_theme_focus']) ? sanitize_key((string) $_GET['my_theme_focus']) : '';
+    $taxonomy = isset($_GET['taxonomy']) ? sanitize_key((string) $_GET['taxonomy']) : '';
+    $post_type = isset($_GET['post_type']) ? sanitize_key((string) $_GET['post_type']) : '';
+    if ($focus !== 'add' || $post_type !== 'product' || $taxonomy !== my_theme_get_product_brand_taxonomy()) {
+        return;
+    }
+
+    echo "<script>window.addEventListener('load',function(){var column=document.getElementById('col-left');if(column){column.scrollIntoView({block:'start'});}var input=document.getElementById('tag-name');if(input){input.focus();}});</script>";
 });
 
 add_action('admin_bar_menu', function ($wp_admin_bar) {
@@ -4830,12 +7326,13 @@ if (!function_exists('my_theme_get_customer_account_snapshot')) {
 if (!function_exists('my_theme_render_account_quick_links')) {
     function my_theme_render_account_quick_links($modifier = '')
     {
-        $business = my_theme_get_business_profile();
+        $store_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
         $shop_url = function_exists('my_theme_get_shop_url') ? my_theme_get_shop_url() : home_url('/shop');
         $orders_url = my_theme_get_account_endpoint_url_safe('orders', home_url('/my-account/orders'));
         $address_url = my_theme_get_account_endpoint_url_safe('edit-address', home_url('/my-account/edit-address'));
         $account_url = my_theme_get_account_endpoint_url_safe('edit-account', home_url('/my-account/edit-account'));
         $contact_url = home_url('/lien-he');
+        $phone_href = isset($store_snapshot['phone_href']) ? (string) $store_snapshot['phone_href'] : 'tel:0944857999';
         $modifier_class = $modifier !== '' ? ' account-quick-links--' . sanitize_html_class($modifier) : '';
 
         echo '<div class="account-quick-links' . esc_attr($modifier_class) . '">';
@@ -4844,7 +7341,7 @@ if (!function_exists('my_theme_render_account_quick_links')) {
         echo '<a class="account-quick-link" href="' . esc_url($address_url) . '"><strong>Cập nhật địa chỉ</strong><span>Lưu sẵn địa chỉ nhận hàng để chốt đơn nhanh hơn.</span></a>';
         echo '<a class="account-quick-link" href="' . esc_url($account_url) . '"><strong>Hoàn thiện hồ sơ</strong><span>Bổ sung email, đổi mật khẩu và cập nhật thông tin liên hệ.</span></a>';
         echo '<a class="account-quick-link" href="' . esc_url($contact_url) . '"><strong>Nhận hỗ trợ kỹ thuật</strong><span>Gửi mô tả bề mặt để được đề xuất hệ sơn phù hợp.</span></a>';
-        echo '<a class="account-quick-link" href="' . esc_url($business['phone_href']) . '"><strong>Gọi chốt báo giá</strong><span>Ưu tiên đơn công trình và hỗ trợ giao nhanh nội thành.</span></a>';
+        echo '<a class="account-quick-link" href="' . esc_url($phone_href) . '"><strong>Gọi chốt báo giá</strong><span>Ưu tiên đơn công trình và hỗ trợ giao nhanh nội thành.</span></a>';
         echo '</div>';
     }
 }
@@ -4854,7 +7351,7 @@ add_action('woocommerce_before_account_navigation', function () {
         return;
     }
 
-    $business = my_theme_get_business_profile();
+    $store_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
     $snapshot = my_theme_get_customer_account_snapshot();
     if (empty($snapshot)) {
         return;
@@ -4876,8 +7373,8 @@ add_action('woocommerce_before_account_navigation', function () {
     echo '<span><strong>Đơn hàng:</strong> ' . esc_html($order_label) . '</span>';
     echo '</div>';
     echo '<div class="account-sidebar-card__actions">';
-    echo '<a class="btn btn-primary btn-sm" href="' . esc_url($business['phone_href']) . '">Gọi hỗ trợ</a>';
-    echo '<a class="btn btn-outline btn-sm" href="' . esc_url($business['zalo_url']) . '" target="_blank" rel="noopener">Zalo kỹ thuật</a>';
+    echo '<a class="btn btn-primary btn-sm" href="' . esc_url(isset($store_snapshot['phone_href']) ? (string) $store_snapshot['phone_href'] : 'tel:0944857999') . '">Gọi hỗ trợ</a>';
+    echo '<a class="btn btn-outline btn-sm" href="' . esc_url(isset($store_snapshot['zalo_url']) ? (string) $store_snapshot['zalo_url'] : 'https://zalo.me/0944857999') . '" target="_blank" rel="noopener">Zalo kỹ thuật</a>';
     echo '</div>';
     echo '</div>';
 }, 5);
@@ -4892,28 +7389,34 @@ add_action('woocommerce_account_dashboard', function () {
         return;
     }
 
-    $address_ready = $snapshot['address'] !== '' ? 'Đã lưu địa chỉ' : 'Cần bổ sung địa chỉ';
-    $email_ready = !$snapshot['email_missing'] ? 'Đã có email nhận thông báo' : 'Nên bổ sung email liên hệ';
-    $phone_ready = $snapshot['phone'] !== '' ? $snapshot['phone'] : 'Thêm số điện thoại nhận hàng';
+    $shop_url = function_exists('my_theme_get_shop_url') ? my_theme_get_shop_url() : home_url('/shop');
+    $orders_url = my_theme_get_account_endpoint_url_safe('orders', home_url('/my-account/orders'));
+    $account_url = my_theme_get_account_endpoint_url_safe('edit-account', home_url('/my-account/edit-account'));
+    $order_total = max(0, (int) $snapshot['order_total']);
 
-    echo '<section class="account-dashboard-panel">';
+    echo '<section class="account-dashboard-panel account-dashboard-panel--compact">';
     echo '<div class="account-section-intro__header">';
     echo '<div>';
     echo '<div class="account-section-intro__eyebrow">Tổng quan tài khoản</div>';
-    echo '<h2 class="account-section-intro__title">Sẵn sàng chốt đơn nhanh cho lần đặt tiếp theo</h2>';
-    echo '<p class="account-section-intro__sub">Bạn có thể kiểm tra tình trạng hồ sơ, quay lại danh mục sản phẩm hoặc gửi yêu cầu báo giá ngay từ đây.</p>';
+    echo '<h2 class="account-section-intro__title">Tài khoản của bạn</h2>';
+    echo '<p class="account-section-intro__sub">Bạn đã có ' . esc_html(number_format_i18n($order_total)) . ' đơn hàng. Chọn nhanh đúng mục để xử lý tiếp.</p>';
     echo '</div>';
-    echo '<a class="btn btn-outline btn-sm" href="' . esc_url(function_exists('my_theme_get_shop_url') ? my_theme_get_shop_url() : home_url('/shop')) . '">Xem cửa hàng</a>';
+    echo '<div class="account-dashboard-actions">';
+    echo '<a class="btn btn-outline btn-sm" href="' . esc_url($orders_url) . '">Đơn hàng</a>';
+    echo '<a class="btn btn-outline btn-sm" href="' . esc_url($account_url) . '">Thông tin</a>';
+    echo '<a class="btn btn-primary btn-sm" href="' . esc_url($shop_url) . '">Mua thêm</a>';
     echo '</div>';
-    echo '<div class="account-summary-grid">';
-    echo '<article class="account-summary-card"><div class="account-summary-card__label">Đơn hàng</div><div class="account-summary-card__value">' . esc_html(number_format_i18n($snapshot['order_total'])) . '</div><div class="account-summary-card__hint">Lịch sử đơn đang gắn với tài khoản này.</div></article>';
-    echo '<article class="account-summary-card"><div class="account-summary-card__label">Số nhận hàng</div><div class="account-summary-card__value">' . esc_html($phone_ready) . '</div><div class="account-summary-card__hint">Dùng để xác nhận đơn và giao nhanh.</div></article>';
-    echo '<article class="account-summary-card"><div class="account-summary-card__label">Địa chỉ mặc định</div><div class="account-summary-card__value">' . esc_html($address_ready) . '</div><div class="account-summary-card__hint">' . esc_html($snapshot['address'] !== '' ? $snapshot['address'] : 'Lưu địa chỉ để checkout không phải nhập lại.') . '</div></article>';
-    echo '<article class="account-summary-card"><div class="account-summary-card__label">Thông báo đơn hàng</div><div class="account-summary-card__value">' . esc_html($email_ready) . '</div><div class="account-summary-card__hint">Email giúp nhận cập nhật đơn và khôi phục mật khẩu dễ hơn.</div></article>';
     echo '</div>';
-    my_theme_render_account_quick_links('dashboard');
     echo '</section>';
 }, 5);
+
+add_action('woocommerce_account_dashboard', function () {
+    if (!is_user_logged_in()) {
+        return;
+    }
+    // Giữ dashboard tài khoản gọn và tập trung vào điều hướng chính.
+    return;
+}, 25);
 
 add_action('woocommerce_before_account_orders', function ($has_orders = false) {
     if (!is_user_logged_in()) {
@@ -4929,7 +7432,6 @@ add_action('woocommerce_before_account_orders', function ($has_orders = false) {
     echo '</div>';
     echo '<a class="btn btn-outline btn-sm" href="' . esc_url(function_exists('my_theme_get_shop_url') ? my_theme_get_shop_url() : home_url('/shop')) . '">Duyệt sản phẩm</a>';
     echo '</div>';
-    my_theme_render_account_quick_links('orders');
     echo '</section>';
 }, 5, 1);
 
@@ -4952,7 +7454,6 @@ if (!function_exists('my_theme_render_account_downloads_intro')) {
         echo '</div>';
         echo '<a class="btn btn-outline btn-sm" href="' . esc_url(home_url('/lien-he')) . '">Yêu cầu tài liệu</a>';
         echo '</div>';
-        my_theme_render_account_quick_links('downloads');
         echo '</section>';
     }
 }
@@ -4973,7 +7474,6 @@ add_action('woocommerce_before_edit_account_address_form', function () {
     echo '</div>';
     echo '<a class="btn btn-outline btn-sm" href="' . esc_url(my_theme_get_account_endpoint_url_safe('orders', home_url('/my-account/orders'))) . '">Xem đơn hàng</a>';
     echo '</div>';
-    echo '<ul class="account-form-note"><li>Dùng địa chỉ công trình nếu cần giao trực tiếp vật tư.</li><li>Thêm số điện thoại dễ bắt máy để tài xế liên hệ nhanh.</li><li>Nếu có nhiều điểm giao, hãy ghi rõ khu vực hoặc tên người nhận.</li></ul>';
     echo '</section>';
 }, 5);
 
@@ -4991,7 +7491,6 @@ add_action('woocommerce_before_edit_account_form', function () {
     echo '</div>';
     echo '<a class="btn btn-outline btn-sm" href="' . esc_url(home_url('/lien-he')) . '">Nhờ hỗ trợ</a>';
     echo '</div>';
-    echo '<ul class="account-form-note"><li>Email hoạt động giúp nhận xác nhận đơn và khôi phục mật khẩu nhanh hơn.</li><li>Chỉ đổi mật khẩu khi bạn muốn cập nhật bảo mật cho tài khoản.</li></ul>';
     echo '</section>';
 }, 5);
 
@@ -5002,7 +7501,7 @@ if (!function_exists('my_theme_render_account_recovery_intro')) {
             return;
         }
 
-        $business = my_theme_get_business_profile();
+        $store_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
         $account_login_url = function_exists('my_theme_get_account_login_url') ? my_theme_get_account_login_url() : wp_login_url();
 
         echo '<section class="account-recovery-shell">';
@@ -5020,8 +7519,8 @@ if (!function_exists('my_theme_render_account_recovery_intro')) {
         echo '<article class="account-recovery-card"><strong>Muốn tạo tài khoản mới?</strong><span>Trang đăng ký vẫn mở để bạn khởi tạo hồ sơ nhận hàng mới.</span></article>';
         echo '</div>';
         echo '<div class="account-recovery-shell__actions">';
-        echo '<a class="btn btn-primary btn-sm" href="' . esc_url($business['phone_href']) . '">Gọi ngay</a>';
-        echo '<a class="btn btn-outline btn-sm" href="' . esc_url($business['zalo_url']) . '" target="_blank" rel="noopener">Zalo kỹ thuật</a>';
+        echo '<a class="btn btn-primary btn-sm" href="' . esc_url(isset($store_snapshot['phone_href']) ? (string) $store_snapshot['phone_href'] : 'tel:0944857999') . '">Gọi ngay</a>';
+        echo '<a class="btn btn-outline btn-sm" href="' . esc_url(isset($store_snapshot['zalo_url']) ? (string) $store_snapshot['zalo_url'] : 'https://zalo.me/0944857999') . '" target="_blank" rel="noopener">Zalo kỹ thuật</a>';
         echo '<a class="btn btn-accent btn-sm" href="' . esc_url(home_url('/lien-he')) . '">Gửi yêu cầu</a>';
         echo '</div>';
         echo '</section>';
@@ -5047,7 +7546,12 @@ if (!function_exists('my_theme_render_checkout_thankyou_panel')) {
         $payment_method = $order ? trim(wp_strip_all_tags((string) $order->get_payment_method_title())) : '';
         $shop_url = function_exists('my_theme_get_shop_url') ? my_theme_get_shop_url() : home_url('/shop');
         $account_url = function_exists('my_theme_get_account_url') ? my_theme_get_account_url() : home_url('/my-account');
-        $business = my_theme_get_business_profile();
+        $store_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
+        $hours_display = isset($store_snapshot['hours_display']) ? (string) $store_snapshot['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00';
+        $service_areas = isset($store_snapshot['service_areas_display']) ? (string) $store_snapshot['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai';
+        $phone_href = isset($store_snapshot['phone_href']) ? (string) $store_snapshot['phone_href'] : 'tel:0944857999';
+        $phone_display = isset($store_snapshot['phone_display']) ? (string) $store_snapshot['phone_display'] : '0944 857 999';
+        $zalo_url = isset($store_snapshot['zalo_url']) ? (string) $store_snapshot['zalo_url'] : 'https://zalo.me/0944857999';
 
         echo '<section class="page-section order-complete-panel" aria-label="Hướng dẫn sau khi đặt hàng">';
         echo '<div class="section-heading">';
@@ -5066,6 +7570,11 @@ if (!function_exists('my_theme_render_checkout_thankyou_panel')) {
         echo '</div>';
         echo '<a class="btn btn-outline btn-sm" href="' . esc_url($account_url) . '">Mở tài khoản</a>';
         echo '</div>';
+        echo '<div class="shop-summary__insight" aria-label="Thông tin hỗ trợ sau khi đặt hàng">';
+        echo '<span class="chip chip--soft">' . esc_html($hours_display) . '</span>';
+        echo '<span class="chip chip--soft">' . esc_html($service_areas) . '</span>';
+        echo '<span class="chip chip--soft">Giữ máy để đội vận hành xác nhận đơn</span>';
+        echo '</div>';
         echo '<div class="order-complete-grid">';
         echo '<article class="info-card"><h3>1. Theo dõi đơn hàng</h3><p>Kiểm tra trạng thái xử lý trong tài khoản để biết khi nào đơn được chốt và chuyển giao.</p></article>';
         echo '<article class="info-card"><h3>2. Chuẩn bị nhận hàng</h3><p>Giữ điện thoại sẵn sàng, xác nhận lại địa chỉ và người nhận để xe giao hàng liên hệ nhanh hơn.</p></article>';
@@ -5074,8 +7583,8 @@ if (!function_exists('my_theme_render_checkout_thankyou_panel')) {
         echo '<div class="cta-inline order-complete-panel__cta">';
         echo '<div class="cta-inline__content"><strong>Cần chốt lại đơn ngay?</strong><p>Đội kỹ thuật hỗ trợ đổi quy cách, bổ sung vật tư và xác nhận tiến độ giao trong giờ hành chính.</p></div>';
         echo '<div class="cta-inline__actions">';
-        echo '<a class="btn btn-primary btn-sm" href="' . esc_url($business['phone_href']) . '">Gọi ' . esc_html($business['phone_display']) . '</a>';
-        echo '<a class="btn btn-outline btn-sm" href="' . esc_url($business['zalo_url']) . '" target="_blank" rel="noopener">Nhắn Zalo</a>';
+        echo '<a class="btn btn-primary btn-sm" href="' . esc_url($phone_href) . '">Gọi ' . esc_html($phone_display) . '</a>';
+        echo '<a class="btn btn-outline btn-sm" href="' . esc_url($zalo_url) . '" target="_blank" rel="noopener">Nhắn Zalo</a>';
         echo '<a class="btn btn-accent btn-sm" href="' . esc_url($shop_url) . '">Mua thêm vật tư</a>';
         echo '</div>';
         echo '</div>';
@@ -5083,6 +7592,32 @@ if (!function_exists('my_theme_render_checkout_thankyou_panel')) {
     }
 }
 add_action('woocommerce_thankyou', 'my_theme_render_checkout_thankyou_panel', 20);
+add_action('woocommerce_thankyou', function ($order_id = 0) {
+    if (!function_exists('my_theme_render_recently_viewed_products')) {
+        return;
+    }
+
+    $exclude_ids = [];
+    $order = ($order_id && function_exists('wc_get_order')) ? wc_get_order($order_id) : null;
+    if ($order instanceof WC_Order) {
+        foreach ($order->get_items() as $item) {
+            if (!$item instanceof WC_Order_Item_Product) {
+                continue;
+            }
+            $product_id = (int) $item->get_product_id();
+            if ($product_id > 0) {
+                $exclude_ids[] = $product_id;
+            }
+        }
+    }
+
+    my_theme_render_recently_viewed_products([
+        'title' => 'Các mã bạn vừa xem trước khi chốt đơn',
+        'aria_label' => 'Các mã bạn vừa xem trước khi chốt đơn',
+        'class' => 'related-products-block--recently-viewed related-products-block--thankyou',
+        'exclude_ids' => array_values(array_unique($exclude_ids)),
+    ]);
+}, 25);
 
 // Thêm trường nhập nhanh dung tích / khối lượng để hiển thị ngoài frontend (cho sản phẩm đơn giản).
 add_action('woocommerce_product_options_general_product_data', function () {
@@ -5242,13 +7777,92 @@ add_action('admin_footer', function () {
     <?php
 });
 
+if (!function_exists('my_theme_get_product_term_objects')) {
+    function my_theme_get_product_term_objects($product_id, $taxonomy = '')
+    {
+        static $cache = [];
+
+        $product_id = (int) $product_id;
+        $taxonomy = sanitize_key((string) $taxonomy);
+        $cache_key = $product_id . ':' . $taxonomy;
+        if (array_key_exists($cache_key, $cache)) {
+            return $cache[$cache_key];
+        }
+
+        if ($product_id <= 0 || $taxonomy === '' || !taxonomy_exists($taxonomy)) {
+            $cache[$cache_key] = [];
+            return [];
+        }
+
+        $terms = get_the_terms($product_id, $taxonomy);
+        if (is_wp_error($terms) || empty($terms) || !is_array($terms)) {
+            $cache[$cache_key] = [];
+            return [];
+        }
+
+        $valid_terms = [];
+        foreach ($terms as $term) {
+            if ($term instanceof WP_Term) {
+                $valid_terms[] = $term;
+            }
+        }
+
+        $cache[$cache_key] = $valid_terms;
+        return $valid_terms;
+    }
+}
+
+if (!function_exists('my_theme_get_product_term_values')) {
+    function my_theme_get_product_term_values($product_id, $taxonomy = '', $field = 'slug')
+    {
+        static $cache = [];
+
+        $product_id = (int) $product_id;
+        $taxonomy = sanitize_key((string) $taxonomy);
+        $field = ($field === 'name') ? 'name' : 'slug';
+        $cache_key = $product_id . ':' . $taxonomy . ':' . $field;
+        if (array_key_exists($cache_key, $cache)) {
+            return $cache[$cache_key];
+        }
+
+        $terms = my_theme_get_product_term_objects($product_id, $taxonomy);
+        if (empty($terms)) {
+            $cache[$cache_key] = [];
+            return [];
+        }
+
+        $values = [];
+        foreach ($terms as $term) {
+            if (!$term instanceof WP_Term) {
+                continue;
+            }
+
+            if ($field === 'name') {
+                $value = trim(wp_strip_all_tags((string) $term->name));
+            } else {
+                $value = sanitize_title((string) $term->slug);
+            }
+
+            if ($value === '') {
+                continue;
+            }
+
+            $values[$value] = $value;
+        }
+
+        $cache[$cache_key] = array_values($values);
+        return $cache[$cache_key];
+    }
+}
+
 // Lấy giá trị attribute/meta cho dung tích và khối lượng (ưu tiên attribute).
 function my_theme_extract_attr_values($product, $slugs) {
     $values = [];
+    $product_id = ($product instanceof WC_Product) ? (int) $product->get_id() : 0;
     foreach ($slugs as $slug) {
         // Lấy terms taxonomy nếu có
-        if (taxonomy_exists($slug)) {
-            $terms = wc_get_product_terms($product->get_id(), $slug, ['fields' => 'names']);
+        if ($product_id > 0 && taxonomy_exists($slug)) {
+            $terms = my_theme_get_product_term_values($product_id, $slug, 'name');
             if (!empty($terms)) {
                 $values = array_merge($values, $terms);
             }
@@ -5627,7 +8241,7 @@ if (!function_exists('my_theme_extract_pack_price_map_from_text')) {
     }
 }
 
-if (!function_exists('my_theme_fetch_pack_price_map_from_source_url')) {
+if (!function_exists('my_theme_extract_pack_price_map_from_source_html')) {
     function my_theme_extract_pack_price_map_from_source_html($raw_html, $is_putty = false)
     {
         $html = (string) $raw_html;
@@ -6010,7 +8624,7 @@ function my_theme_get_product_pack_groups($product) {
     return $cache[$cache_key];
 }
 
-function my_theme_get_pack_price_map_for_display($product) {
+function my_theme_get_pack_price_map_for_display($product, $apply_global_sale = true) {
     if (!$product instanceof WC_Product) {
         return [];
     }
@@ -6035,7 +8649,169 @@ function my_theme_get_pack_price_map_for_display($product) {
         return my_theme_compare_pack_labels($a, $b);
     });
 
+    if ($apply_global_sale && my_theme_global_sale_is_enabled()) {
+        foreach ($map as $label => $price_value) {
+            $discounted_price = my_theme_get_global_sale_price_from_regular((float) $price_value);
+            if ($discounted_price > 0 && $discounted_price < (float) $price_value) {
+                $map[$label] = (float) $discounted_price;
+            }
+        }
+    }
+
     return $map;
+}
+
+if (!function_exists('my_theme_get_pack_price_maps')) {
+    function my_theme_get_pack_price_maps($product)
+    {
+        if (!$product instanceof WC_Product) {
+            return [
+                'raw' => [],
+                'display' => [],
+            ];
+        }
+
+        static $cache = [];
+
+        $product_id = (int) $product->get_id();
+        $sale_signature = my_theme_global_sale_is_enabled()
+            ? ('1:' . number_format(my_theme_get_global_sale_percent(), 4, '.', ''))
+            : '0:0';
+        $cache_key = ($product_id > 0 ? ('id:' . $product_id) : ('obj:' . spl_object_hash($product))) . ':' . $sale_signature;
+        if (isset($cache[$cache_key]) && is_array($cache[$cache_key])) {
+            return $cache[$cache_key];
+        }
+
+        $raw_map = my_theme_get_pack_price_map_for_display($product, false);
+        $display_map = $raw_map;
+        if (!empty($display_map) && my_theme_global_sale_is_enabled()) {
+            foreach ($display_map as $label => $price_value) {
+                $discounted_price = my_theme_get_global_sale_price_from_regular((float) $price_value);
+                if ($discounted_price > 0 && $discounted_price < (float) $price_value) {
+                    $display_map[$label] = (float) $discounted_price;
+                }
+            }
+        }
+
+        $cache[$cache_key] = [
+            'raw' => $raw_map,
+            'display' => $display_map,
+        ];
+
+        return $cache[$cache_key];
+    }
+}
+
+if (!function_exists('my_theme_get_pack_price_display_map')) {
+    function my_theme_get_pack_price_display_map($product)
+    {
+        if (!$product instanceof WC_Product) {
+            return [];
+        }
+
+        $price_maps = function_exists('my_theme_get_pack_price_maps')
+            ? my_theme_get_pack_price_maps($product)
+            : ['display' => my_theme_get_pack_price_map_for_display($product, true)];
+
+        return (isset($price_maps['display']) && is_array($price_maps['display']))
+            ? $price_maps['display']
+            : [];
+    }
+}
+
+if (!function_exists('my_theme_get_pack_price_raw_map')) {
+    function my_theme_get_pack_price_raw_map($product)
+    {
+        if (!$product instanceof WC_Product) {
+            return [];
+        }
+
+        $price_maps = function_exists('my_theme_get_pack_price_maps')
+            ? my_theme_get_pack_price_maps($product)
+            : ['raw' => my_theme_get_pack_price_map_for_display($product, false)];
+
+        return (isset($price_maps['raw']) && is_array($price_maps['raw']))
+            ? $price_maps['raw']
+            : [];
+    }
+}
+
+if (!function_exists('my_theme_product_has_active_sale')) {
+    function my_theme_product_has_active_sale($product)
+    {
+        if (!$product instanceof WC_Product) {
+            return false;
+        }
+
+        $default_pack_context = function_exists('my_theme_get_default_selected_capacity_price_context')
+            ? my_theme_get_default_selected_capacity_price_context($product)
+            : ['capacity' => '', 'price' => 0.0, 'regular_price' => 0.0];
+        if (
+            !empty($default_pack_context['capacity'])
+            && (float) ($default_pack_context['regular_price'] ?? 0) > (float) ($default_pack_context['price'] ?? 0)
+            && (float) ($default_pack_context['price'] ?? 0) > 0
+        ) {
+            return true;
+        }
+
+        $regular_price = my_theme_get_product_raw_regular_price($product);
+        $sale_price = my_theme_get_product_effective_sale_price($product);
+
+        return $regular_price > 0 && $sale_price > 0 && $sale_price < $regular_price;
+    }
+}
+
+if (!function_exists('my_theme_get_effective_sale_product_ids')) {
+    function my_theme_get_effective_sale_product_ids(array $candidate_ids = [])
+    {
+        static $request_cache = [];
+
+        if (empty($candidate_ids)) {
+            $candidate_ids = function_exists('my_theme_get_catalog_visible_product_ids')
+                ? my_theme_get_catalog_visible_product_ids(false)
+                : [];
+        }
+
+        $candidate_ids = array_values(array_filter(array_map('intval', $candidate_ids), function ($id) {
+            return $id > 0;
+        }));
+        if (empty($candidate_ids)) {
+            return [];
+        }
+
+        $cache_version = (string) get_option('my_theme_filter_cache_version', '1');
+        $digest = md5(implode(',', $candidate_ids));
+        $request_key = $cache_version . ':' . $digest;
+        if (array_key_exists($request_key, $request_cache)) {
+            return $request_cache[$request_key];
+        }
+        $transient_key = 'my_theme_effective_sale_ids_' . $cache_version . '_' . $digest;
+        $cached = get_transient($transient_key);
+        if (is_array($cached)) {
+            $request_cache[$request_key] = array_values(array_unique(array_map('intval', $cached)));
+            return $request_cache[$request_key];
+        }
+
+        $product_map = function_exists('my_theme_get_product_object_map')
+            ? my_theme_get_product_object_map($candidate_ids)
+            : [];
+        $sale_ids = [];
+
+        foreach ($candidate_ids as $product_id) {
+            if (!isset($product_map[$product_id]) || !$product_map[$product_id] instanceof WC_Product) {
+                continue;
+            }
+
+            if (my_theme_product_has_active_sale($product_map[$product_id])) {
+                $sale_ids[] = $product_id;
+            }
+        }
+
+        $sale_ids = array_values(array_unique(array_map('intval', $sale_ids)));
+        $request_cache[$request_key] = $sale_ids;
+        set_transient($transient_key, $sale_ids, 30 * MINUTE_IN_SECONDS);
+        return $sale_ids;
+    }
 }
 
 // Lấy danh sách dung tích/khối lượng (mảng) đã chuẩn hóa đơn vị & thứ tự.
@@ -6073,6 +8849,23 @@ if (!function_exists('my_theme_get_brand_keyword_map')) {
     }
 }
 
+if (!function_exists('my_theme_get_brand_label_from_slug')) {
+    function my_theme_get_brand_label_from_slug($brand_slug = '')
+    {
+        $brand_slug = sanitize_title((string) $brand_slug);
+        if ($brand_slug === '') {
+            return '';
+        }
+
+        $map = my_theme_get_brand_keyword_map();
+        if (isset($map[$brand_slug]['label']) && trim((string) $map[$brand_slug]['label']) !== '') {
+            return (string) $map[$brand_slug]['label'];
+        }
+
+        return ucfirst($brand_slug);
+    }
+}
+
 if (!function_exists('my_theme_normalize_product_id_list')) {
     function my_theme_normalize_product_id_list($product_ids)
     {
@@ -6090,6 +8883,63 @@ if (!function_exists('my_theme_normalize_product_id_list')) {
     }
 }
 
+if (!function_exists('my_theme_preserve_product_id_order')) {
+    function my_theme_preserve_product_id_order($product_ids)
+    {
+        if (!is_array($product_ids) || empty($product_ids)) {
+            return [];
+        }
+
+        $normalized = [];
+        $seen = [];
+        foreach ($product_ids as $product_id) {
+            $product_id = (int) $product_id;
+            if ($product_id <= 0 || isset($seen[$product_id])) {
+                continue;
+            }
+
+            $seen[$product_id] = true;
+            $normalized[] = $product_id;
+        }
+
+        return $normalized;
+    }
+}
+
+if (!function_exists('my_theme_filter_product_ids_by_source_order')) {
+    function my_theme_filter_product_ids_by_source_order($source_product_ids, $allowed_product_ids)
+    {
+        $source_product_ids = function_exists('my_theme_preserve_product_id_order')
+            ? my_theme_preserve_product_id_order($source_product_ids)
+            : my_theme_normalize_product_id_list($source_product_ids);
+        if (empty($source_product_ids)) {
+            return [];
+        }
+
+        $allowed_product_ids = function_exists('my_theme_preserve_product_id_order')
+            ? my_theme_preserve_product_id_order($allowed_product_ids)
+            : my_theme_normalize_product_id_list($allowed_product_ids);
+        if (empty($allowed_product_ids)) {
+            return [];
+        }
+
+        $allowed_lookup = [];
+        foreach ($allowed_product_ids as $product_id) {
+            $allowed_lookup[(int) $product_id] = true;
+        }
+
+        $filtered = [];
+        foreach ($source_product_ids as $product_id) {
+            $product_id = (int) $product_id;
+            if ($product_id > 0 && isset($allowed_lookup[$product_id])) {
+                $filtered[] = $product_id;
+            }
+        }
+
+        return $filtered;
+    }
+}
+
 if (!function_exists('my_theme_get_product_object_map')) {
     function my_theme_get_product_object_map($product_ids)
     {
@@ -6104,6 +8954,13 @@ if (!function_exists('my_theme_get_product_object_map')) {
         $request_key = md5(implode(',', $product_ids));
         if (isset($request_cache[$request_key]) && is_array($request_cache[$request_key])) {
             return $request_cache[$request_key];
+        }
+
+        if (function_exists('update_postmeta_cache')) {
+            update_postmeta_cache($product_ids);
+        }
+        if (function_exists('update_object_term_cache')) {
+            update_object_term_cache($product_ids, 'product');
         }
 
         $map = [];
@@ -6180,6 +9037,135 @@ if (!function_exists('my_theme_count_visible_product_categories')) {
     }
 }
 
+if (!function_exists('my_theme_get_visible_product_category_groups')) {
+    function my_theme_get_visible_product_category_groups($product_ids)
+    {
+        static $request_cache = [];
+
+        $product_ids = my_theme_normalize_product_id_list($product_ids);
+        if (empty($product_ids) || !taxonomy_exists('product_cat')) {
+            return [
+                'lookup' => [],
+                'by_parent' => [],
+            ];
+        }
+
+        $cache_version = (string) get_option('my_theme_filter_cache_version', '1');
+        $digest = md5(implode(',', $product_ids));
+        $request_key = $cache_version . ':' . $digest;
+        if (isset($request_cache[$request_key]) && is_array($request_cache[$request_key])) {
+            return $request_cache[$request_key];
+        }
+
+        $transient_key = 'my_theme_visible_cat_groups_' . $cache_version . '_' . $digest;
+        $cached = get_transient($transient_key);
+        if (
+            is_array($cached)
+            && isset($cached['lookup']) && is_array($cached['lookup'])
+            && isset($cached['by_parent']) && is_array($cached['by_parent'])
+        ) {
+            $request_cache[$request_key] = $cached;
+            return $cached;
+        }
+
+        $terms = get_terms([
+            'taxonomy' => 'product_cat',
+            'hide_empty' => true,
+            'object_ids' => $product_ids,
+        ]);
+
+        if (is_wp_error($terms) || empty($terms)) {
+            $empty_groups = [
+                'lookup' => [],
+                'by_parent' => [],
+            ];
+            $request_cache[$request_key] = $empty_groups;
+            set_transient($transient_key, $empty_groups, 30 * MINUTE_IN_SECONDS);
+            return $empty_groups;
+        }
+
+        $term_objects = [];
+        $lookup = [];
+        foreach ($terms as $term) {
+            if (!$term instanceof WP_Term || empty($term->slug) || (string) $term->slug === 'uncategorized') {
+                continue;
+            }
+
+            $term_id = (int) $term->term_id;
+            if ($term_id <= 0) {
+                continue;
+            }
+
+            $term_objects[$term_id] = $term;
+            $lookup[$term_id] = [
+                'term_id' => $term_id,
+                'parent' => max(0, (int) $term->parent),
+                'slug' => (string) $term->slug,
+                'name' => (string) $term->name,
+                'count' => max(0, (int) $term->count),
+            ];
+        }
+
+        if (empty($lookup)) {
+            $empty_groups = [
+                'lookup' => [],
+                'by_parent' => [],
+            ];
+            $request_cache[$request_key] = $empty_groups;
+            set_transient($transient_key, $empty_groups, 30 * MINUTE_IN_SECONDS);
+            return $empty_groups;
+        }
+
+        $group_objects = [];
+        foreach ($lookup as $term_id => $term_data) {
+            $parent_id = (int) $term_data['parent'];
+            if ($parent_id > 0 && !isset($lookup[$parent_id])) {
+                $parent_id = 0;
+                $lookup[$term_id]['parent'] = 0;
+            }
+            if (!isset($group_objects[$parent_id])) {
+                $group_objects[$parent_id] = [];
+            }
+            if (isset($term_objects[$term_id])) {
+                $group_objects[$parent_id][] = $term_objects[$term_id];
+            }
+        }
+
+        $by_parent = [];
+        foreach ($group_objects as $parent_id => $group_terms) {
+            if (function_exists('my_theme_sort_product_category_terms')) {
+                $group_terms = my_theme_sort_product_category_terms($group_terms);
+            } else {
+                usort($group_terms, function ($a, $b) {
+                    $a_name = ($a instanceof WP_Term) ? (string) $a->name : '';
+                    $b_name = ($b instanceof WP_Term) ? (string) $b->name : '';
+                    return strnatcasecmp($a_name, $b_name);
+                });
+            }
+
+            $by_parent[(int) $parent_id] = [];
+            foreach ($group_terms as $term) {
+                if (!$term instanceof WP_Term) {
+                    continue;
+                }
+                $term_id = (int) $term->term_id;
+                if ($term_id > 0 && isset($lookup[$term_id])) {
+                    $by_parent[(int) $parent_id][] = $lookup[$term_id];
+                }
+            }
+        }
+
+        $groups = [
+            'lookup' => $lookup,
+            'by_parent' => $by_parent,
+        ];
+
+        $request_cache[$request_key] = $groups;
+        set_transient($transient_key, $groups, 30 * MINUTE_IN_SECONDS);
+        return $groups;
+    }
+}
+
 if (!function_exists('my_theme_detect_brand_slug_from_text')) {
     function my_theme_detect_brand_slug_from_text($text = '')
     {
@@ -6205,7 +9191,9 @@ if (!function_exists('my_theme_detect_brand_slug_from_text')) {
 if (!function_exists('my_theme_get_product_brand_slug')) {
     function my_theme_get_product_brand_slug($prod = null)
     {
-        $product = ($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID());
+        $product = function_exists('my_theme_resolve_product')
+            ? my_theme_resolve_product($prod)
+            : (($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID()));
         if (!$product instanceof WC_Product) {
             return '';
         }
@@ -6218,11 +9206,8 @@ if (!function_exists('my_theme_get_product_brand_slug')) {
 
         $tax_candidates = ['pa_brand', 'product_brand', 'brand'];
         foreach ($tax_candidates as $taxonomy) {
-            if (!taxonomy_exists($taxonomy)) {
-                continue;
-            }
-            $slugs = wc_get_product_terms($product->get_id(), $taxonomy, ['fields' => 'slugs']);
-            if (!empty($slugs) && !is_wp_error($slugs)) {
+            $slugs = my_theme_get_product_term_values($product_id, $taxonomy, 'slug');
+            if (!empty($slugs)) {
                 $slug = sanitize_title((string) $slugs[0]);
                 if ($slug !== '') {
                     if ($product_id > 0) {
@@ -6241,8 +9226,8 @@ if (!function_exists('my_theme_get_product_brand_slug')) {
             return $brand_slug;
         }
 
-        $cat_names = wc_get_product_terms($product->get_id(), 'product_cat', ['fields' => 'names']);
-        if (!empty($cat_names) && !is_wp_error($cat_names)) {
+        $cat_names = my_theme_get_product_term_values($product_id, 'product_cat', 'name');
+        if (!empty($cat_names)) {
             foreach ($cat_names as $cat_name) {
                 $brand_slug = my_theme_detect_brand_slug_from_text((string) $cat_name);
                 if ($brand_slug !== '') {
@@ -6264,7 +9249,9 @@ if (!function_exists('my_theme_get_product_brand_slug')) {
 if (!function_exists('my_theme_get_product_brand_label')) {
     function my_theme_get_product_brand_label($prod = null)
     {
-        $product = ($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID());
+        $product = function_exists('my_theme_resolve_product')
+            ? my_theme_resolve_product($prod)
+            : (($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID()));
         if (!$product instanceof WC_Product) {
             return '';
         }
@@ -6358,8 +9345,11 @@ if (!function_exists('my_theme_get_brand_filter_options')) {
 
         $counts = [];
         $map = my_theme_get_brand_keyword_map();
+        $product_map = function_exists('my_theme_get_product_object_map')
+            ? my_theme_get_product_object_map($product_ids)
+            : [];
         foreach ($product_ids as $product_id) {
-            $product = wc_get_product((int) $product_id);
+            $product = isset($product_map[(int) $product_id]) ? $product_map[(int) $product_id] : wc_get_product((int) $product_id);
             if (!$product instanceof WC_Product) {
                 continue;
             }
@@ -6401,13 +9391,27 @@ if (!function_exists('my_theme_filter_product_ids_by_brand_slug')) {
         static $request_cache = [];
 
         $brand_slug = sanitize_title((string) $brand_slug);
-        $product_ids = my_theme_normalize_product_id_list($product_ids);
+        $source_product_ids = function_exists('my_theme_preserve_product_id_order')
+            ? my_theme_preserve_product_id_order($product_ids)
+            : my_theme_normalize_product_id_list($product_ids);
+        $product_ids = my_theme_normalize_product_id_list($source_product_ids);
         if ($brand_slug === '' || empty($product_ids)) {
-            return $product_ids;
+            return $source_product_ids;
         }
 
-        $request_key = md5(implode(',', $product_ids)) . ':' . $brand_slug;
+        $digest = md5(implode(',', $product_ids));
+        $cache_version = (string) get_option('my_theme_filter_cache_version', '1');
+        $source_digest = md5(implode(',', $source_product_ids));
+        $request_key = $cache_version . ':' . $source_digest . ':' . $brand_slug;
         if (array_key_exists($request_key, $request_cache)) {
+            return $request_cache[$request_key];
+        }
+        $transient_key = 'my_theme_brand_filtered_ids_' . $cache_version . '_' . md5($digest . '|' . $brand_slug);
+        $cached = get_transient($transient_key);
+        if (is_array($cached)) {
+            $request_cache[$request_key] = function_exists('my_theme_filter_product_ids_by_source_order')
+                ? my_theme_filter_product_ids_by_source_order($source_product_ids, $cached)
+                : my_theme_normalize_product_id_list($cached);
             return $request_cache[$request_key];
         }
 
@@ -6429,6 +9433,9 @@ if (!function_exists('my_theme_filter_product_ids_by_brand_slug')) {
                 'fields'         => 'ids',
                 'post__in'       => $product_ids,
                 'no_found_rows'  => true,
+                'ignore_sticky_posts' => true,
+                'update_post_meta_cache' => false,
+                'update_post_term_cache' => false,
                 'tax_query'      => [
                     [
                         'taxonomy' => $taxonomy,
@@ -6437,16 +9444,22 @@ if (!function_exists('my_theme_filter_product_ids_by_brand_slug')) {
                     ],
                 ],
             ]);
-            $matched_ids = my_theme_normalize_product_id_list($matched_ids);
+            $matched_ids = function_exists('my_theme_filter_product_ids_by_source_order')
+                ? my_theme_filter_product_ids_by_source_order($source_product_ids, $matched_ids)
+                : my_theme_normalize_product_id_list($matched_ids);
             if (!empty($matched_ids)) {
                 $request_cache[$request_key] = $matched_ids;
+                set_transient($transient_key, my_theme_normalize_product_id_list($matched_ids), 30 * MINUTE_IN_SECONDS);
                 return $matched_ids;
             }
         }
 
         $filtered = [];
+        $product_map = function_exists('my_theme_get_product_object_map')
+            ? my_theme_get_product_object_map($product_ids)
+            : [];
         foreach ($product_ids as $product_id) {
-            $product = wc_get_product((int) $product_id);
+            $product = isset($product_map[(int) $product_id]) ? $product_map[(int) $product_id] : wc_get_product((int) $product_id);
             if (!$product instanceof WC_Product) {
                 continue;
             }
@@ -6457,6 +9470,7 @@ if (!function_exists('my_theme_filter_product_ids_by_brand_slug')) {
         }
 
         $request_cache[$request_key] = $filtered;
+        set_transient($transient_key, my_theme_normalize_product_id_list($filtered), 30 * MINUTE_IN_SECONDS);
         return $filtered;
     }
 }
@@ -6580,7 +9594,9 @@ if (!function_exists('my_theme_detect_line_slug_from_text')) {
 if (!function_exists('my_theme_get_product_line_slug')) {
     function my_theme_get_product_line_slug($prod = null)
     {
-        $product = ($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID());
+        $product = function_exists('my_theme_resolve_product')
+            ? my_theme_resolve_product($prod)
+            : (($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID()));
         if (!$product instanceof WC_Product) {
             return '';
         }
@@ -6593,11 +9609,8 @@ if (!function_exists('my_theme_get_product_line_slug')) {
 
         $tax_candidates = ['pa_line', 'product_line', 'line'];
         foreach ($tax_candidates as $taxonomy) {
-            if (!taxonomy_exists($taxonomy)) {
-                continue;
-            }
-            $slugs = wc_get_product_terms($product_id, $taxonomy, ['fields' => 'slugs']);
-            if (!empty($slugs) && !is_wp_error($slugs)) {
+            $slugs = my_theme_get_product_term_values($product_id, $taxonomy, 'slug');
+            if (!empty($slugs)) {
                 $term_slug = sanitize_title((string) $slugs[0]);
                 if ($term_slug !== '') {
                     if ($product_id > 0) {
@@ -6617,8 +9630,8 @@ if (!function_exists('my_theme_get_product_line_slug')) {
             return $line_slug;
         }
 
-        $cat_names = wc_get_product_terms($product->get_id(), 'product_cat', ['fields' => 'names']);
-        if (!empty($cat_names) && !is_wp_error($cat_names)) {
+        $cat_names = my_theme_get_product_term_values($product_id, 'product_cat', 'name');
+        if (!empty($cat_names)) {
             foreach ($cat_names as $cat_name) {
                 $line_slug = my_theme_detect_line_slug_from_text((string) $cat_name, $brand_slug);
                 if ($line_slug !== '') {
@@ -6630,8 +9643,8 @@ if (!function_exists('my_theme_get_product_line_slug')) {
             }
         }
 
-        $cat_slugs = wc_get_product_terms($product->get_id(), 'product_cat', ['fields' => 'slugs']);
-        if (!empty($cat_slugs) && !is_wp_error($cat_slugs)) {
+        $cat_slugs = my_theme_get_product_term_values($product_id, 'product_cat', 'slug');
+        if (!empty($cat_slugs)) {
             $fallback_map = [
                 'son-lot' => 'line-primer',
                 'chong-tham' => 'line-waterproof',
@@ -6782,8 +9795,11 @@ if (!function_exists('my_theme_get_line_filter_options')) {
         }
 
         $line_counts = [];
+        $product_map = function_exists('my_theme_get_product_object_map')
+            ? my_theme_get_product_object_map($product_ids)
+            : [];
         foreach ($product_ids as $product_id) {
-            $product = wc_get_product((int) $product_id);
+            $product = isset($product_map[(int) $product_id]) ? $product_map[(int) $product_id] : wc_get_product((int) $product_id);
             if (!$product instanceof WC_Product) {
                 continue;
             }
@@ -6828,238 +9844,6 @@ if (!function_exists('my_theme_get_line_filter_options')) {
     }
 }
 
-if (!function_exists('my_theme_get_search_assist_payload')) {
-    function my_theme_get_search_assist_payload($force_refresh = false)
-    {
-        static $request_cache = null;
-
-        if (!$force_refresh && is_array($request_cache)) {
-            return $request_cache;
-        }
-
-        $visible_product_ids = function_exists('my_theme_get_catalog_visible_product_ids')
-            ? my_theme_get_catalog_visible_product_ids(false)
-            : [];
-        $visible_product_ids = my_theme_normalize_product_id_list($visible_product_ids);
-
-        $shop_url = function_exists('my_theme_get_shop_url') ? my_theme_get_shop_url() : home_url('/shop');
-        $cache_version = (string) get_option('my_theme_filter_cache_version', '1');
-        $digest = !empty($visible_product_ids) ? md5(implode(',', $visible_product_ids)) : 'empty';
-        $cache_key = 'my_theme_search_assist_v1_' . $cache_version . '_' . $digest;
-
-        if (!$force_refresh) {
-            $cached = get_transient($cache_key);
-            if (is_array($cached)) {
-                $request_cache = $cached;
-                return $cached;
-            }
-        }
-
-        $payload = [
-            'products' => [],
-            'brands' => [],
-            'lines' => [],
-            'defaults' => [],
-            'quick_queries' => [],
-            'quick_links' => [],
-        ];
-
-        $quick_queries = [
-            'Sơn nội thất',
-            'Sơn ngoại thất',
-            'Chống thấm',
-            'Sơn epoxy',
-            'Sơn kim loại',
-            'Bột trét',
-        ];
-        foreach ($quick_queries as $query_label) {
-            $query_label = trim((string) $query_label);
-            if ($query_label === '') {
-                continue;
-            }
-            $payload['quick_queries'][] = [
-                'label' => $query_label,
-                'url' => add_query_arg('q', $query_label, $shop_url),
-            ];
-        }
-
-        $payload['quick_links'] = [
-            [
-                'label' => 'Mở giải pháp',
-                'url' => home_url('/giai-phap'),
-            ],
-            [
-                'label' => 'Liên hệ báo giá',
-                'url' => home_url('/lien-he'),
-            ],
-            [
-                'label' => 'FAQ',
-                'url' => home_url('/faq'),
-            ],
-            [
-                'label' => 'Tính sơn',
-                'url' => home_url('/#tinh-son'),
-            ],
-        ];
-
-        if (!empty($visible_product_ids) && function_exists('my_theme_get_product_object_map')) {
-            $product_map = my_theme_get_product_object_map(array_slice($visible_product_ids, 0, 60));
-            foreach ($product_map as $product_id => $product) {
-                if (!$product instanceof WC_Product) {
-                    continue;
-                }
-
-                $product_name = trim((string) $product->get_name());
-                if ($product_name === '') {
-                    continue;
-                }
-
-                $brand_label = function_exists('my_theme_get_product_brand_label')
-                    ? trim((string) my_theme_get_product_brand_label($product))
-                    : '';
-                $line_label = function_exists('my_theme_get_product_line_label')
-                    ? trim((string) my_theme_get_product_line_label($product))
-                    : '';
-                $meta_bits = array_values(array_filter([$brand_label, $line_label]));
-                $meta_text = implode(' • ', $meta_bits);
-                $payload['products'][] = [
-                    'type' => 'Sản phẩm',
-                    'label' => $product_name,
-                    'meta' => $meta_text,
-                    'url' => get_permalink((int) $product_id),
-                    'search' => my_theme_normalize_search_text($product_name . ' ' . $meta_text),
-                ];
-            }
-        }
-
-        $brand_options = function_exists('my_theme_get_brand_filter_options')
-            ? my_theme_get_brand_filter_options($visible_product_ids)
-            : [];
-        if (is_array($brand_options)) {
-            foreach (array_slice($brand_options, 0, 10, true) as $brand_slug => $brand_meta) {
-                $brand_slug = sanitize_title((string) $brand_slug);
-                $brand_label = isset($brand_meta['label']) ? trim((string) $brand_meta['label']) : '';
-                $brand_count = isset($brand_meta['count']) ? max(0, (int) $brand_meta['count']) : 0;
-                if ($brand_slug === '' || $brand_label === '') {
-                    continue;
-                }
-
-                $meta_text = $brand_count > 0 ? ($brand_count . ' sản phẩm') : 'Thương hiệu';
-                $payload['brands'][] = [
-                    'type' => 'Thương hiệu',
-                    'label' => $brand_label,
-                    'meta' => $meta_text,
-                    'url' => add_query_arg('brand', $brand_slug, $shop_url),
-                    'search' => my_theme_normalize_search_text($brand_label . ' ' . $brand_slug),
-                ];
-            }
-        }
-
-        $line_options = function_exists('my_theme_get_line_filter_options')
-            ? my_theme_get_line_filter_options($visible_product_ids, '')
-            : [];
-        if (is_array($line_options)) {
-            foreach (array_slice($line_options, 0, 10, true) as $line_slug => $line_meta) {
-                $line_slug = sanitize_title((string) $line_slug);
-                $line_label = isset($line_meta['label']) ? trim((string) $line_meta['label']) : '';
-                $line_count = isset($line_meta['count']) ? max(0, (int) $line_meta['count']) : 0;
-                if ($line_slug === '' || $line_label === '') {
-                    continue;
-                }
-
-                $meta_text = $line_count > 0 ? ($line_count . ' sản phẩm') : 'Danh mục';
-                $payload['lines'][] = [
-                    'type' => 'Hạng mục',
-                    'label' => $line_label,
-                    'meta' => $meta_text,
-                    'url' => add_query_arg('line', $line_slug, $shop_url),
-                    'search' => my_theme_normalize_search_text($line_label . ' ' . $line_slug),
-                ];
-            }
-        }
-
-        $payload['defaults'] = array_values(array_slice(array_merge(
-            array_slice($payload['products'], 0, 4),
-            array_slice($payload['brands'], 0, 3),
-            array_slice($payload['lines'], 0, 3)
-        ), 0, 8));
-
-        $request_cache = $payload;
-        set_transient($cache_key, $payload, 30 * MINUTE_IN_SECONDS);
-        return $payload;
-    }
-}
-
-if (!function_exists('my_theme_render_search_assist')) {
-    function my_theme_render_search_assist($context = 'header')
-    {
-        $context = sanitize_key((string) $context);
-        if ($context === '') {
-            $context = 'header';
-        }
-
-        $payload = my_theme_get_search_assist_payload();
-        $quick_queries = isset($payload['quick_queries']) && is_array($payload['quick_queries']) ? $payload['quick_queries'] : [];
-        $quick_links = isset($payload['quick_links']) && is_array($payload['quick_links']) ? $payload['quick_links'] : [];
-        $defaults = isset($payload['defaults']) && is_array($payload['defaults']) ? $payload['defaults'] : [];
-
-        echo '<div class="search-assist search-assist--' . esc_attr($context) . '" data-search-assist-panel hidden>';
-        echo '<div class="search-assist__section">';
-        echo '<p class="search-assist__eyebrow">Tìm nhanh theo nhu cầu</p>';
-        echo '<div class="search-assist__chips">';
-        foreach ($quick_queries as $item) {
-            $item_label = isset($item['label']) ? trim((string) $item['label']) : '';
-            $item_url = isset($item['url']) ? (string) $item['url'] : '';
-            if ($item_label === '' || $item_url === '') {
-                continue;
-            }
-            echo '<a class="search-assist__chip" href="' . esc_url($item_url) . '">' . esc_html($item_label) . '</a>';
-        }
-        echo '</div>';
-        echo '</div>';
-
-        echo '<div class="search-assist__section">';
-        echo '<p class="search-assist__eyebrow">Lối đi nhanh</p>';
-        echo '<div class="search-assist__chips search-assist__chips--links">';
-        foreach ($quick_links as $item) {
-            $item_label = isset($item['label']) ? trim((string) $item['label']) : '';
-            $item_url = isset($item['url']) ? (string) $item['url'] : '';
-            if ($item_label === '' || $item_url === '') {
-                continue;
-            }
-            echo '<a class="search-assist__chip search-assist__chip--link" href="' . esc_url($item_url) . '">' . esc_html($item_label) . '</a>';
-        }
-        echo '</div>';
-        echo '</div>';
-
-        echo '<div class="search-assist__section">';
-        echo '<div class="search-assist__head">';
-        echo '<p class="search-assist__eyebrow">Gợi ý từ kho hiện có</p>';
-        echo '<span class="search-assist__status" data-search-assist-status>Gõ tên mã, hãng hoặc hạng mục để lọc nhanh hơn.</span>';
-        echo '</div>';
-        echo '<div class="search-assist__results" data-search-assist-results>';
-        foreach ($defaults as $item) {
-            $item_label = isset($item['label']) ? trim((string) $item['label']) : '';
-            $item_url = isset($item['url']) ? (string) $item['url'] : '';
-            $item_type = isset($item['type']) ? trim((string) $item['type']) : 'Gợi ý';
-            $item_meta = isset($item['meta']) ? trim((string) $item['meta']) : '';
-            if ($item_label === '' || $item_url === '') {
-                continue;
-            }
-            echo '<a class="search-assist__item" href="' . esc_url($item_url) . '">';
-            echo '<span class="search-assist__item-top"><span class="search-assist__badge">' . esc_html($item_type) . '</span></span>';
-            echo '<strong>' . esc_html($item_label) . '</strong>';
-            if ($item_meta !== '') {
-                echo '<span class="search-assist__meta">' . esc_html($item_meta) . '</span>';
-            }
-            echo '</a>';
-        }
-        echo '</div>';
-        echo '</div>';
-        echo '</div>';
-    }
-}
-
 if (!function_exists('my_theme_filter_product_ids_by_line_slug')) {
     function my_theme_filter_product_ids_by_line_slug($product_ids, $line_slug = '', $brand_slug = '')
     {
@@ -7067,13 +9851,27 @@ if (!function_exists('my_theme_filter_product_ids_by_line_slug')) {
 
         $line_slug = sanitize_title((string) $line_slug);
         $brand_slug = sanitize_title((string) $brand_slug);
-        $product_ids = my_theme_normalize_product_id_list($product_ids);
+        $source_product_ids = function_exists('my_theme_preserve_product_id_order')
+            ? my_theme_preserve_product_id_order($product_ids)
+            : my_theme_normalize_product_id_list($product_ids);
+        $product_ids = my_theme_normalize_product_id_list($source_product_ids);
         if ($line_slug === '' || empty($product_ids)) {
-            return $product_ids;
+            return $source_product_ids;
         }
 
-        $request_key = md5(implode(',', $product_ids)) . ':' . $line_slug . ':' . $brand_slug;
+        $digest = md5(implode(',', $product_ids));
+        $cache_version = (string) get_option('my_theme_filter_cache_version', '1');
+        $source_digest = md5(implode(',', $source_product_ids));
+        $request_key = $cache_version . ':' . $source_digest . ':' . $line_slug . ':' . $brand_slug;
         if (array_key_exists($request_key, $request_cache)) {
+            return $request_cache[$request_key];
+        }
+        $transient_key = 'my_theme_line_filtered_ids_' . $cache_version . '_' . md5($digest . '|' . $line_slug . '|' . $brand_slug);
+        $cached = get_transient($transient_key);
+        if (is_array($cached)) {
+            $request_cache[$request_key] = function_exists('my_theme_filter_product_ids_by_source_order')
+                ? my_theme_filter_product_ids_by_source_order($source_product_ids, $cached)
+                : my_theme_normalize_product_id_list($cached);
             return $request_cache[$request_key];
         }
 
@@ -7121,18 +9919,27 @@ if (!function_exists('my_theme_filter_product_ids_by_line_slug')) {
                 'fields'         => 'ids',
                 'post__in'       => $product_ids,
                 'no_found_rows'  => true,
+                'ignore_sticky_posts' => true,
+                'update_post_meta_cache' => false,
+                'update_post_term_cache' => false,
                 'tax_query'      => $tax_query,
             ]);
-            $matched_ids = my_theme_normalize_product_id_list($matched_ids);
+            $matched_ids = function_exists('my_theme_filter_product_ids_by_source_order')
+                ? my_theme_filter_product_ids_by_source_order($source_product_ids, $matched_ids)
+                : my_theme_normalize_product_id_list($matched_ids);
             if (!empty($matched_ids)) {
                 $request_cache[$request_key] = $matched_ids;
+                set_transient($transient_key, my_theme_normalize_product_id_list($matched_ids), 30 * MINUTE_IN_SECONDS);
                 return $matched_ids;
             }
         }
 
         $filtered = [];
+        $product_map = function_exists('my_theme_get_product_object_map')
+            ? my_theme_get_product_object_map($product_ids)
+            : [];
         foreach ($product_ids as $product_id) {
-            $product = wc_get_product((int) $product_id);
+            $product = isset($product_map[(int) $product_id]) ? $product_map[(int) $product_id] : wc_get_product((int) $product_id);
             if (!$product instanceof WC_Product) {
                 continue;
             }
@@ -7146,6 +9953,7 @@ if (!function_exists('my_theme_filter_product_ids_by_line_slug')) {
         }
 
         $request_cache[$request_key] = $filtered;
+        set_transient($transient_key, my_theme_normalize_product_id_list($filtered), 30 * MINUTE_IN_SECONDS);
         return $filtered;
     }
 }
@@ -7153,7 +9961,9 @@ if (!function_exists('my_theme_filter_product_ids_by_line_slug')) {
 if (!function_exists('my_theme_get_product_primary_category_term')) {
     function my_theme_get_product_primary_category_term($prod = null)
     {
-        $product = ($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID());
+        $product = function_exists('my_theme_resolve_product')
+            ? my_theme_resolve_product($prod)
+            : (($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID()));
         if (!$product instanceof WC_Product || !taxonomy_exists('product_cat')) {
             return null;
         }
@@ -7164,8 +9974,8 @@ if (!function_exists('my_theme_get_product_primary_category_term')) {
             return $cache[$cache_key];
         }
 
-        $terms = wc_get_product_terms($cache_key, 'product_cat', ['fields' => 'all']);
-        if (is_wp_error($terms) || empty($terms)) {
+        $terms = my_theme_get_product_term_objects($cache_key, 'product_cat');
+        if (empty($terms)) {
             $cache[$cache_key] = null;
             return null;
         }
@@ -7261,67 +10071,289 @@ if (!function_exists('my_theme_get_product_primary_category_label')) {
     }
 }
 
+if (!function_exists('my_theme_get_product_catalog_profile')) {
+    function my_theme_get_product_catalog_profile($prod = null)
+    {
+        $product = function_exists('my_theme_resolve_product')
+            ? my_theme_resolve_product($prod)
+            : (($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID()));
+        if (!$product instanceof WC_Product) {
+            return [
+                'display_name' => '',
+                'brand_label' => '',
+                'brand_slug' => '',
+                'line_label' => '',
+                'line_slug' => '',
+                'primary_term' => null,
+                'category_id' => 0,
+                'category_label' => '',
+                'category_slug' => '',
+            ];
+        }
+
+        static $cache = [];
+        $product_id = (int) $product->get_id();
+        if ($product_id > 0 && array_key_exists($product_id, $cache)) {
+            return $cache[$product_id];
+        }
+
+        $display_name = function_exists('my_theme_get_product_display_name')
+            ? (string) my_theme_get_product_display_name($product)
+            : (string) $product->get_name();
+        $brand_slug = function_exists('my_theme_get_product_brand_slug')
+            ? sanitize_title((string) my_theme_get_product_brand_slug($product))
+            : '';
+        $brand_label = '';
+        if ($brand_slug !== '') {
+            $brand_map = my_theme_get_brand_keyword_map();
+            $brand_label = isset($brand_map[$brand_slug]['label'])
+                ? trim((string) $brand_map[$brand_slug]['label'])
+                : ucfirst($brand_slug);
+        }
+        if ($brand_label === '') {
+            $brand_label = 'Sản phẩm';
+        }
+
+        $line_slug = function_exists('my_theme_get_product_line_slug')
+            ? sanitize_title((string) my_theme_get_product_line_slug($product))
+            : '';
+        $line_label = $line_slug !== ''
+            ? my_theme_get_line_label_from_slug($line_slug)
+            : '';
+
+        $primary_term = function_exists('my_theme_get_product_primary_category_term')
+            ? my_theme_get_product_primary_category_term($product)
+            : null;
+
+        $profile = [
+            'display_name' => $display_name,
+            'brand_label' => $brand_label,
+            'brand_slug' => $brand_slug,
+            'line_label' => $line_label,
+            'line_slug' => $line_slug,
+            'primary_term' => $primary_term instanceof WP_Term ? $primary_term : null,
+            'category_id' => $primary_term instanceof WP_Term ? (int) $primary_term->term_id : 0,
+            'category_label' => $primary_term instanceof WP_Term ? (string) $primary_term->name : '',
+            'category_slug' => $primary_term instanceof WP_Term ? sanitize_title((string) $primary_term->slug) : '',
+        ];
+
+        if ($product_id > 0) {
+            $cache[$product_id] = $profile;
+        }
+
+        return $profile;
+    }
+}
+
 if (!function_exists('my_theme_get_product_card_excerpt')) {
     function my_theme_get_product_card_excerpt($prod = null, $limit = 16)
     {
-        $product = ($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID());
+        $product = function_exists('my_theme_resolve_product')
+            ? my_theme_resolve_product($prod)
+            : (($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID()));
         if (!$product instanceof WC_Product) {
             return '';
         }
 
-        $text = trim(wp_strip_all_tags((string) $product->get_short_description()));
-        if ($text === '') {
-            $text = trim(wp_strip_all_tags((string) $product->get_description()));
+        static $base_cache = [];
+        static $trimmed_cache = [];
+
+        $product_id = (int) $product->get_id();
+        $limit = max(8, (int) $limit);
+        $trimmed_cache_key = $product_id . ':' . $limit;
+        if ($product_id > 0 && array_key_exists($trimmed_cache_key, $trimmed_cache)) {
+            return (string) $trimmed_cache[$trimmed_cache_key];
         }
-        if ($text !== '' && function_exists('my_theme_text_looks_unaccented_vi') && my_theme_text_looks_unaccented_vi($text)) {
-            $text = '';
+
+        if ($product_id > 0 && array_key_exists($product_id, $base_cache)) {
+            $text = (string) $base_cache[$product_id];
+        } else {
+            $text = trim(wp_strip_all_tags((string) $product->get_short_description()));
+            if ($text === '') {
+                $text = trim(wp_strip_all_tags((string) $product->get_description()));
+            }
+            if ($text !== '' && function_exists('my_theme_text_looks_unaccented_vi') && my_theme_text_looks_unaccented_vi($text)) {
+                $text = '';
+            }
+            if ($text === '') {
+                $profile = function_exists('my_theme_get_product_catalog_profile')
+                    ? my_theme_get_product_catalog_profile($product)
+                    : [];
+                $cat_slug = isset($profile['category_slug']) ? sanitize_title((string) $profile['category_slug']) : '';
+                $cat_name = isset($profile['category_label']) ? trim((string) $profile['category_label']) : '';
+                $line_label = isset($profile['line_label']) ? trim((string) $profile['line_label']) : '';
+                $line_slug = isset($profile['line_slug']) ? sanitize_title((string) $profile['line_slug']) : '';
+                $brand_label = isset($profile['brand_label']) ? trim((string) $profile['brand_label']) : '';
+
+                $usage_map = [
+                    'son-noi-that' => 'Dùng cho tường nội thất, bám dính tốt và giữ màu bền khi sử dụng hằng ngày.',
+                    'son-ngoai-that' => 'Dùng cho tường ngoại thất, tăng độ bền màu và chống chịu thời tiết.',
+                    'son-lot' => 'Dùng làm lớp lót giúp tăng bám dính và ổn định bề mặt trước khi sơn phủ.',
+                    'chong-tham' => 'Dùng cho khu vực cần chống thấm như tường ngoài, sân thượng và khu ẩm ướt.',
+                    'bot-tret' => 'Dùng để làm phẳng bề mặt trước khi thi công sơn lót và sơn phủ.',
+                    'keo-va-phu-gia' => 'Dùng cho hạng mục dán, chà ron, trám khe hoặc tăng độ kết dính khi thi công.',
+                    'son-epoxy' => 'Dùng cho bề mặt chịu tải và ma sát cao, cần lớp phủ bền cơ học.',
+                    'son-kim-loai' => 'Dùng cho bề mặt kim loại, hỗ trợ chống gỉ và bảo vệ lớp nền.',
+                    'son-cong-nghiep' => 'Dùng cho hạng mục công nghiệp cần độ bền và khả năng bảo vệ cao.',
+                    'son-dau' => 'Dùng cho bề mặt yêu cầu độ phủ và độ bền phù hợp hệ sơn dầu.',
+                ];
+
+                if ($cat_slug !== '' && isset($usage_map[$cat_slug])) {
+                    $text = (string) $usage_map[$cat_slug];
+                } else {
+                    $scope = $cat_name !== '' ? $cat_name : 'hạng mục thi công';
+                    $text = 'Sản phẩm dùng cho ' . mb_strtolower($scope) . ', hỗ trợ thi công ổn định và bền bề mặt.';
+                }
+
+                // Keep usage text neutral and concise; avoid awkward prefixes like "Dòng ...".
+                $line_is_generic = function_exists('my_theme_is_generic_line_label')
+                    ? my_theme_is_generic_line_label($line_label, $line_slug, $cat_name)
+                    : false;
+                if (!$line_is_generic && $brand_label !== '' && $brand_label !== 'Sản phẩm') {
+                    $text = trim((string) preg_replace('/^\s*Dòng\s+/iu', '', $text));
+                }
+            }
+
+            $text = trim((string) preg_replace('/^\s*Dòng\s+[^:]{1,80}:\s*/u', '', $text));
+            if ($product_id > 0) {
+                $base_cache[$product_id] = $text;
+            }
         }
-        if ($text === '') {
-            $primary = function_exists('my_theme_get_product_primary_category_term')
-                ? my_theme_get_product_primary_category_term($product)
+
+        $trimmed = wp_trim_words($text, $limit, '...');
+        if ($product_id > 0) {
+            $trimmed_cache[$trimmed_cache_key] = $trimmed;
+        }
+
+        return $trimmed;
+    }
+}
+
+if (!function_exists('my_theme_get_catalog_search_index')) {
+    function my_theme_get_catalog_search_index($product_ids = null)
+    {
+        static $request_cache = [];
+        static $parent_term_cache = [];
+
+        if ($product_ids === null) {
+            $product_ids = function_exists('my_theme_get_catalog_visible_product_ids')
+                ? my_theme_get_catalog_visible_product_ids(false)
+                : [];
+        }
+
+        $product_ids = my_theme_normalize_product_id_list($product_ids);
+        if (empty($product_ids)) {
+            return [];
+        }
+
+        $cache_version = (string) get_option('my_theme_filter_cache_version', '1');
+        $digest = md5(implode(',', $product_ids));
+        $request_key = $cache_version . ':' . $digest;
+        if (array_key_exists($request_key, $request_cache)) {
+            return $request_cache[$request_key];
+        }
+
+        $cache_key = 'my_theme_catalog_search_index_v1_' . $cache_version . '_' . $digest;
+        $cached = get_transient($cache_key);
+        if (is_array($cached)) {
+            $request_cache[$request_key] = $cached;
+            return $request_cache[$request_key];
+        }
+
+        $product_map = function_exists('my_theme_get_product_object_map')
+            ? my_theme_get_product_object_map($product_ids)
+            : [];
+        if (empty($product_map)) {
+            $request_cache[$request_key] = [];
+            set_transient($cache_key, [], 30 * MINUTE_IN_SECONDS);
+            return [];
+        }
+
+        $index = [];
+        foreach ($product_ids as $product_id) {
+            $product_id = (int) $product_id;
+            if ($product_id <= 0 || !isset($product_map[$product_id])) {
+                continue;
+            }
+
+            $product = $product_map[$product_id];
+            if (!$product instanceof WC_Product) {
+                continue;
+            }
+
+            $profile = function_exists('my_theme_get_product_catalog_profile')
+                ? my_theme_get_product_catalog_profile($product)
+                : [];
+            $name = isset($profile['display_name']) && (string) $profile['display_name'] !== ''
+                ? (string) $profile['display_name']
+                : ((string) $product->get_name());
+            $brand_label = isset($profile['brand_label']) ? (string) $profile['brand_label'] : '';
+            $brand_slug = isset($profile['brand_slug']) ? sanitize_title((string) $profile['brand_slug']) : '';
+            $line_label = isset($profile['line_label']) ? (string) $profile['line_label'] : '';
+            $line_slug = isset($profile['line_slug']) ? sanitize_title((string) $profile['line_slug']) : '';
+            $primary_term = isset($profile['primary_term']) && $profile['primary_term'] instanceof WP_Term
+                ? $profile['primary_term']
                 : null;
-            $cat_slug = ($primary instanceof WP_Term) ? sanitize_title((string) $primary->slug) : '';
-            $cat_name = ($primary instanceof WP_Term) ? trim((string) $primary->name) : '';
-            $line_label = function_exists('my_theme_get_product_line_label')
-                ? trim((string) my_theme_get_product_line_label($product))
-                : '';
-            $line_slug = function_exists('my_theme_get_product_line_slug')
-                ? sanitize_title((string) my_theme_get_product_line_slug($product))
-                : '';
-            $brand_label = function_exists('my_theme_get_product_brand_label')
-                ? trim((string) my_theme_get_product_brand_label($product))
-                : '';
+            $category_label = isset($profile['category_label']) ? (string) $profile['category_label'] : '';
+            $category_slug = isset($profile['category_slug']) ? sanitize_title((string) $profile['category_slug']) : '';
+            $category_parent_slug = '';
+            if ($primary_term instanceof WP_Term && (int) $primary_term->parent > 0) {
+                $parent_id = (int) $primary_term->parent;
+                if (!array_key_exists($parent_id, $parent_term_cache)) {
+                    $parent_term = get_term($parent_id, 'product_cat');
+                    $parent_term_cache[$parent_id] = ($parent_term instanceof WP_Term && !is_wp_error($parent_term))
+                        ? sanitize_title((string) $parent_term->slug)
+                        : '';
+                }
+                $category_parent_slug = (string) $parent_term_cache[$parent_id];
+            }
 
-            $usage_map = [
-                'son-noi-that' => 'Dùng cho tường nội thất, bám dính tốt và giữ màu bền khi sử dụng hằng ngày.',
-                'son-ngoai-that' => 'Dùng cho tường ngoại thất, tăng độ bền màu và chống chịu thời tiết.',
-                'son-lot' => 'Dùng làm lớp lót giúp tăng bám dính và ổn định bề mặt trước khi sơn phủ.',
-                'chong-tham' => 'Dùng cho khu vực cần chống thấm như tường ngoài, sân thượng và khu ẩm ướt.',
-                'bot-tret' => 'Dùng để làm phẳng bề mặt trước khi thi công sơn lót và sơn phủ.',
-                'keo-va-phu-gia' => 'Dùng cho hạng mục dán, chà ron, trám khe hoặc tăng độ kết dính khi thi công.',
-                'son-epoxy' => 'Dùng cho bề mặt chịu tải và ma sát cao, cần lớp phủ bền cơ học.',
-                'son-kim-loai' => 'Dùng cho bề mặt kim loại, hỗ trợ chống gỉ và bảo vệ lớp nền.',
-                'son-cong-nghiep' => 'Dùng cho hạng mục công nghiệp cần độ bền và khả năng bảo vệ cao.',
-                'son-dau' => 'Dùng cho bề mặt yêu cầu độ phủ và độ bền phù hợp hệ sơn dầu.',
+            $excerpt = function_exists('my_theme_get_product_card_excerpt')
+                ? (string) my_theme_get_product_card_excerpt($product, 18)
+                : '';
+            $name_norm = my_theme_normalize_search_text($name);
+            $brand_norm = my_theme_normalize_search_text($brand_label);
+            $line_norm = my_theme_normalize_search_text($line_label);
+            $category_norm = my_theme_normalize_search_text($category_label);
+            $excerpt_norm = my_theme_normalize_search_text($excerpt);
+
+            $created = method_exists($product, 'get_date_created') ? $product->get_date_created() : null;
+            $index[$product_id] = [
+                'id' => $product_id,
+                'name' => $name,
+                'name_norm' => $name_norm,
+                'brand_label' => $brand_label,
+                'brand_slug' => $brand_slug,
+                'brand_norm' => $brand_norm,
+                'line_label' => $line_label,
+                'line_slug' => $line_slug,
+                'line_norm' => $line_norm,
+                'category_label' => $category_label,
+                'category_slug' => $category_slug,
+                'category_parent_slug' => $category_parent_slug,
+                'category_norm' => $category_norm,
+                'excerpt' => $excerpt,
+                'excerpt_norm' => $excerpt_norm,
+                'haystack' => trim(implode(' ', array_filter([
+                    $name_norm,
+                    $brand_norm,
+                    $line_norm,
+                    $category_norm,
+                    $excerpt_norm,
+                ]))),
+                'featured' => (method_exists($product, 'is_featured') && $product->is_featured()) ? 1 : 0,
+                'stock' => (method_exists($product, 'is_in_stock') && $product->is_in_stock()) ? 1 : 0,
+                'sales_total' => method_exists($product, 'get_total_sales')
+                    ? (int) $product->get_total_sales()
+                    : (int) get_post_meta($product_id, 'total_sales', true),
+                'created_ts' => ($created instanceof WC_DateTime) ? (int) $created->getTimestamp() : 0,
+                'url' => get_permalink($product_id),
             ];
-
-            if ($cat_slug !== '' && isset($usage_map[$cat_slug])) {
-                $text = (string) $usage_map[$cat_slug];
-            } else {
-                $scope = $cat_name !== '' ? $cat_name : 'hạng mục thi công';
-                $text = 'Sản phẩm dùng cho ' . mb_strtolower($scope) . ', hỗ trợ thi công ổn định và bền bề mặt.';
-            }
-
-            // Keep usage text neutral and concise; avoid awkward prefixes like "Dòng ...".
-            $line_is_generic = function_exists('my_theme_is_generic_line_label')
-                ? my_theme_is_generic_line_label($line_label, $line_slug, $cat_name)
-                : false;
-            if (!$line_is_generic && $brand_label !== '' && $brand_label !== 'Sản phẩm') {
-                $text = trim((string) preg_replace('/^\s*Dòng\s+/iu', '', $text));
-            }
         }
-        $text = trim((string) preg_replace('/^\s*Dòng\s+[^:]{1,80}:\s*/u', '', $text));
-        return wp_trim_words($text, max(8, (int) $limit), '...');
+
+        $request_cache[$request_key] = $index;
+        set_transient($cache_key, $index, 30 * MINUTE_IN_SECONDS);
+        return $request_cache[$request_key];
     }
 }
 
@@ -7360,12 +10392,18 @@ if (!function_exists('my_theme_is_catalog_ready_product')) {
             return true;
         }
 
-        $map = my_theme_get_pack_price_map_for_display($product);
+        $map = function_exists('my_theme_get_pack_price_display_map')
+            ? my_theme_get_pack_price_display_map($product)
+            : my_theme_get_pack_price_map_for_display($product);
         if (!empty($map)) {
             return true;
         }
 
-        return ((float) $product->get_price()) > 0;
+        $display_price = function_exists('my_theme_get_default_loop_price')
+            ? (float) my_theme_get_default_loop_price($product)
+            : (float) $product->get_price();
+
+        return $display_price > 0;
     }
 }
 
@@ -7380,7 +10418,7 @@ if (!function_exists('my_theme_get_related_products_for_display')) {
         $limit = max(1, (int) $limit);
         $product_id = (int) $product->get_id();
         $cache_version = (string) get_option('my_theme_related_cache_version', '1');
-        $cache_key = 'my_theme_related_' . $cache_version . '_' . $product_id . '_' . $limit;
+        $cache_key = 'my_theme_related_v2_' . $cache_version . '_' . $product_id . '_' . $limit;
         $cached_ids = get_transient($cache_key);
         if (is_array($cached_ids) && !empty($cached_ids)) {
             $cached_products = [];
@@ -7482,30 +10520,50 @@ if (!function_exists('my_theme_get_related_products_for_display')) {
                 break;
             }
 
-            $query_args = [
-                'status'  => 'publish',
-                'type'    => ['simple', 'variable'],
-                'limit'   => max(48, $limit * 16),
-                'exclude' => array_merge([$product_id], $seen_ids),
-                'orderby' => 'meta_value_num',
-                'meta_key' => '_price',
-                'order'   => 'DESC',
-                'return'  => 'objects',
+            $candidate_query_args = [
+                'post_type'           => 'product',
+                'post_status'         => 'publish',
+                'posts_per_page'      => max(48, $limit * 16),
+                'post__not_in'        => array_merge([$product_id], $seen_ids),
+                'ignore_sticky_posts' => true,
             ];
             if (!empty($stage['tax_query'])) {
-                $query_args['tax_query'] = $stage['tax_query'];
+                $candidate_query_args['tax_query'] = $stage['tax_query'];
             }
 
-            $products = wc_get_products($query_args);
-            if (empty($products)) {
+            $candidate_ids = function_exists('my_theme_get_price_sorted_query_product_ids')
+                ? my_theme_get_price_sorted_query_product_ids($candidate_query_args, 'desc')
+                : get_posts(array_merge($candidate_query_args, [
+                    'fields' => 'ids',
+                    'orderby' => 'date',
+                    'order' => 'DESC',
+                    'no_found_rows' => true,
+                    'update_post_meta_cache' => false,
+                    'update_post_term_cache' => false,
+                ]));
+            $candidate_ids = function_exists('my_theme_preserve_product_id_order')
+                ? my_theme_preserve_product_id_order($candidate_ids)
+                : my_theme_normalize_product_id_list($candidate_ids);
+            if (empty($candidate_ids)) {
+                continue;
+            }
+            if (count($candidate_ids) > $candidate_query_args['posts_per_page']) {
+                $candidate_ids = array_slice($candidate_ids, 0, $candidate_query_args['posts_per_page']);
+            }
+
+            $product_map = function_exists('my_theme_get_product_object_map')
+                ? my_theme_get_product_object_map($candidate_ids)
+                : [];
+            if (empty($product_map)) {
                 continue;
             }
 
-            foreach ($products as $candidate) {
+            foreach ($candidate_ids as $candidate_id) {
+                $candidate_id = (int) $candidate_id;
+                $candidate = isset($product_map[$candidate_id]) ? $product_map[$candidate_id] : null;
                 if (!$candidate instanceof WC_Product) {
                     continue;
                 }
-                $candidate_id = (int) $candidate->get_id();
                 if ($candidate_id <= 0 || isset($seen_ids[$candidate_id])) {
                     continue;
                 }
@@ -7587,7 +10645,9 @@ function my_theme_render_capacity_weight($prod = null) {
         return;
     }
 
-    $has_pack_price = !empty(my_theme_get_pack_price_map_for_display($product));
+    $has_pack_price = !empty(function_exists('my_theme_get_pack_price_display_map')
+        ? my_theme_get_pack_price_display_map($product)
+        : my_theme_get_pack_price_map_for_display($product));
     $is_putty = my_theme_is_putty_product($product);
     if ($product->is_type('simple')) {
         if ($has_pack_price) {
@@ -7637,7 +10697,9 @@ if (!function_exists('my_theme_render_loop_pack_summary')) {
         $capacity_values = [];
         $weight_values = [];
         $package_values = [];
-        $pack_price_map = my_theme_get_pack_price_map_for_display($product);
+        $pack_price_map = function_exists('my_theme_get_pack_price_display_map')
+            ? my_theme_get_pack_price_display_map($product)
+            : my_theme_get_pack_price_map_for_display($product);
 
         if (!empty($pack_price_map)) {
             if (!$show_map_sizes) {
@@ -7687,7 +10749,9 @@ function my_theme_render_capacity_badges($prod = null) {
     $product = ($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID());
     if (!$product instanceof WC_Product) return;
 
-    $map = my_theme_get_pack_price_map_for_display($product);
+    $map = function_exists('my_theme_get_pack_price_display_map')
+        ? my_theme_get_pack_price_display_map($product)
+        : my_theme_get_pack_price_map_for_display($product);
     $is_putty = my_theme_is_putty_product($product);
     if ($product->is_type('simple')) {
         if (!empty($map)) {
@@ -9695,8 +12759,46 @@ add_action('admin_menu', function () {
     );
 }, 60);
 
+if (!function_exists('my_theme_is_local_environment')) {
+    function my_theme_is_local_environment()
+    {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $env = function_exists('wp_get_environment_type') ? (string) wp_get_environment_type() : '';
+        if (in_array($env, ['local', 'development'], true)) {
+            $cached = true;
+            return $cached;
+        }
+
+        $request_host = isset($_SERVER['HTTP_HOST']) ? strtolower(trim((string) wp_unslash($_SERVER['HTTP_HOST']))) : '';
+        $site_host = strtolower((string) wp_parse_url(home_url('/'), PHP_URL_HOST));
+        $hosts = array_values(array_unique(array_filter([$request_host, $site_host])));
+
+        foreach ($hosts as $host) {
+            if (in_array($host, ['localhost', '127.0.0.1', '::1'], true)) {
+                $cached = true;
+                return $cached;
+            }
+            if ((bool) preg_match('/(\.local|\.test|\.localhost)$/', $host)) {
+                $cached = true;
+                return $cached;
+            }
+        }
+
+        $cached = false;
+        return $cached;
+    }
+}
+
 add_action('admin_notices', function () {
     if (!current_user_can('manage_options') && !current_user_can('manage_woocommerce')) {
+        return;
+    }
+
+    if (function_exists('my_theme_is_local_environment') && my_theme_is_local_environment()) {
         return;
     }
 
@@ -9710,6 +12812,79 @@ add_action('admin_notices', function () {
     }
 
     echo '<div class="notice notice-warning"><p><strong>Search indexing đang tắt.</strong> WordPress hiện bật <code>Discourage search engines</code>. <a href="' . esc_url(admin_url('options-reading.php')) . '">Mở Reading Settings</a>.</p></div>';
+});
+
+add_action('admin_head', function () {
+    if (!is_admin() || !function_exists('my_theme_is_local_environment') || !my_theme_is_local_environment()) {
+        return;
+    }
+    ?>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var hiddenPhrases = [
+          'Search indexing đang tắt',
+          'Discourage search engines',
+          'Trình lập lịch hành động:',
+          'past-due action',
+          'Cửa hàng chưa sử dụng kết nối an toàn',
+          'sử dụng HTTPS',
+          'Pinterest for WooCommerce will soon discontinue support',
+          'Please update WooCommerce to take advantage'
+        ];
+
+        var selectors = [
+          '.notice',
+          '.update-nag',
+          '.woocommerce-message',
+          '.woocommerce-layout__notice-list .notice'
+        ];
+
+        var normalize = function (text) {
+          return String(text || '').replace(/\s+/g, ' ').trim().toLowerCase();
+        };
+
+        var hideMatchingNotices = function (root) {
+          selectors.forEach(function (selector) {
+            var nodes = [];
+            if (root.matches && root.matches(selector)) {
+              nodes.push(root);
+            }
+            root.querySelectorAll(selector).forEach(function (node) {
+              nodes.push(node);
+            });
+            nodes.forEach(function (node) {
+              var content = normalize(node.textContent);
+              if (!content) {
+                return;
+              }
+              var matched = hiddenPhrases.some(function (phrase) {
+                return content.indexOf(normalize(phrase)) !== -1;
+              });
+              if (matched) {
+                node.style.display = 'none';
+              }
+            });
+          });
+        };
+
+        hideMatchingNotices(document);
+
+        if ('MutationObserver' in window) {
+          var observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+              mutation.addedNodes.forEach(function (node) {
+                if (!node || node.nodeType !== 1) {
+                  return;
+                }
+                hideMatchingNotices(node);
+              });
+            });
+          });
+          observer.observe(document.body, { childList: true, subtree: true });
+        }
+      });
+    </script>
+    <?php
 });
 
 if (!function_exists('my_theme_render_site_readiness_dashboard_widget')) {
@@ -9934,16 +13109,18 @@ add_action('admin_enqueue_scripts', function ($hook_suffix) {
         return;
     }
 
-    $path = get_theme_file_path('assets/css/admin-catalog-qa.css');
-    if (!is_string($path) || !file_exists($path)) {
+    $asset = function_exists('my_theme_resolve_theme_asset')
+        ? my_theme_resolve_theme_asset('assets/css/admin-catalog-qa.css')
+        : null;
+    if (!is_array($asset) || empty($asset['uri'])) {
         return;
     }
 
     wp_enqueue_style(
         'my-theme-admin-catalog-qa',
-        get_theme_file_uri('assets/css/admin-catalog-qa.css'),
+        $asset['uri'],
         [],
-        (string) filemtime($path)
+        isset($asset['ver']) ? (string) $asset['ver'] : null
     );
 });
 
@@ -10592,51 +13769,8 @@ function my_theme_get_pack_meta_label($selected_pack) {
 
 // Render danh sách giá theo từng dung tích/khối lượng nếu có map giá.
 function my_theme_render_pack_price_list($prod = null, $context = 'loop') {
-    $product = ($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID());
-    if (!$product instanceof WC_Product) {
-        return;
-    }
-
-    $map = my_theme_get_pack_price_map_for_display($product);
-    if (empty($map)) {
-        return;
-    }
-
-    $title = my_theme_get_pack_title_text(array_keys($map));
-    $class = 'product-pack-prices';
-    if ($context === 'single') {
-        $class .= ' product-pack-prices--single';
-    } elseif ($context === 'related') {
-        $class .= ' product-pack-prices--related';
-    } else {
-        $class .= ' product-pack-prices--loop';
-    }
-
-    $display_map = $map;
-    $more_count = 0;
-    $max_items = 0;
-    if ($context === 'related') {
-        $max_items = 2;
-    } elseif ($context !== 'single') {
-        $max_items = 3;
-    }
-    if ($max_items > 0 && count($map) > $max_items) {
-        $display_map = array_slice($map, 0, $max_items, true);
-        $more_count = count($map) - $max_items;
-    }
-
-    echo '<div class="' . esc_attr($class) . '">';
-    echo '<span class="product-pack-prices__label">' . esc_html($title) . '</span>';
-    $is_first = true;
-    foreach ($display_map as $size_label => $price_value) {
-        $item_class = 'product-pack-prices__item' . ($is_first ? ' is-active' : '');
-        echo '<span class="' . esc_attr($item_class) . '" data-pack-size="' . esc_attr($size_label) . '"><strong>' . esc_html($size_label) . '</strong>: ' . wp_kses_post(wc_price($price_value)) . '</span>';
-        $is_first = false;
-    }
-    if ($more_count > 0) {
-        echo '<span class="product-pack-prices__more">+' . esc_html((string) $more_count) . ' mức giá</span>';
-    }
-    echo '</div>';
+    // Hidden by request: keep pack-selection and pricing logic, remove the extra reference list UI.
+    return;
 }
 
 add_action('woocommerce_single_product_summary', function () {
@@ -10647,28 +13781,280 @@ function my_theme_get_default_loop_price($product) {
     if (!$product instanceof WC_Product) {
         return 0.0;
     }
-    $map = my_theme_get_pack_price_map_for_display($product);
-    if (!empty($map)) {
-        $first_key = array_key_first($map);
-        if ($first_key !== null) {
-            return (float) $map[$first_key];
-        }
+
+    $default_pack_context = function_exists('my_theme_get_default_selected_capacity_price_context')
+        ? my_theme_get_default_selected_capacity_price_context($product)
+        : ['capacity' => '', 'price' => 0.0, 'regular_price' => 0.0];
+    if (!empty($default_pack_context['capacity']) && (float) ($default_pack_context['price'] ?? 0) > 0) {
+        return (float) $default_pack_context['price'];
     }
+
     return (float) $product->get_price();
 }
 
-function my_theme_render_loop_price($prod = null) {
-    $product = ($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID());
+function my_theme_get_default_loop_regular_price($product) {
     if (!$product instanceof WC_Product) {
+        return 0.0;
+    }
+
+    $default_pack_context = function_exists('my_theme_get_default_selected_capacity_price_context')
+        ? my_theme_get_default_selected_capacity_price_context($product)
+        : ['capacity' => '', 'price' => 0.0, 'regular_price' => 0.0];
+    if (!empty($default_pack_context['capacity']) && (float) ($default_pack_context['regular_price'] ?? 0) > 0) {
+        return (float) $default_pack_context['regular_price'];
+    }
+
+    return my_theme_get_product_raw_regular_price($product);
+}
+
+if (!function_exists('my_theme_sort_product_ids_by_loop_price')) {
+    function my_theme_sort_product_ids_by_loop_price($product_ids, $direction = 'asc')
+    {
+        static $request_cache = [];
+
+        $source_product_ids = function_exists('my_theme_preserve_product_id_order')
+            ? my_theme_preserve_product_id_order($product_ids)
+            : my_theme_normalize_product_id_list($product_ids);
+        if (empty($source_product_ids)) {
+            return [];
+        }
+
+        $direction = (strtolower((string) $direction) === 'desc') ? 'desc' : 'asc';
+        $cache_version = (string) get_option('my_theme_filter_cache_version', '1');
+        $digest = md5($direction . '|' . implode(',', $source_product_ids));
+        $request_key = $cache_version . ':' . $digest;
+        if (array_key_exists($request_key, $request_cache)) {
+            return $request_cache[$request_key];
+        }
+
+        $cache_key = 'my_theme_loop_price_sorted_ids_v1_' . $cache_version . '_' . $digest;
+        $cached = get_transient($cache_key);
+        if (is_array($cached)) {
+            $allowed_lookup = array_fill_keys($source_product_ids, true);
+            $filtered = [];
+            $seen = [];
+            foreach ($cached as $product_id) {
+                $product_id = (int) $product_id;
+                if ($product_id <= 0 || isset($seen[$product_id]) || !isset($allowed_lookup[$product_id])) {
+                    continue;
+                }
+
+                $seen[$product_id] = true;
+                $filtered[] = $product_id;
+            }
+            foreach ($source_product_ids as $product_id) {
+                $product_id = (int) $product_id;
+                if ($product_id > 0 && !isset($seen[$product_id])) {
+                    $filtered[] = $product_id;
+                }
+            }
+
+            $request_cache[$request_key] = $filtered;
+            return $request_cache[$request_key];
+        }
+
+        $product_map = function_exists('my_theme_get_product_object_map')
+            ? my_theme_get_product_object_map($source_product_ids)
+            : [];
+        if (empty($product_map)) {
+            $request_cache[$request_key] = [];
+            set_transient($cache_key, [], 30 * MINUTE_IN_SECONDS);
+            return [];
+        }
+
+        $sortable = [];
+        foreach ($source_product_ids as $position => $product_id) {
+            $product_id = (int) $product_id;
+            if ($product_id <= 0 || !isset($product_map[$product_id])) {
+                continue;
+            }
+
+            $product = $product_map[$product_id];
+            if (!$product instanceof WC_Product) {
+                continue;
+            }
+
+            $sortable[] = [
+                'id' => $product_id,
+                'position' => (int) $position,
+                'price' => function_exists('my_theme_get_default_loop_price')
+                    ? (float) my_theme_get_default_loop_price($product)
+                    : (float) $product->get_price(),
+            ];
+        }
+
+        if (empty($sortable)) {
+            $request_cache[$request_key] = [];
+            set_transient($cache_key, [], 30 * MINUTE_IN_SECONDS);
+            return [];
+        }
+
+        usort($sortable, static function (array $a, array $b) use ($direction): int {
+            $price_a = isset($a['price']) ? (float) $a['price'] : 0.0;
+            $price_b = isset($b['price']) ? (float) $b['price'] : 0.0;
+            $has_price_a = ($price_a > 0);
+            $has_price_b = ($price_b > 0);
+
+            if ($has_price_a !== $has_price_b) {
+                return $has_price_a ? -1 : 1;
+            }
+
+            if ($has_price_a && $price_a !== $price_b) {
+                if ($direction === 'desc') {
+                    return ($price_a > $price_b) ? -1 : 1;
+                }
+
+                return ($price_a < $price_b) ? -1 : 1;
+            }
+
+            $position_a = isset($a['position']) ? (int) $a['position'] : 0;
+            $position_b = isset($b['position']) ? (int) $b['position'] : 0;
+            if ($position_a === $position_b) {
+                return 0;
+            }
+
+            return ($position_a < $position_b) ? -1 : 1;
+        });
+
+        $sorted_ids = array_values(array_filter(array_map(static function (array $row): int {
+            return isset($row['id']) ? (int) $row['id'] : 0;
+        }, $sortable)));
+
+        $request_cache[$request_key] = $sorted_ids;
+        set_transient($cache_key, $sorted_ids, 30 * MINUTE_IN_SECONDS);
+
+        return $request_cache[$request_key];
+    }
+}
+
+if (!function_exists('my_theme_get_price_sorted_query_product_ids')) {
+    function my_theme_get_price_sorted_query_product_ids($query_args, $direction = 'asc')
+    {
+        static $request_cache = [];
+
+        if (!is_array($query_args) || empty($query_args)) {
+            return [];
+        }
+
+        $direction = (strtolower((string) $direction) === 'desc') ? 'desc' : 'asc';
+        $base_args = $query_args;
+        unset(
+            $base_args['paged'],
+            $base_args['page'],
+            $base_args['posts_per_page'],
+            $base_args['offset'],
+            $base_args['orderby'],
+            $base_args['order'],
+            $base_args['meta_key'],
+            $base_args['fields'],
+            $base_args['no_found_rows'],
+            $base_args['cache_results'],
+            $base_args['update_post_meta_cache'],
+            $base_args['update_post_term_cache'],
+            $base_args['lazy_load_term_meta']
+        );
+
+        $base_args['fields'] = 'ids';
+        $base_args['posts_per_page'] = -1;
+        $base_args['paged'] = 1;
+        $base_args['ignore_sticky_posts'] = true;
+        $base_args['no_found_rows'] = true;
+        $base_args['cache_results'] = false;
+        $base_args['update_post_meta_cache'] = false;
+        $base_args['update_post_term_cache'] = false;
+        $base_args['lazy_load_term_meta'] = false;
+        $base_args['suppress_filters'] = false;
+
+        if (!empty($base_args['post__in']) && is_array($base_args['post__in'])) {
+            $base_args['orderby'] = 'post__in';
+            $base_args['order'] = 'ASC';
+        } else {
+            $base_args['orderby'] = 'date';
+            $base_args['order'] = 'DESC';
+        }
+
+        $cache_version = (string) get_option('my_theme_filter_cache_version', '1');
+        $encoded_args = wp_json_encode($base_args);
+        if (!is_string($encoded_args) || $encoded_args === '') {
+            $encoded_args = serialize($base_args);
+        }
+        $digest = md5($direction . '|' . $encoded_args);
+        $request_key = $cache_version . ':' . $digest;
+        if (array_key_exists($request_key, $request_cache)) {
+            return $request_cache[$request_key];
+        }
+
+        $cache_key = 'my_theme_price_sorted_query_ids_v1_' . $cache_version . '_' . $digest;
+        $cached = get_transient($cache_key);
+        if (is_array($cached)) {
+            $request_cache[$request_key] = function_exists('my_theme_preserve_product_id_order')
+                ? my_theme_preserve_product_id_order($cached)
+                : my_theme_normalize_product_id_list($cached);
+            return $request_cache[$request_key];
+        }
+
+        $matched_ids = get_posts($base_args);
+        $matched_ids = function_exists('my_theme_preserve_product_id_order')
+            ? my_theme_preserve_product_id_order($matched_ids)
+            : my_theme_normalize_product_id_list($matched_ids);
+        if (empty($matched_ids)) {
+            $request_cache[$request_key] = [];
+            set_transient($cache_key, [], 15 * MINUTE_IN_SECONDS);
+            return [];
+        }
+
+        $sorted_ids = function_exists('my_theme_sort_product_ids_by_loop_price')
+            ? my_theme_sort_product_ids_by_loop_price($matched_ids, $direction)
+            : $matched_ids;
+        $sorted_ids = function_exists('my_theme_preserve_product_id_order')
+            ? my_theme_preserve_product_id_order($sorted_ids)
+            : my_theme_normalize_product_id_list($sorted_ids);
+
+        $request_cache[$request_key] = $sorted_ids;
+        set_transient($cache_key, $sorted_ids, 15 * MINUTE_IN_SECONDS);
+
+        return $request_cache[$request_key];
+    }
+}
+
+if (!function_exists('my_theme_get_loop_price_html')) {
+    function my_theme_get_loop_price_html($prod = null, $wrapper_class = 'product-card__price')
+    {
+        $product = function_exists('my_theme_resolve_product')
+            ? my_theme_resolve_product($prod)
+            : (($prod instanceof WC_Product) ? $prod : wc_get_product(get_the_ID()));
+        if (!$product instanceof WC_Product) {
+            return '';
+        }
+
+        $wrapper_class = trim((string) $wrapper_class);
+        if ($wrapper_class === '') {
+            $wrapper_class = 'product-card__price';
+        }
+
+        $price_value = my_theme_get_default_loop_price($product);
+        $regular_price_value = my_theme_get_default_loop_regular_price($product);
+        if ($price_value > 0) {
+            if ($regular_price_value > $price_value) {
+                return '<div class="' . esc_attr($wrapper_class) . '"><del class="product-card__price-regular">' . wp_kses_post(wc_price($regular_price_value)) . '</del><ins class="product-card__price-sale"><span class="product-card__price-value" data-price="' . esc_attr($price_value) . '" data-regular-price="' . esc_attr($regular_price_value) . '">' . wp_kses_post(wc_price($price_value)) . '</span></ins></div>';
+            }
+
+            return '<div class="' . esc_attr($wrapper_class) . '"><span class="product-card__price-value" data-price="' . esc_attr($price_value) . '">' . wp_kses_post(wc_price($price_value)) . '</span></div>';
+        }
+
+        return '<div class="' . esc_attr($wrapper_class) . '"><span class="product-card__price-contact">Liên hệ báo giá</span></div>';
+    }
+}
+
+function my_theme_render_loop_price($prod = null) {
+    $price_html = function_exists('my_theme_get_loop_price_html')
+        ? my_theme_get_loop_price_html($prod, 'product-card__price')
+        : '';
+    if ($price_html === '') {
         return;
     }
 
-    $price_value = my_theme_get_default_loop_price($product);
-    if ($price_value > 0) {
-        echo '<div class="product-card__price"><span class="product-card__price-value" data-price="' . esc_attr($price_value) . '">' . wp_kses_post(wc_price($price_value)) . '</span></div>';
-        return;
-    }
-    echo '<div class="product-card__price"><span class="product-card__price-contact">Liên hệ báo giá</span></div>';
+    echo $price_html;
 }
 
 if (!function_exists('my_theme_render_single_product_quick_facts')) {
@@ -10682,17 +14068,23 @@ if (!function_exists('my_theme_render_single_product_quick_facts')) {
             return;
         }
 
-        $brand_label = function_exists('my_theme_get_product_brand_label')
-            ? trim((string) my_theme_get_product_brand_label($product))
+        $catalog_profile = function_exists('my_theme_get_product_catalog_profile')
+            ? my_theme_get_product_catalog_profile($product)
+            : [];
+        $brand_label = isset($catalog_profile['brand_label'])
+            ? trim((string) $catalog_profile['brand_label'])
             : '';
-        $line_label = function_exists('my_theme_get_product_line_label')
-            ? trim((string) my_theme_get_product_line_label($product))
+        if ($brand_label === 'Sản phẩm') {
+            $brand_label = '';
+        }
+        $line_label = isset($catalog_profile['line_label'])
+            ? trim((string) $catalog_profile['line_label'])
             : '';
-        $line_slug = function_exists('my_theme_get_product_line_slug')
-            ? sanitize_title((string) my_theme_get_product_line_slug($product))
+        $line_slug = isset($catalog_profile['line_slug'])
+            ? sanitize_title((string) $catalog_profile['line_slug'])
             : '';
-        $cat_label = function_exists('my_theme_get_product_primary_category_label')
-            ? trim((string) my_theme_get_product_primary_category_label($product))
+        $cat_label = isset($catalog_profile['category_label'])
+            ? trim((string) $catalog_profile['category_label'])
             : '';
 
         $facts = [];
@@ -10757,17 +14149,19 @@ add_filter('woocommerce_get_price_html', function ($price_html, $product) {
         return $price_html;
     }
 
-    $map = my_theme_get_pack_price_map_for_display($product);
+    $default_pack_context = function_exists('my_theme_get_default_selected_capacity_price_context')
+        ? my_theme_get_default_selected_capacity_price_context($product)
+        : ['capacity' => '', 'price' => 0.0, 'regular_price' => 0.0];
     $raw_price = (float) $product->get_price();
 
-    if (!empty($map)) {
-        if (trim((string) $price_html) !== '' && $raw_price > 0) {
-            return $price_html;
+    if (!empty($default_pack_context['capacity']) && (float) ($default_pack_context['price'] ?? 0) > 0) {
+        $default_price = (float) $default_pack_context['price'];
+        $default_regular_price = max($default_price, (float) ($default_pack_context['regular_price'] ?? 0));
+        if ($default_regular_price > $default_price) {
+            return '<del>' . wp_kses_post(wc_price($default_regular_price)) . '</del><ins>' . wp_kses_post(wc_price($default_price)) . '</ins>';
         }
-        $first_price = (float) reset($map);
-        if ($first_price > 0) {
-            return wc_price($first_price);
-        }
+
+        return wc_price($default_price);
     }
 
     if ($raw_price <= 0) {
@@ -10785,7 +14179,9 @@ add_filter('woocommerce_is_purchasable', function ($purchasable, $product) {
         return false;
     }
 
-    $map = my_theme_get_pack_price_map_for_display($product);
+    $map = function_exists('my_theme_get_pack_price_display_map')
+        ? my_theme_get_pack_price_display_map($product)
+        : my_theme_get_pack_price_map_for_display($product);
     if (!empty($map)) {
         return true;
     }
@@ -10804,7 +14200,15 @@ function my_theme_render_loop_add_to_cart($prod = null) {
         return;
     }
 
-    $price_map = my_theme_get_pack_price_map_for_display($product);
+    $pack_price_maps = function_exists('my_theme_get_pack_price_maps')
+        ? my_theme_get_pack_price_maps($product)
+        : [
+            'raw' => my_theme_get_pack_price_map_for_display($product, false),
+            'display' => my_theme_get_pack_price_map_for_display($product, true),
+        ];
+    $price_map = isset($pack_price_maps['display']) && is_array($pack_price_maps['display'])
+        ? $pack_price_maps['display']
+        : [];
     $has_pack_price = !empty($price_map);
     if ((!$product->is_purchasable() && !$has_pack_price) || !$product->is_in_stock()) {
         echo '<a class="button btn-outline w-100" href="' . esc_url($product->get_permalink()) . '">Xem chi tiết</a>';
@@ -10841,26 +14245,71 @@ function my_theme_render_loop_add_to_cart($prod = null) {
     }
 
     $sizes = array_keys($price_map);
-    $default_size = (string) array_key_first($price_map);
-    $default_price = (float) $price_map[$default_size];
+    $raw_price_map = isset($pack_price_maps['raw']) && is_array($pack_price_maps['raw'])
+        ? $pack_price_maps['raw']
+        : [];
+    $default_context = function_exists('my_theme_get_default_selected_capacity_price_context')
+        ? my_theme_get_default_selected_capacity_price_context($product)
+        : ['capacity' => '', 'price' => 0.0, 'regular_price' => 0.0];
+    $default_size = !empty($default_context['capacity']) ? (string) $default_context['capacity'] : (string) array_key_first($price_map);
+    $default_price = isset($price_map[$default_size]) ? (float) $price_map[$default_size] : (float) ($default_context['price'] ?? 0);
     $picker_label = my_theme_get_pack_picker_text($sizes, false);
+    $loop_sync_onchange = my_theme_get_loop_capacity_inline_onchange();
+    $loop_label_onclick = function_exists('my_theme_get_loop_capacity_label_inline_onclick')
+        ? my_theme_get_loop_capacity_label_inline_onclick()
+        : '';
 
     echo '<form class="loop-pack-form" method="post" action="' . esc_url($product->get_permalink()) . '" enctype="multipart/form-data" data-product-id="' . esc_attr($product->get_id()) . '">';
+    $option_wrap_class = 'loop-pack-picker__options';
+    if (count($sizes) === 1) {
+        $option_wrap_class .= ' loop-pack-picker__options--single';
+    }
+
     echo '<div class="loop-pack-picker">';
     echo '<span class="loop-pack-picker__label">' . esc_html($picker_label) . ':</span>';
-    echo '<div class="loop-pack-picker__options" role="group" aria-label="' . esc_attr($picker_label) . '">';
+    echo '<div class="' . esc_attr($option_wrap_class) . '" role="radiogroup" aria-label="' . esc_attr($picker_label) . '">';
     foreach ($sizes as $size_label) {
-        $is_active = ($size_label === $default_size) ? ' is-active' : '';
-        echo '<button type="button" class="loop-pack-option' . esc_attr($is_active) . '" data-capacity="' . esc_attr($size_label) . '" data-price="' . esc_attr($price_map[$size_label]) . '">' . esc_html($size_label) . '</button>';
+        $input_id = 'loop-pack-' . $product->get_id() . '-' . sanitize_title($size_label);
+        $regular_size_price = isset($raw_price_map[$size_label]) ? (float) $raw_price_map[$size_label] : (float) $price_map[$size_label];
+        echo '<input class="loop-pack-option__input" type="radio" name="selected_capacity" id="' . esc_attr($input_id) . '" value="' . esc_attr($size_label) . '" data-capacity="' . esc_attr($size_label) . '" data-price="' . esc_attr($price_map[$size_label]) . '" data-regular-price="' . esc_attr($regular_size_price) . '" onchange="' . esc_attr($loop_sync_onchange) . '"' . checked($size_label, $default_size, false) . '>';
+        $label_onclick_attr = $loop_label_onclick !== '' ? ' onclick="' . esc_attr($loop_label_onclick) . '"' : '';
+        echo '<label class="loop-pack-option" for="' . esc_attr($input_id) . '" data-capacity="' . esc_attr($size_label) . '" data-price="' . esc_attr($price_map[$size_label]) . '" data-regular-price="' . esc_attr($regular_size_price) . '"' . $label_onclick_attr . '>' . esc_html($size_label) . '</label>';
     }
     echo '</div>';
     echo '</div>';
     echo '<input type="hidden" name="add-to-cart" value="' . esc_attr($product->get_id()) . '">';
     echo '<input type="hidden" name="quantity" value="1">';
-    echo '<input type="hidden" name="selected_capacity" value="' . esc_attr($default_size) . '">';
     echo '<input type="hidden" name="selected_capacity_price" value="' . esc_attr($default_price) . '">';
-    echo '<button type="submit" class="button add_to_cart_button w-100">Thêm vào giỏ</button>';
+    echo '<button type="submit" class="button loop-pack-form__submit w-100">Thêm vào giỏ</button>';
     echo '</form>';
+}
+
+if (!function_exists('my_theme_get_single_capacity_inline_onchange')) {
+    function my_theme_get_single_capacity_inline_onchange()
+    {
+        return "(function(input){var picker=input.closest('.capacity-picker');if(!picker){return;}var raw=input.getAttribute('data-price')||'';var amount=parseFloat(String(raw).replace(/\\./g,'').replace(/,/g,'.').replace(/[^0-9.-]/g,''))||0;var rawRegular=input.getAttribute('data-regular-price')||'';var regularAmount=parseFloat(String(rawRegular).replace(/\\./g,'').replace(/,/g,'.').replace(/[^0-9.-]/g,''))||0;var cap=input.value||input.getAttribute('data-capacity')||'';var current=picker.querySelector('[data-capacity-current]');if(current){current.textContent=cap||'-';}var hidden=picker.querySelector('input[name=\"selected_capacity_price\"]');if(hidden){hidden.value=amount>0?String(Math.round(amount)):'';}Array.prototype.forEach.call(picker.querySelectorAll('.capacity-option'),function(label){label.classList.toggle('is-active',label.getAttribute('for')===input.id);});var summary=picker.closest('.summary');if(!summary){return;}var fmt=function(value){return new Intl.NumberFormat('vi-VN').format(Math.round(value))+'&nbsp;<span class=\"woocommerce-Price-currencySymbol\">&#8363;</span>';};var priceWrap=summary.querySelector('.price');if(priceWrap){if(amount>0&&regularAmount>amount){priceWrap.innerHTML='<del><span class=\"woocommerce-Price-amount amount\"><bdi>'+fmt(regularAmount)+'</bdi></span></del><ins><span class=\"woocommerce-Price-amount amount\"><bdi>'+fmt(amount)+'</bdi></span></ins>';}else if(amount>0){priceWrap.innerHTML='<span class=\"woocommerce-Price-amount amount\"><bdi>'+fmt(amount)+'</bdi></span>';}else{priceWrap.innerHTML='<span class=\"product-price-contact-inline\">Liên hệ báo giá</span>';}}Array.prototype.forEach.call(summary.querySelectorAll('.product-pack-prices__item'),function(item){item.classList.toggle('is-active',(item.getAttribute('data-pack-size')||'')===cap);});})(this)";
+    }
+}
+
+if (!function_exists('my_theme_get_loop_capacity_inline_onchange')) {
+    function my_theme_get_loop_capacity_inline_onchange()
+    {
+        return "(function(input){var form=input.closest('.loop-pack-form');if(!form){return;}var raw=input.getAttribute('data-price')||'';var amount=parseFloat(String(raw).replace(/\\./g,'').replace(/,/g,'.').replace(/[^0-9.-]/g,''))||0;var rawRegular=input.getAttribute('data-regular-price')||'';var regularAmount=parseFloat(String(rawRegular).replace(/\\./g,'').replace(/,/g,'.').replace(/[^0-9.-]/g,''))||0;var cap=input.value||input.getAttribute('data-capacity')||'';var hidden=form.querySelector('input[name=\"selected_capacity_price\"]');if(hidden){hidden.value=amount>0?String(Math.round(amount)):'';}Array.prototype.forEach.call(form.querySelectorAll('.loop-pack-option'),function(label){label.classList.toggle('is-active',label.getAttribute('for')===input.id);});var card=form.closest('.product-card');if(card){var fmt=function(value){return new Intl.NumberFormat('vi-VN').format(Math.round(value))+'&nbsp;<span class=\"woocommerce-Price-currencySymbol\">&#8363;</span>';};var priceWrap=card.querySelector('.product-card__price');if(priceWrap){if(amount>0&&regularAmount>amount){priceWrap.innerHTML='<del class=\"product-card__price-regular\"><span class=\"woocommerce-Price-amount amount\"><bdi>'+fmt(regularAmount)+'</bdi></span></del><ins class=\"product-card__price-sale\"><span class=\"product-card__price-value\" data-price=\"'+String(Math.round(amount))+'\" data-regular-price=\"'+String(Math.round(regularAmount))+'\"><span class=\"woocommerce-Price-amount amount\"><bdi>'+fmt(amount)+'</bdi></span></span></ins>';}else if(amount>0){priceWrap.innerHTML='<span class=\"product-card__price-value\" data-price=\"'+String(Math.round(amount))+'\"><span class=\"woocommerce-Price-amount amount\"><bdi>'+fmt(amount)+'</bdi></span></span>';}else{priceWrap.innerHTML='<span class=\"product-card__price-contact\">Liên hệ báo giá</span>';}}Array.prototype.forEach.call(card.querySelectorAll('.product-pack-prices__item'),function(item){item.classList.toggle('is-active',(item.getAttribute('data-pack-size')||'')===cap);});}})(this)";
+    }
+}
+
+if (!function_exists('my_theme_get_single_capacity_label_inline_onclick')) {
+    function my_theme_get_single_capacity_label_inline_onclick()
+    {
+        return "(function(label){var picker=label.closest('.capacity-picker');if(!picker){return;}var id=label.getAttribute('for')||'';if(!id){return;}var input=null;Array.prototype.some.call(picker.querySelectorAll('.capacity-option__input'),function(node){if((node.id||'')!==id){return false;}input=node;return true;});if(!input){return;}input.checked=true;try{input.dispatchEvent(new Event('change',{bubbles:true}));}catch(e){if(document.createEvent){var evt=document.createEvent('Event');evt.initEvent('change',true,true);input.dispatchEvent(evt);}else if(typeof input.onchange==='function'){input.onchange();}}})(this)";
+    }
+}
+
+if (!function_exists('my_theme_get_loop_capacity_label_inline_onclick')) {
+    function my_theme_get_loop_capacity_label_inline_onclick()
+    {
+        return "(function(label){var form=label.closest('.loop-pack-form');if(!form){return;}var id=label.getAttribute('for')||'';if(!id){return;}var input=null;Array.prototype.some.call(form.querySelectorAll('.loop-pack-option__input'),function(node){if((node.id||'')!==id){return false;}input=node;return true;});if(!input){return;}input.checked=true;try{input.dispatchEvent(new Event('change',{bubbles:true}));}catch(e){if(document.createEvent){var evt=document.createEvent('Event');evt.initEvent('change',true,true);input.dispatchEvent(evt);}else if(typeof input.onchange==='function'){input.onchange();}}})(this)";
+    }
 }
 
 // --- Simple product: picker dung tích đổi giá theo bảng map ---
@@ -10869,70 +14318,491 @@ function my_theme_render_capacity_price_picker() {
     global $product;
     if (!$product instanceof WC_Product || $product->is_type('variable')) return; // biến thể dùng core
 
-    $map = my_theme_get_pack_price_map_for_display($product);
+    $pack_price_maps = function_exists('my_theme_get_pack_price_maps')
+        ? my_theme_get_pack_price_maps($product)
+        : [
+            'raw' => my_theme_get_pack_price_map_for_display($product, false),
+            'display' => my_theme_get_pack_price_map_for_display($product, true),
+        ];
+    $raw_map = isset($pack_price_maps['raw']) && is_array($pack_price_maps['raw'])
+        ? $pack_price_maps['raw']
+        : [];
+    $map = isset($pack_price_maps['display']) && is_array($pack_price_maps['display'])
+        ? $pack_price_maps['display']
+        : [];
     if (empty($map)) return;
 
     $caps = array_keys($map);
     $picker_label = my_theme_get_pack_picker_text($caps, true);
     $picker_aria = my_theme_get_pack_picker_text($caps, false);
+    $single_sync_onchange = my_theme_get_single_capacity_inline_onchange();
+    $single_label_onclick = function_exists('my_theme_get_single_capacity_label_inline_onclick')
+        ? my_theme_get_single_capacity_label_inline_onclick()
+        : '';
 
-    $default_cap = $caps[0];
-    $default_price = $map[$default_cap];
+    $default_context = function_exists('my_theme_get_default_selected_capacity_price_context')
+        ? my_theme_get_default_selected_capacity_price_context($product)
+        : ['capacity' => '', 'price' => 0.0, 'regular_price' => 0.0];
+    $default_cap = !empty($default_context['capacity']) ? (string) $default_context['capacity'] : (string) $caps[0];
+    $default_price = isset($map[$default_cap]) ? (float) $map[$default_cap] : (float) ($default_context['price'] ?? 0);
+    ?>
+    <?php
+    $option_wrap_class = 'capacity-picker__options';
+    if (count($caps) === 1) {
+        $option_wrap_class .= ' capacity-picker__options--single';
+    }
     ?>
     <div class="capacity-picker" data-product-id="<?php echo esc_attr($product->get_id()); ?>">
       <div class="capacity-picker__label"><?php echo esc_html($picker_label); ?></div>
-      <div class="capacity-picker__options" role="group" aria-label="<?php echo esc_attr($picker_aria); ?>">
+      <div class="<?php echo esc_attr($option_wrap_class); ?>" role="radiogroup" aria-label="<?php echo esc_attr($picker_aria); ?>">
         <?php foreach ($caps as $cap) : ?>
-          <button type="button" class="capacity-option<?php echo $cap === $default_cap ? ' is-active' : ''; ?>" data-capacity="<?php echo esc_attr($cap); ?>" data-price="<?php echo esc_attr($map[$cap]); ?>">
+          <?php $input_id = 'capacity-option-' . $product->get_id() . '-' . sanitize_title($cap); ?>
+          <input
+            class="capacity-option__input"
+            type="radio"
+            name="selected_capacity"
+            id="<?php echo esc_attr($input_id); ?>"
+            value="<?php echo esc_attr($cap); ?>"
+            data-capacity="<?php echo esc_attr($cap); ?>"
+            data-price="<?php echo esc_attr($map[$cap]); ?>"
+            data-regular-price="<?php echo esc_attr($raw_map[$cap] ?? $map[$cap]); ?>"
+            onchange="<?php echo esc_attr($single_sync_onchange); ?>"
+            <?php checked($cap, $default_cap); ?>
+          >
+          <label class="capacity-option" for="<?php echo esc_attr($input_id); ?>" data-capacity="<?php echo esc_attr($cap); ?>" data-price="<?php echo esc_attr($map[$cap]); ?>" data-regular-price="<?php echo esc_attr($raw_map[$cap] ?? $map[$cap]); ?>"<?php echo $single_label_onclick !== '' ? ' onclick="' . esc_attr($single_label_onclick) . '"' : ''; ?>>
             <?php echo esc_html($cap); ?>
-          </button>
+          </label>
         <?php endforeach; ?>
       </div>
       <div class="capacity-picker__current">Đang chọn: <strong data-capacity-current><?php echo esc_html($default_cap); ?></strong></div>
-      <input type="hidden" name="selected_capacity" value="<?php echo esc_attr($default_cap); ?>">
       <input type="hidden" name="selected_capacity_price" value="<?php echo esc_attr($default_price); ?>">
     </div>
     <?php
 }
 add_action('woocommerce_before_add_to_cart_button', 'my_theme_render_capacity_price_picker', 8);
 
+if (!function_exists('my_theme_get_selected_capacity_price_context')) {
+    function my_theme_get_selected_capacity_price_context($product, $selected_capacity = '')
+    {
+        $selected_capacity = trim((string) $selected_capacity);
+        if ($selected_capacity === '' || !$product instanceof WC_Product) {
+            return [
+                'capacity' => '',
+                'price' => 0.0,
+                'regular_price' => 0.0,
+            ];
+        }
+
+        $pack_price_maps = function_exists('my_theme_get_pack_price_maps')
+            ? my_theme_get_pack_price_maps($product)
+            : [
+                'raw' => my_theme_get_pack_price_map_for_display($product, false),
+                'display' => my_theme_get_pack_price_map_for_display($product, true),
+            ];
+        $display_map = isset($pack_price_maps['display']) && is_array($pack_price_maps['display'])
+            ? $pack_price_maps['display']
+            : [];
+        if (empty($display_map)) {
+            return [
+                'capacity' => '',
+                'price' => 0.0,
+                'regular_price' => 0.0,
+            ];
+        }
+
+        if (!isset($display_map[$selected_capacity])) {
+            return [
+                'capacity' => '',
+                'price' => 0.0,
+                'regular_price' => 0.0,
+            ];
+        }
+
+        $raw_map = isset($pack_price_maps['raw']) && is_array($pack_price_maps['raw'])
+            ? $pack_price_maps['raw']
+            : [];
+        $selected_price = (float) $display_map[$selected_capacity];
+        $selected_regular_price = isset($raw_map[$selected_capacity])
+            ? (float) $raw_map[$selected_capacity]
+            : $selected_price;
+
+        return [
+            'capacity' => $selected_capacity,
+            'price' => $selected_price,
+            'regular_price' => max($selected_price, $selected_regular_price),
+        ];
+    }
+}
+
+if (!function_exists('my_theme_get_default_selected_capacity_price_context')) {
+    function my_theme_get_default_selected_capacity_price_context($product)
+    {
+        if (!$product instanceof WC_Product) {
+            return [
+                'capacity' => '',
+                'price' => 0.0,
+                'regular_price' => 0.0,
+            ];
+        }
+
+        $display_map = function_exists('my_theme_get_pack_price_display_map')
+            ? my_theme_get_pack_price_display_map($product)
+            : my_theme_get_pack_price_map_for_display($product);
+        if (empty($display_map)) {
+            return [
+                'capacity' => '',
+                'price' => 0.0,
+                'regular_price' => 0.0,
+            ];
+        }
+
+        $default_capacity = (string) array_key_first($display_map);
+        if ($default_capacity === '') {
+            return [
+                'capacity' => '',
+                'price' => 0.0,
+                'regular_price' => 0.0,
+            ];
+        }
+
+        return my_theme_get_selected_capacity_price_context($product, $default_capacity);
+    }
+}
+
+if (!function_exists('my_theme_get_pack_cart_item_unique_key')) {
+    function my_theme_get_pack_cart_item_unique_key($product_id, $selected_capacity = '')
+    {
+        $product_id = (int) $product_id;
+        $selected_capacity = trim((string) $selected_capacity);
+        if ($product_id <= 0 || $selected_capacity === '') {
+            return '';
+        }
+
+        return md5(implode('|', [
+            'pack',
+            (string) $product_id,
+            $selected_capacity,
+        ]));
+    }
+}
+
+if (!function_exists('my_theme_normalize_cart_item_identity_value')) {
+    function my_theme_normalize_cart_item_identity_value($value)
+    {
+        if (is_null($value) || is_scalar($value)) {
+            return $value;
+        }
+
+        if (!is_array($value)) {
+            return null;
+        }
+
+        $normalized = [];
+        foreach ($value as $item_key => $item_value) {
+            if (!is_scalar($item_key) && !is_null($item_key)) {
+                continue;
+            }
+
+            $normalized_value = my_theme_normalize_cart_item_identity_value($item_value);
+            if ($normalized_value === null && !is_null($item_value)) {
+                continue;
+            }
+
+            $normalized[$item_key] = $normalized_value;
+        }
+
+        if (!empty($normalized) && array_keys($normalized) !== range(0, count($normalized) - 1)) {
+            ksort($normalized);
+        }
+
+        return $normalized;
+    }
+}
+
+if (!function_exists('my_theme_sync_cart_item_selected_capacity')) {
+    function my_theme_sync_cart_item_selected_capacity($cart_item, $product = null)
+    {
+        if (!is_array($cart_item)) {
+            return $cart_item;
+        }
+
+        $product = ($product instanceof WC_Product)
+            ? $product
+            : ((isset($cart_item['data']) && $cart_item['data'] instanceof WC_Product) ? $cart_item['data'] : null);
+        if (!$product instanceof WC_Product) {
+            return $cart_item;
+        }
+
+        $selected_capacity = isset($cart_item['selected_capacity']) ? trim((string) $cart_item['selected_capacity']) : '';
+        $selected_context = [
+            'capacity' => '',
+            'price' => 0.0,
+            'regular_price' => 0.0,
+        ];
+
+        if ($selected_capacity !== '') {
+            $selected_context = my_theme_get_selected_capacity_price_context($product, $selected_capacity);
+        }
+
+        if ($selected_context['capacity'] === '' || $selected_context['price'] <= 0) {
+            $selected_context = my_theme_get_default_selected_capacity_price_context($product);
+        }
+
+        if ($selected_context['capacity'] !== '' && $selected_context['price'] > 0) {
+            $cart_item['selected_capacity'] = (string) $selected_context['capacity'];
+            $cart_item['selected_capacity_price'] = (float) $selected_context['price'];
+            $cart_item['selected_capacity_regular_price'] = (float) $selected_context['regular_price'];
+            $pack_key = my_theme_get_pack_cart_item_unique_key($product->get_id(), $selected_context['capacity']);
+            if ($pack_key !== '') {
+                $cart_item['my_theme_pack_key'] = $pack_key;
+            }
+        } else {
+            unset(
+                $cart_item['selected_capacity'],
+                $cart_item['selected_capacity_price'],
+                $cart_item['selected_capacity_regular_price'],
+                $cart_item['my_theme_pack_key'],
+                $cart_item['unique_key']
+            );
+        }
+
+        return $cart_item;
+    }
+}
+
+if (!function_exists('my_theme_get_cart_item_identity_data')) {
+    function my_theme_get_cart_item_identity_data($cart_item)
+    {
+        if (!is_array($cart_item)) {
+            return [];
+        }
+
+        $identity_data = [];
+        $excluded_keys = [
+            'key',
+            'product_id',
+            'variation_id',
+            'variation',
+            'quantity',
+            'data',
+            'data_hash',
+            'line_tax_data',
+            'line_subtotal',
+            'line_subtotal_tax',
+            'line_total',
+            'line_tax',
+            'selected_capacity_price',
+            'selected_capacity_regular_price',
+            'unique_key',
+            'my_theme_pack_key',
+        ];
+
+        foreach ($cart_item as $data_key => $data_value) {
+            if (in_array((string) $data_key, $excluded_keys, true)) {
+                continue;
+            }
+
+            $normalized_value = function_exists('my_theme_normalize_cart_item_identity_value')
+                ? my_theme_normalize_cart_item_identity_value($data_value)
+                : $data_value;
+            if ($normalized_value === null && !is_null($data_value)) {
+                continue;
+            }
+
+            $identity_data[$data_key] = $normalized_value;
+        }
+
+        if (!empty($cart_item['selected_capacity'])) {
+            $product_id = isset($cart_item['product_id']) ? (int) $cart_item['product_id'] : 0;
+            $pack_key = my_theme_get_pack_cart_item_unique_key($product_id, (string) $cart_item['selected_capacity']);
+            if ($pack_key !== '') {
+                $identity_data['my_theme_pack_key'] = $pack_key;
+            }
+        } else {
+            unset($identity_data['my_theme_pack_key']);
+        }
+
+        return $identity_data;
+    }
+}
+
 // Lưu dung tích vào cart item
+add_filter('woocommerce_add_to_cart_validation', function ($passed, $product_id, $quantity, $variation_id = 0, $variations = [], $cart_item_data = []) {
+    if (!$passed || !isset($_POST['selected_capacity'])) {
+        return $passed;
+    }
+
+    $product = wc_get_product($product_id);
+    if (!$product instanceof WC_Product) {
+        return $passed;
+    }
+
+    $display_map = function_exists('my_theme_get_pack_price_display_map')
+        ? my_theme_get_pack_price_display_map($product)
+        : my_theme_get_pack_price_map_for_display($product);
+    if (empty($display_map)) {
+        return $passed;
+    }
+
+    $selected_capacity = wc_clean(wp_unslash($_POST['selected_capacity']));
+    $selected_context = ($selected_capacity !== '')
+        ? my_theme_get_selected_capacity_price_context($product, $selected_capacity)
+        : ['capacity' => '', 'price' => 0.0, 'regular_price' => 0.0];
+    if ($selected_context['capacity'] !== '' && $selected_context['price'] > 0) {
+        return $passed;
+    }
+
+    if (function_exists('wc_add_notice')) {
+        wc_add_notice('Quy cách bạn chọn không còn hợp lệ. Vui lòng chọn lại trước khi thêm vào giỏ.', 'error');
+    }
+
+    return false;
+}, 20, 6);
+
 add_filter('woocommerce_add_cart_item_data', function ($cart_item_data, $product_id) {
     $selected_capacity = '';
     if (isset($_POST['selected_capacity'])) {
         $selected_capacity = wc_clean(wp_unslash($_POST['selected_capacity']));
     }
-    $selected_price = 0.0;
-    if (isset($_POST['selected_capacity_price'])) {
-        $selected_price = (float) wc_clean(wp_unslash($_POST['selected_capacity_price']));
+    $product = wc_get_product($product_id);
+    if ($product instanceof WC_Product) {
+        $selected_context = ($selected_capacity !== '')
+            ? my_theme_get_selected_capacity_price_context($product, $selected_capacity)
+            : my_theme_get_default_selected_capacity_price_context($product);
+        if ($selected_context['capacity'] !== '' && $selected_context['price'] > 0) {
+            $selected_capacity = (string) $selected_context['capacity'];
+        } elseif ($selected_capacity !== '') {
+            $selected_capacity = '';
+        }
     }
 
     if ($selected_capacity !== '') {
-        $product = wc_get_product($product_id);
-        if ($product instanceof WC_Product) {
-            $price_map = my_theme_get_pack_price_map_for_display($product);
-            if (!empty($price_map)) {
-                if (!isset($price_map[$selected_capacity])) {
-                    $first_key = (string) array_key_first($price_map);
-                    if ($first_key !== '') {
-                        $selected_capacity = $first_key;
-                    }
-                }
-                if ($selected_capacity !== '' && isset($price_map[$selected_capacity])) {
-                    $selected_price = (float) $price_map[$selected_capacity];
-                }
-            }
-        }
         $cart_item_data['selected_capacity'] = $selected_capacity;
+        $pack_key = my_theme_get_pack_cart_item_unique_key($product_id, $selected_capacity);
+        if ($pack_key !== '') {
+            $cart_item_data['my_theme_pack_key'] = $pack_key;
+        }
     }
-    if ($selected_price > 0) {
-        $cart_item_data['selected_capacity_price'] = $selected_price;
-    }
-    if (!empty($cart_item_data)) {
-        $cart_item_data['unique_key'] = md5(microtime().rand());
-    }
+
     return $cart_item_data;
 }, 10, 2);
+
+add_filter('woocommerce_add_cart_item', function ($cart_item) {
+    return function_exists('my_theme_sync_cart_item_selected_capacity')
+        ? my_theme_sync_cart_item_selected_capacity($cart_item)
+        : $cart_item;
+}, 20);
+
+add_filter('woocommerce_get_cart_item_from_session', function ($cart_item, $values, $cart_item_key) {
+    if (!is_array($cart_item) || !is_array($values)) {
+        return $cart_item;
+    }
+
+    if (!empty($values['selected_capacity'])) {
+        $cart_item['selected_capacity'] = (string) $values['selected_capacity'];
+    }
+    if (!empty($values['my_theme_pack_key'])) {
+        $cart_item['my_theme_pack_key'] = (string) $values['my_theme_pack_key'];
+    }
+
+    unset($cart_item['unique_key']);
+
+    return function_exists('my_theme_sync_cart_item_selected_capacity')
+        ? my_theme_sync_cart_item_selected_capacity($cart_item)
+        : $cart_item;
+}, 20, 3);
+
+add_action('woocommerce_cart_loaded_from_session', function ($cart) {
+    if (!$cart instanceof WC_Cart || empty($cart->cart_contents) || !method_exists($cart, 'generate_cart_id')) {
+        return;
+    }
+
+    $normalized_contents = [];
+    $did_change = false;
+
+    foreach ($cart->cart_contents as $cart_item_key => $cart_item) {
+        if (!is_array($cart_item)) {
+            continue;
+        }
+
+        if (function_exists('my_theme_sync_cart_item_selected_capacity')) {
+            $cart_item = my_theme_sync_cart_item_selected_capacity($cart_item);
+        }
+
+        $product_id = isset($cart_item['product_id']) ? (int) $cart_item['product_id'] : 0;
+        $variation_id = isset($cart_item['variation_id']) ? (int) $cart_item['variation_id'] : 0;
+        $variation = isset($cart_item['variation']) && is_array($cart_item['variation']) ? $cart_item['variation'] : [];
+        $identity_data = function_exists('my_theme_get_cart_item_identity_data')
+            ? my_theme_get_cart_item_identity_data($cart_item)
+            : [];
+        $normalized_key = $cart->generate_cart_id($product_id, $variation_id, $variation, $identity_data);
+        if ($normalized_key === '') {
+            $normalized_key = (string) $cart_item_key;
+        }
+
+        if (isset($normalized_contents[$normalized_key]) && is_array($normalized_contents[$normalized_key])) {
+            $normalized_contents[$normalized_key]['quantity'] = (int) ($normalized_contents[$normalized_key]['quantity'] ?? 0) + (int) ($cart_item['quantity'] ?? 0);
+            $did_change = true;
+            continue;
+        }
+
+        $normalized_contents[$normalized_key] = $cart_item;
+        if ((string) $cart_item_key !== $normalized_key) {
+            $did_change = true;
+        }
+    }
+
+    if ($did_change) {
+        $cart->cart_contents = $normalized_contents;
+    }
+}, 20);
+
+if (!function_exists('my_theme_get_cart_item_price_html')) {
+    function my_theme_get_cart_item_price_html($cart_item)
+    {
+        if (!is_array($cart_item)) {
+            return '';
+        }
+
+        $product = isset($cart_item['data']) ? $cart_item['data'] : null;
+        if ($product instanceof WC_Product && function_exists('my_theme_sync_cart_item_selected_capacity')) {
+            $cart_item = my_theme_sync_cart_item_selected_capacity($cart_item, $product);
+        }
+
+        $selected_capacity = isset($cart_item['selected_capacity']) ? trim((string) $cart_item['selected_capacity']) : '';
+        $selected_price = isset($cart_item['selected_capacity_price']) ? (float) $cart_item['selected_capacity_price'] : 0.0;
+        $selected_regular_price = isset($cart_item['selected_capacity_regular_price']) ? (float) $cart_item['selected_capacity_regular_price'] : 0.0;
+
+        if ($selected_capacity !== '' && $selected_price > 0) {
+            if ($selected_regular_price > $selected_price) {
+                return '<span class="cart-item__price-value cart-item__price-value--sale"><del>' . wp_kses_post(wc_price($selected_regular_price)) . '</del><ins>' . wp_kses_post(wc_price($selected_price)) . '</ins></span>';
+            }
+
+            return '<span class="cart-item__price-value">' . wp_kses_post(wc_price($selected_price)) . '</span>';
+        }
+
+        if ($product instanceof WC_Product) {
+            $price_value = function_exists('my_theme_get_default_loop_price')
+                ? (float) my_theme_get_default_loop_price($product)
+                : (float) $product->get_price();
+            $regular_price_value = function_exists('my_theme_get_default_loop_regular_price')
+                ? (float) my_theme_get_default_loop_regular_price($product)
+                : (float) $product->get_regular_price();
+
+            if ($price_value > 0) {
+                if ($regular_price_value > $price_value) {
+                    return '<span class="cart-item__price-value cart-item__price-value--sale"><del>' . wp_kses_post(wc_price($regular_price_value)) . '</del><ins>' . wp_kses_post(wc_price($price_value)) . '</ins></span>';
+                }
+
+                return '<span class="cart-item__price-value">' . wp_kses_post(wc_price($price_value)) . '</span>';
+            }
+
+            return '<span class="cart-item__price-value">Liên hệ báo giá</span>';
+        }
+
+        return '';
+    }
+}
 
 // Hiển thị dung tích trong cart/checkout
 add_filter('woocommerce_get_item_data', function ($item_data, $cart_item) {
@@ -10946,6 +14816,13 @@ add_filter('woocommerce_get_item_data', function ($item_data, $cart_item) {
     return $item_data;
 }, 10, 2);
 
+add_filter('woocommerce_cart_item_price', function ($price_html, $cart_item) {
+    $selected_price_html = function_exists('my_theme_get_cart_item_price_html')
+        ? my_theme_get_cart_item_price_html($cart_item)
+        : '';
+    return ($selected_price_html !== '') ? $selected_price_html : $price_html;
+}, 20, 2);
+
 // Lưu dung tích đã chọn vào order items để hiển thị trong admin/email.
 add_action('woocommerce_checkout_create_order_line_item', function ($item, $cart_item_key, $values) {
     if (!empty($values['selected_capacity'])) {
@@ -10957,12 +14834,50 @@ add_action('woocommerce_checkout_create_order_line_item', function ($item, $cart
 // Set giá theo dung tích đã chọn
 add_action('woocommerce_before_calculate_totals', function ($cart) {
     if (is_admin() && !defined('DOING_AJAX')) return;
-    foreach ($cart->get_cart() as $cart_item_key => $cart_item) {
-        if (!empty($cart_item['selected_capacity_price'])) {
-            $cart_item['data']->set_price((float) $cart_item['selected_capacity_price']);
-        }
+    if (!$cart instanceof WC_Cart) {
+        return;
     }
-}, 10, 1);
+
+    foreach ($cart->get_cart() as $cart_item_key => $cart_item) {
+        if (empty($cart_item['data']) || !$cart_item['data'] instanceof WC_Product) {
+            continue;
+        }
+
+        $product_for_cart = null;
+        $product_id = (int) $cart_item['data']->get_id();
+        if ($product_id > 0) {
+            $base_product = wc_get_product($product_id);
+            if ($base_product instanceof WC_Product) {
+                $product_for_cart = clone $base_product;
+            }
+        }
+        if (!$product_for_cart instanceof WC_Product) {
+            $product_for_cart = clone $cart_item['data'];
+        }
+
+        $cart_item['data'] = $product_for_cart;
+        if (function_exists('my_theme_sync_cart_item_selected_capacity')) {
+            $cart_item = my_theme_sync_cart_item_selected_capacity($cart_item, $product_for_cart);
+        }
+
+        $selected_capacity = !empty($cart_item['selected_capacity']) ? (string) $cart_item['selected_capacity'] : '';
+        $selected_price = !empty($cart_item['selected_capacity_price']) ? (float) $cart_item['selected_capacity_price'] : 0.0;
+        $selected_regular_price = !empty($cart_item['selected_capacity_regular_price'])
+            ? (float) $cart_item['selected_capacity_regular_price']
+            : $selected_price;
+
+        if ($selected_capacity !== '' && $selected_price > 0) {
+            my_theme_apply_runtime_price_override($product_for_cart, $selected_price, $selected_regular_price);
+            $product_for_cart->set_price($selected_price);
+            $product_for_cart->set_regular_price(max($selected_price, $selected_regular_price));
+            $product_for_cart->set_sale_price($selected_regular_price > $selected_price ? $selected_price : '');
+        } else {
+            my_theme_apply_runtime_price_override($product_for_cart, 0.0, 0.0);
+        }
+
+        $cart->cart_contents[$cart_item_key] = $cart_item;
+    }
+}, 100, 1);
 
 // Helper: download remote image and attach to product (used by official import)
 if (!function_exists('my_theme_download_remote_image')) {
@@ -12060,7 +15975,9 @@ add_action('admin_init', function () {
             $product->set_weight('');
         }
 
-        $price_map = my_theme_get_pack_price_map_for_display($product);
+        $price_map = function_exists('my_theme_get_pack_price_raw_map')
+            ? my_theme_get_pack_price_raw_map($product)
+            : my_theme_get_pack_price_map_for_display($product, false);
         if (!empty($price_map)) {
             $map_parts = [];
             foreach ($price_map as $size_label => $price_value) {
@@ -12119,7 +16036,9 @@ add_action('admin_init', function () {
         }
         $checked++;
 
-        $existing_map = my_theme_get_pack_price_map_for_display($product);
+        $existing_map = function_exists('my_theme_get_pack_price_raw_map')
+            ? my_theme_get_pack_price_raw_map($product)
+            : my_theme_get_pack_price_map_for_display($product, false);
         if (!$force && !empty($existing_map)) {
             $skipped++;
             continue;
@@ -12221,7 +16140,9 @@ add_action('admin_init', function () {
             continue;
         }
 
-        $map = my_theme_get_pack_price_map_for_display($product);
+        $map = function_exists('my_theme_get_pack_price_raw_map')
+            ? my_theme_get_pack_price_raw_map($product)
+            : my_theme_get_pack_price_map_for_display($product, false);
         $groups = my_theme_get_product_pack_groups($product);
         $capacity = isset($groups['capacity']) ? (array) $groups['capacity'] : [];
         $weight = isset($groups['weight']) ? (array) $groups['weight'] : [];
@@ -12267,8 +16188,14 @@ if (!function_exists('my_theme_render_single_product_meta_clean')) {
             return;
         }
 
-        $brand = my_theme_get_product_brand_label($product);
-        $category = my_theme_get_product_primary_category_label($product);
+        $catalog_profile = function_exists('my_theme_get_product_catalog_profile')
+            ? my_theme_get_product_catalog_profile($product)
+            : [];
+        $brand = isset($catalog_profile['brand_label']) ? trim((string) $catalog_profile['brand_label']) : '';
+        if ($brand === 'Sản phẩm') {
+            $brand = '';
+        }
+        $category = isset($catalog_profile['category_label']) ? trim((string) $catalog_profile['category_label']) : '';
 
         if ($brand === '' && $category === '') {
             return;
@@ -12304,14 +16231,43 @@ if (!function_exists('my_theme_render_single_contact_actions')) {
             return;
         }
 
-        $business = my_theme_get_business_profile();
-        $quote_url = home_url('/lien-he');
+        $store_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
+        $quote_url = home_url('/lien-he/');
+        $colour_options = function_exists('my_theme_get_single_product_colour_picker_options')
+            ? my_theme_get_single_product_colour_picker_options($product)
+            : [];
+        $has_colour_picker = !empty($colour_options);
+        $default_colour = $has_colour_picker ? $colour_options[0] : [];
+        $default_colour_code = trim((string) ($default_colour['code'] ?? ''));
+        $default_colour_name = trim((string) ($default_colour['name'] ?? ''));
+        $default_product_code = trim((string) ($default_colour['product_code'] ?? ''));
+        $catalog_profile = function_exists('my_theme_get_product_catalog_profile')
+            ? my_theme_get_product_catalog_profile($product)
+            : [];
+        $product_name = isset($catalog_profile['display_name']) && (string) $catalog_profile['display_name'] !== ''
+            ? trim((string) $catalog_profile['display_name'])
+            : trim((string) $product->get_name());
+        if ($has_colour_picker) {
+            $quote_url = add_query_arg([
+                'lead_product' => $product_name,
+                'lead_colour_code' => $default_colour_code,
+                'lead_colour_name' => $default_colour_name,
+                'lead_product_code' => $default_product_code,
+                'source' => 'product-colour-picker',
+            ], $quote_url);
+        }
 
         echo '<div class="single-product-actions single-product-actions--contact">';
-        echo '<a class="btn btn-primary" href="' . esc_url($business['phone_href']) . '">Gọi báo giá</a>';
-        echo '<a class="btn btn-outline" href="' . esc_url($business['zalo_url']) . '" target="_blank" rel="noopener">Zalo tư vấn</a>';
-        echo '<a class="btn btn-accent" href="' . esc_url($quote_url) . '">Gửi yêu cầu</a>';
+        echo '<a class="btn btn-primary" href="' . esc_url(isset($store_snapshot['phone_href']) ? (string) $store_snapshot['phone_href'] : 'tel:0944857999') . '" data-colour-cta="phone" data-base-href="' . esc_url(isset($store_snapshot['phone_href']) ? (string) $store_snapshot['phone_href'] : 'tel:0944857999') . '"><span data-phone-label>' . esc_html($has_colour_picker && $default_colour_code !== '' ? ('Gọi báo giá mã ' . $default_colour_code) : 'Gọi báo giá') . '</span></a>';
+        echo '<a class="btn btn-outline" href="' . esc_url(isset($store_snapshot['zalo_url']) ? (string) $store_snapshot['zalo_url'] : 'https://zalo.me/0944857999') . '" data-colour-cta="zalo" data-base-href="' . esc_url(isset($store_snapshot['zalo_url']) ? (string) $store_snapshot['zalo_url'] : 'https://zalo.me/0944857999') . '" target="_blank" rel="noopener">Zalo tư vấn</a>';
+        echo '<a class="btn btn-accent" href="' . esc_url($quote_url) . '" data-colour-cta="contact" data-base-href="' . esc_url(home_url('/lien-he/')) . '">Gửi yêu cầu</a>';
         echo '</div>';
+        if ($has_colour_picker) {
+            $default_selection_text = $default_product_code !== ''
+                ? $default_product_code . ($default_colour_name !== '' ? ' - ' . $default_colour_name : '')
+                : $default_colour_code;
+            echo '<p class="single-product-actions__selection-note" data-colour-selection-note>Đang chọn mã ' . esc_html($default_selection_text) . '. Khi gửi yêu cầu, form sẽ mang theo đúng mã này.</p>';
+        }
     }
 }
 
@@ -12549,12 +16505,22 @@ add_action('template_redirect', function () {
     if ($request_path === '') {
         return;
     }
+    $decoded_request_path = trim((string) rawurldecode($request_path), '/');
+    if ($decoded_request_path !== '' && sanitize_title($decoded_request_path) === 'trang-mau') {
+        $sample_page = get_page_by_path('trang-mau');
+        if ($sample_page instanceof WP_Post) {
+            wp_safe_redirect(get_permalink($sample_page), 301);
+        } else {
+            wp_safe_redirect(home_url('/'), 301);
+        }
+        exit;
+    }
 
-    $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
+    $shop_url = function_exists('my_theme_get_shop_url') ? my_theme_get_shop_url() : home_url('/shop/');
     $legacy_map = [
-        'thanh-toan' => wc_get_checkout_url(),
-        'gio-hang' => wc_get_cart_url(),
-        'tinh-son' => home_url('/#tinh-son'),
+        'thanh-toan' => function_exists('my_theme_get_checkout_url_safe') ? my_theme_get_checkout_url_safe() : home_url('/thanh-toan'),
+        'gio-hang' => function_exists('my_theme_get_cart_url_safe') ? my_theme_get_cart_url_safe() : home_url('/gio-hang'),
+        'tinh-son' => my_theme_get_paint_calculator_url(),
         'product/son-dulux-easyclean-noi-that' => home_url('/product/duluxeasycleanlauchuihieuquabematmo/'),
         'product/son-dulux-weathershield-ngoai-that' => home_url('/product/duluxweathershieldbematbong/'),
         'product/son-maxilite-noi-that-5l' => home_url('/product/sonnuocnoithatmaxilitehi-covertudulux/'),
@@ -12562,6 +16528,11 @@ add_action('template_redirect', function () {
         'product/bot-tret-kova-noi-that' => add_query_arg('q', 'kova', $shop_url),
         'product/bot-tret-kova-ngoai-that' => add_query_arg('q', 'kova', $shop_url),
         'product/son-kova-ngoai-that-effective-chuyen-dung' => add_query_arg('q', 'kova', $shop_url),
+        'product/webercolor-classic' => home_url('/product/keo-cha-ron-webercolor-classic/'),
+        'product/webercolor-classic-2023' => home_url('/product/keo-cha-ron-webercolor-classic/'),
+        'product/webercolor-classic-ps' => home_url('/product/keo-cha-ron-webercolor-classic/'),
+        'product/webertai-gres' => home_url('/product/keo-dan-gach-webertai-gres-40kg/'),
+        'product/webertai-vis' => home_url('/product/keo-dan-gach-webertai-vis-40kg/'),
     ];
 
     if (!isset($legacy_map[$request_path])) {
@@ -12571,3 +16542,164 @@ add_action('template_redirect', function () {
     wp_safe_redirect($legacy_map[$request_path], 301);
     exit;
 }, 1);
+
+if (!function_exists('my_theme_render_sitemap_urlset')) {
+    function my_theme_render_sitemap_urlset($post_type = 'page')
+    {
+        $post_type = sanitize_key((string) $post_type);
+        $allowed = ['page', 'post', 'product'];
+        if (!in_array($post_type, $allowed, true)) {
+            $post_type = 'page';
+        }
+
+        $ids = get_posts([
+            'post_type'      => $post_type,
+            'post_status'    => 'publish',
+            'posts_per_page' => 5000,
+            'fields'         => 'ids',
+            'orderby'        => 'modified',
+            'order'          => 'DESC',
+        ]);
+
+        echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+        echo "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
+        foreach ((array) $ids as $id) {
+            $loc = get_permalink((int) $id);
+            if (!is_string($loc) || $loc === '') {
+                continue;
+            }
+            $modified = get_post_modified_time('c', true, (int) $id);
+            $modified = is_string($modified) && $modified !== '' ? $modified : gmdate('c');
+            echo "  <url>\n";
+            echo "    <loc>" . esc_url($loc) . "</loc>\n";
+            echo "    <lastmod>" . esc_html($modified) . "</lastmod>\n";
+            echo "  </url>\n";
+        }
+        echo "</urlset>\n";
+    }
+}
+
+if (!function_exists('my_theme_render_sitemap_index')) {
+    function my_theme_render_sitemap_index()
+    {
+        $sections = [
+            'pages' => home_url('/sitemap-pages.xml'),
+            'posts' => home_url('/sitemap-posts.xml'),
+        ];
+        if (post_type_exists('product')) {
+            $sections['products'] = home_url('/sitemap-products.xml');
+        }
+
+        echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+        echo "<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
+        $lastmod = gmdate('c');
+        foreach ($sections as $url) {
+            echo "  <sitemap>\n";
+            echo "    <loc>" . esc_url($url) . "</loc>\n";
+            echo "    <lastmod>" . esc_html($lastmod) . "</lastmod>\n";
+            echo "  </sitemap>\n";
+        }
+        echo "</sitemapindex>\n";
+    }
+}
+
+// Serve XML sitemaps without requiring extra plugins.
+add_action('template_redirect', function () {
+    $request_uri = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '';
+    if ($request_uri === '') {
+        return;
+    }
+    $request_path = trim((string) wp_parse_url($request_uri, PHP_URL_PATH), '/');
+    if ($request_path === '') {
+        return;
+    }
+
+    $path_map = [
+        'sitemap.xml' => 'index',
+        'sitemap-pages.xml' => 'page',
+        'sitemap-posts.xml' => 'post',
+        'sitemap-products.xml' => 'product',
+    ];
+    if (!isset($path_map[$request_path])) {
+        return;
+    }
+
+    if ($path_map[$request_path] === 'product' && !post_type_exists('product')) {
+        status_header(404);
+        exit;
+    }
+
+    status_header(200);
+    nocache_headers();
+    header('Content-Type: application/xml; charset=utf-8');
+    if ($path_map[$request_path] === 'index') {
+        my_theme_render_sitemap_index();
+    } else {
+        my_theme_render_sitemap_urlset($path_map[$request_path]);
+    }
+    exit;
+}, 0);
+
+// Ensure robots.txt always advertises the sitemap entry point.
+add_filter('robots_txt', function ($output, $public) {
+    $sitemap = home_url('/sitemap.xml');
+    $normalized = trim((string) $output);
+    if ($normalized === '') {
+        $normalized = "User-agent: *\nDisallow:";
+    }
+    if (stripos($normalized, 'Sitemap:') === false) {
+        $normalized .= "\nSitemap: " . $sitemap;
+    }
+    return $normalized . "\n";
+}, 20, 2);
+
+// Add baseline security headers at application layer (web server can still override).
+add_action('send_headers', function () {
+    if (headers_sent()) {
+        return;
+    }
+
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: SAMEORIGIN');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
+
+    if (is_ssl()) {
+        header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
+    }
+}, 20);
+
+if (!function_exists('my_theme_fix_legacy_sample_page_slug')) {
+    function my_theme_fix_legacy_sample_page_slug()
+    {
+        global $wpdb;
+        if (!$wpdb instanceof wpdb) {
+            return;
+        }
+
+        $legacy_slug = 'Trang mẫu';
+        $target_slug = 'trang-mau';
+        $query = $wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'page' AND post_name = %s",
+            $legacy_slug
+        );
+        $ids = $wpdb->get_col($query);
+        if (empty($ids) || !is_array($ids)) {
+            return;
+        }
+
+        foreach ($ids as $id) {
+            $id = (int) $id;
+            if ($id <= 0) {
+                continue;
+            }
+            wp_update_post([
+                'ID' => $id,
+                'post_name' => $target_slug,
+            ]);
+        }
+    }
+}
+
+// Normalize legacy sample page slug generated with spaces/accents.
+add_action('init', 'my_theme_fix_legacy_sample_page_slug', 5);

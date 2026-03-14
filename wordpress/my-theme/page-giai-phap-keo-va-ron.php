@@ -10,84 +10,20 @@ $landing_shop_url = function_exists('my_theme_get_shop_url') ? my_theme_get_shop
 $landing_contact_url = home_url('/lien-he');
 $landing_guide_url = home_url('/huong-dan-mua-hang');
 $landing_blog_url = trailingslashit(home_url('/blog'));
+$landing_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
+$landing_store_hours = isset($landing_snapshot['hours_display']) ? (string) $landing_snapshot['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00';
+$landing_store_areas = isset($landing_snapshot['service_areas_display']) ? (string) $landing_snapshot['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai';
+$landing_store_address = isset($landing_snapshot['address_full']) ? (string) $landing_snapshot['address_full'] : '392 TL10, Bình Trị Đông, Bình Tân, TP.HCM';
+$landing_brand_preview = isset($landing_snapshot['brand_preview']) && is_array($landing_snapshot['brand_preview'])
+    ? $landing_snapshot['brand_preview']
+    : [];
 
-$landing_get_products = static function (array $slugs) {
-    $products = [];
-    foreach ($slugs as $slug) {
-        $slug = sanitize_title((string) $slug);
-        if ($slug === '') {
-            continue;
-        }
-        $post = get_page_by_path($slug, OBJECT, 'product');
-        if (!($post instanceof WP_Post)) {
-            continue;
-        }
-        $product = wc_get_product((int) $post->ID);
-        if ($product instanceof WC_Product) {
-            $products[] = $product;
-        }
-    }
-    return $products;
-};
-
-$landing_capture = static function (callable $callback) {
-    ob_start();
-    $callback();
-    return trim((string) ob_get_clean());
-};
-
-$landing_render_product_cards = static function (array $products) use ($landing_capture) {
-    foreach ($products as $product) {
-        if (!$product instanceof WC_Product) {
-            continue;
-        }
-        $name = function_exists('my_theme_get_product_display_name')
-            ? (string) my_theme_get_product_display_name($product)
-            : (string) $product->get_name();
-        $excerpt = function_exists('my_theme_get_product_card_excerpt')
-            ? (string) my_theme_get_product_card_excerpt($product, 18)
-            : '';
-        $price_html = trim((string) $product->get_price_html());
-        if ($price_html === '') {
-            $price_html = '<span class="product-price-contact-inline">Liên hệ báo giá</span>';
-        }
-        $pack_summary = function_exists('my_theme_render_loop_pack_summary')
-            ? $landing_capture(static function () use ($product) {
-                my_theme_render_loop_pack_summary($product, true);
-            })
-            : '';
-        ?>
-        <article class="landing-product-card">
-          <a class="landing-product-card__thumb" href="<?php echo esc_url($product->get_permalink()); ?>">
-            <?php echo $product->get_image('woocommerce_thumbnail', ['alt' => $name, 'loading' => 'lazy']); ?>
-          </a>
-          <div class="landing-product-card__body">
-            <div class="landing-product-card__eyebrow">Keo và ron gạch</div>
-            <h3 class="landing-product-card__title">
-              <a href="<?php echo esc_url($product->get_permalink()); ?>"><?php echo esc_html($name); ?></a>
-            </h3>
-            <?php if ($excerpt !== '') : ?>
-              <p class="landing-product-card__excerpt"><?php echo esc_html($excerpt); ?></p>
-            <?php endif; ?>
-            <?php if ($pack_summary !== '') : ?>
-              <div class="landing-product-card__packs"><?php echo $pack_summary; ?></div>
-            <?php endif; ?>
-          </div>
-          <div class="landing-product-card__actions">
-            <div class="landing-product-card__price"><?php echo wp_kses_post($price_html); ?></div>
-            <a class="btn btn-primary w-100" href="<?php echo esc_url($product->get_permalink()); ?>">Xem sản phẩm</a>
-          </div>
-        </article>
-        <?php
-    }
-};
-
-$landing_featured_products = $landing_get_products([
+$landing_featured_products = function_exists('my_theme_get_products_by_slugs') ? my_theme_get_products_by_slugs([
     'keo-cha-ron-webercolor-classic',
     'webercolor-no-stain',
     'keo-dan-gach-webertai-fix-40kg',
     'weberseal-ws500',
-]);
+]) : [];
 ?>
 <main id="main-content">
   <div class="container">
@@ -108,6 +44,16 @@ $landing_featured_products = $landing_get_products([
             <a class="chip" href="<?php echo esc_url($landing_blog_url . 'cach-chon-keo-cha-ron-cho-nha-tam-va-bep/'); ?>">Bài tư vấn</a>
             <a class="chip" href="<?php echo esc_url($landing_contact_url); ?>">Gửi nhu cầu</a>
           </div>
+          <div class="trust-row" aria-label="Điểm nổi bật keo và ron gạch">
+            <span class="trust-item">Phân biệt rõ keo dán, chà ron và trám khe</span>
+            <span class="trust-item">Đi theo khu vực nhà tắm, bếp, ban công</span>
+            <span class="trust-item">Dễ chốt theo loại gạch và diện tích</span>
+          </div>
+          <div class="landing-hero__actions">
+            <a class="btn btn-primary" href="<?php echo esc_url($landing_phone_href); ?>">Gọi báo giá</a>
+            <a class="btn btn-outline" href="<?php echo esc_url($landing_zalo_url); ?>" target="_blank" rel="noopener">Zalo kỹ thuật</a>
+            <a class="btn btn-accent" href="<?php echo esc_url($landing_shop_url); ?>">Mở kho sản phẩm</a>
+          </div>
         </div>
         <aside class="landing-hero__panel">
           <h3>Thông tin nên gửi trước khi hỏi keo và ron</h3>
@@ -117,8 +63,56 @@ $landing_featured_products = $landing_get_products([
             <li>Khu vực có ẩm thường xuyên, ngoài trời hay trong nhà.</li>
             <li>Diện tích hoặc số lượng bao cần lấy.</li>
           </ol>
+          <div class="landing-kpis" aria-label="Tóm tắt hỗ trợ keo và ron">
+            <div class="landing-kpi">
+              <strong><?php echo esc_html($landing_store_hours); ?></strong>
+              <span>Khung giờ phản hồi nhanh cho đơn dân dụng và thợ thi công.</span>
+            </div>
+            <div class="landing-kpi">
+              <strong><?php echo esc_html($landing_store_areas); ?></strong>
+              <span>Khu vực ưu tiên hỗ trợ giao hàng và tư vấn kỹ thuật.</span>
+            </div>
+          </div>
+          <div class="about-store-facts">
+            <div class="about-store-fact">
+              <strong>Hotline kỹ thuật</strong>
+              <span><?php echo esc_html($landing_phone_display); ?></span>
+            </div>
+            <div class="about-store-fact">
+              <strong>Địa chỉ cửa hàng</strong>
+              <span><?php echo esc_html($landing_store_address); ?></span>
+            </div>
+          </div>
+          <?php if (!empty($landing_brand_preview)) : ?>
+            <div class="about-store-brands" aria-label="Một số thương hiệu đang có">
+              <?php foreach ($landing_brand_preview as $landing_brand_meta) : ?>
+                <?php
+                $landing_brand_label = isset($landing_brand_meta['label']) ? trim((string) $landing_brand_meta['label']) : '';
+                if ($landing_brand_label === '') {
+                    continue;
+                }
+                ?>
+                <span class="chip chip--soft"><?php echo esc_html($landing_brand_label); ?></span>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
         </aside>
       </section>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <h3>Nhà tắm và khu vệ sinh</h3>
+          <p>Ưu tiên vật tư phù hợp khu ẩm kéo dài, ron sạch hơn và khe tiếp giáp cần trám kín đúng chỗ.</p>
+        </div>
+        <div class="info-card">
+          <h3>Bếp và khu sinh hoạt</h3>
+          <p>Cần chú ý dầu mỡ, vệ sinh và độ bám bẩn của đường ron để chọn vật tư hợp lý hơn ngay từ đầu.</p>
+        </div>
+        <div class="info-card">
+          <h3>Ban công và khu ngoài trời</h3>
+          <p>Nên báo rõ khu vực chịu nắng mưa và loại gạch để cửa hàng chốt nhanh nhóm keo dán, ron hoặc trám khe phù hợp.</p>
+        </div>
+      </div>
 
       <div class="content-block" id="keo-ron-theo-khu-vuc">
         <h3>Chọn theo khu vực thi công</h3>
@@ -153,7 +147,15 @@ $landing_featured_products = $landing_get_products([
           <a class="btn btn-outline btn-sm" href="<?php echo esc_url($landing_shop_url); ?>">Xem toàn bộ kho</a>
         </div>
         <div class="landing-product-grid">
-          <?php $landing_render_product_cards($landing_featured_products); ?>
+          <?php
+          if (function_exists('my_theme_render_landing_product_cards')) {
+              my_theme_render_landing_product_cards($landing_featured_products, [
+                  'fallback_eyebrow' => 'Keo và ron gạch',
+                  'show_category' => false,
+                  'show_line' => false,
+              ]);
+          }
+          ?>
         </div>
       </section>
 
@@ -173,14 +175,32 @@ $landing_featured_products = $landing_get_products([
       </div>
 
       <?php
-      echo do_shortcode(
-          '[lead_capture_form source="landing-keo-ron" title="Gửi nhu cầu để nhận gợi ý keo, ron và phụ gia phù hợp" subtitle="Điền loại gạch, khu vực thi công và diện tích để đội kỹ thuật gọi lại nhanh hơn." button="Nhận tư vấn keo và ron"]'
-      );
+      if (function_exists('my_theme_render_group_knowledge_sections')) {
+          my_theme_render_group_knowledge_sections('grout');
+      }
+
+      if (function_exists('my_theme_render_lead_capture_form')) {
+          echo my_theme_render_lead_capture_form([
+              'source' => 'landing-keo-ron',
+              'title' => 'Gửi nhu cầu để nhận gợi ý keo, ron và phụ gia phù hợp',
+              'subtitle' => 'Điền loại gạch, khu vực thi công và diện tích để đội kỹ thuật gọi lại nhanh hơn.',
+              'button' => 'Nhận tư vấn keo và ron',
+          ]);
+      }
       ?>
 
       <?php
       if (function_exists('my_theme_render_solution_pathways')) {
           my_theme_render_solution_pathways('grout');
+      }
+
+      if (function_exists('my_theme_render_service_compass')) {
+          my_theme_render_service_compass([
+              'class' => 'service-compass--solutions',
+              'eyebrow' => 'Nếu vẫn chưa chốt loại vật tư ốp lát',
+              'title' => 'Từ giải pháp keo và ron, bạn có thể đi tiếp theo 3 hướng này',
+              'subtitle' => 'Mở kho sản phẩm nếu bạn đã có loại vật tư cụ thể. Xem các giải pháp lân cận nếu nhu cầu còn giao với chống thấm hoặc nội ngoại thất. Hoặc gửi loại gạch và khu vực thi công để đội kỹ thuật điều hướng lại.',
+          ]);
       }
       ?>
 

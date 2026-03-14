@@ -21,6 +21,16 @@ $trade_zalo_url = isset($trade_business['zalo_url']) ? (string) $trade_business[
         <span class="trust-item">Hàng mới 100%</span>
         <span class="trust-item">Báo giá nhanh</span>
       </div>
+      <?php
+      if (function_exists('my_theme_render_service_compass')) {
+          my_theme_render_service_compass([
+              'class' => 'service-compass--trade',
+              'eyebrow' => 'Báo giá thợ và công trình',
+              'title' => 'Để nhận giá đúng nhanh hơn, nên đi theo 3 hướng này',
+              'subtitle' => 'Nếu đã có mã thì gửi thẳng danh sách cần báo giá. Nếu chưa chốt hệ vật tư thì vào giải pháp trước. Nếu cần giao theo tiến độ, điền form để đội vận hành chuẩn bị báo giá đúng hơn.',
+          ]);
+      }
+      ?>
 
       <div class="info-grid">
         <div class="info-card">
@@ -45,6 +55,17 @@ $trade_zalo_url = isset($trade_business['zalo_url']) ? (string) $trade_business[
           <li>Địa điểm giao hàng và tiến độ công trình.</li>
         </ul>
       </div>
+
+      <?php
+      if (function_exists('my_theme_render_lead_capture_form')) {
+          echo my_theme_render_lead_capture_form([
+              'source' => 'trade-page',
+              'title' => 'Cần giá thợ hoặc giá công trình sát nhu cầu thực tế?',
+              'subtitle' => 'Gửi mã sơn, diện tích, quy mô công trình và tiến độ cần hàng. Đội kỹ thuật sẽ báo lại theo khối lượng và luồng giao phù hợp hơn.',
+              'button' => 'Nhận báo giá công trình',
+          ]);
+      }
+      ?>
 
       <?php get_template_part('template-parts/home', 'cta-inline'); ?>
 

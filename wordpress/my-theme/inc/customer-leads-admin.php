@@ -48,18 +48,18 @@ if (!function_exists('my_theme_lead_admin_enqueue_assets')) {
             return;
         }
 
-        $relative = 'assets/css/admin-leads.css';
-        $path = get_theme_file_path($relative);
-        if (!is_string($path) || !file_exists($path)) {
+        $asset = function_exists('my_theme_resolve_theme_asset')
+            ? my_theme_resolve_theme_asset('assets/css/admin-leads.css')
+            : null;
+        if (!is_array($asset) || empty($asset['uri'])) {
             return;
         }
 
-        $ver = filemtime($path);
         wp_enqueue_style(
             'my-theme-admin-leads',
-            get_theme_file_uri($relative),
+            $asset['uri'],
             [],
-            $ver ? $ver : null
+            isset($asset['ver']) ? (string) $asset['ver'] : null
         );
     }
 }

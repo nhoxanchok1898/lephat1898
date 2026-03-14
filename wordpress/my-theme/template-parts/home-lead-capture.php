@@ -1,10 +1,10 @@
 <?php
-$home_lead_business = function_exists('my_theme_get_business_profile') ? my_theme_get_business_profile() : [];
-$home_lead_phone_href = isset($home_lead_business['phone_href']) ? (string) $home_lead_business['phone_href'] : 'tel:0944857999';
-$home_lead_phone_display = isset($home_lead_business['phone_display']) ? (string) $home_lead_business['phone_display'] : '0944 857 999';
-$home_lead_zalo_url = isset($home_lead_business['zalo_url']) ? (string) $home_lead_business['zalo_url'] : 'https://zalo.me/0944857999';
-$home_lead_hours = isset($home_lead_business['hours_display']) ? (string) $home_lead_business['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00';
-$home_lead_service_areas = isset($home_lead_business['service_areas_display']) ? (string) $home_lead_business['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai';
+$home_lead_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
+$home_lead_phone_href = isset($home_lead_snapshot['phone_href']) ? (string) $home_lead_snapshot['phone_href'] : 'tel:0944857999';
+$home_lead_phone_display = isset($home_lead_snapshot['phone_display']) ? (string) $home_lead_snapshot['phone_display'] : '0944 857 999';
+$home_lead_zalo_url = isset($home_lead_snapshot['zalo_url']) ? (string) $home_lead_snapshot['zalo_url'] : 'https://zalo.me/0944857999';
+$home_lead_hours = isset($home_lead_snapshot['hours_display']) ? (string) $home_lead_snapshot['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00';
+$home_lead_service_areas = isset($home_lead_snapshot['service_areas_display']) ? (string) $home_lead_snapshot['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai';
 $home_lead_shop_url = function_exists('my_theme_get_shop_url') ? my_theme_get_shop_url() : home_url('/shop');
 ?>
 <div class="home-lead-shell" id="bao-gia-nhanh">

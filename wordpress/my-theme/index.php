@@ -32,6 +32,35 @@ $current_page = max(1, (int) get_query_var('paged'));
       </div>
     </section>
 
+    <?php
+    if (function_exists('my_theme_render_quick_answers')) {
+        my_theme_render_quick_answers([
+            'class' => 'quick-answers--blog',
+            'eyebrow' => 'FAQ ngắn trước khi đi tiếp',
+            'title' => 'Một vài câu hỏi khách thường cần chốt trước khi rời blog',
+            'subtitle' => 'Nếu bạn đang đọc blog để hiểu vấn đề, hãy kiểm tra nhanh các câu hỏi này trước khi chuyển sang sản phẩm, giải pháp hoặc gửi yêu cầu.',
+            'indexes' => [0, 1, 4],
+        ]);
+    }
+
+    if (function_exists('my_theme_render_service_compass')) {
+        my_theme_render_service_compass([
+            'class' => 'service-compass--blog',
+            'eyebrow' => 'Đọc xong rồi đi tiếp',
+            'title' => 'Blog giúp hiểu vấn đề, còn chốt vật tư thì đi tiếp theo 3 đường này',
+            'subtitle' => 'Sau khi đọc tư vấn, bạn có thể mở kho sản phẩm, đi vào nhóm giải pháp hoặc gửi nhu cầu thực tế để đội kỹ thuật điều hướng nhanh hơn.',
+        ]);
+    }
+
+    if (function_exists('my_theme_render_recently_viewed_products')) {
+        my_theme_render_recently_viewed_products([
+            'title' => 'Các mã bạn vừa xem trước khi đọc blog',
+            'aria_label' => 'Các mã bạn vừa xem trước khi đọc blog',
+            'class' => 'related-products-block--recently-viewed related-products-block--blog',
+        ]);
+    }
+    ?>
+
     <section class="page-section blog-shell blog-listing">
       <div class="insight-grid">
         <?php
@@ -94,9 +123,20 @@ $current_page = max(1, (int) get_query_var('paged'));
               'next_text' => 'Sau',
           ]);
           ?>
-        </nav>
+          </nav>
       <?php endif; ?>
     </section>
+
+    <?php
+    if (function_exists('my_theme_render_lead_capture_form')) {
+        echo my_theme_render_lead_capture_form([
+            'source' => 'blog-index',
+            'title' => 'Đọc blog xong nhưng vẫn chưa chốt được mã?',
+            'subtitle' => 'Gửi bề mặt, diện tích, hãng đang cân nhắc hoặc tiến độ công trình để đội kỹ thuật chuyển bạn sang đúng sản phẩm hoặc landing page phù hợp hơn.',
+            'button' => 'Gửi nhu cầu từ blog',
+        ]);
+    }
+    ?>
   </div>
 </main>
 <?php get_footer(); ?>

@@ -36,9 +36,29 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
         <a href="<?php echo esc_url(home_url('/huong-dan-mua-hang')); ?>">Hướng dẫn mua hàng</a>
         <a href="<?php echo esc_url(home_url('/faq')); ?>">Câu hỏi thường gặp</a>
         <a href="<?php echo esc_url(home_url('/van-chuyen-giao-hang')); ?>">Vận chuyển & giao hàng</a>
-        <a href="<?php echo esc_url(home_url('/chinh-sach-doi-tra')); ?>">Chính sách đổi trả</a>
+        <a href="<?php echo esc_url(home_url('/giai-phap')); ?>">Giải pháp theo bề mặt</a>
       </div>
     </section>
+
+    <?php
+    if (function_exists('my_theme_render_service_compass')) {
+        my_theme_render_service_compass([
+            'class' => 'service-compass--404',
+            'eyebrow' => 'Bị cụt đường dẫn',
+            'title' => 'Nếu trang cũ không còn, đây là 3 đường nhanh để quay lại luồng mua hàng',
+            'subtitle' => 'Mở kho sản phẩm nếu bạn đang tìm mã cụ thể. Vào giải pháp nếu đang đi theo bề mặt thi công. Hoặc gửi nhu cầu để đội kỹ thuật chỉ lại đúng trang.',
+        ]);
+    }
+
+    if (function_exists('my_theme_render_lead_capture_form')) {
+        echo my_theme_render_lead_capture_form([
+            'source' => '404-page',
+            'title' => 'Không tìm thấy trang bạn cần?',
+            'subtitle' => 'Gửi tên sản phẩm, thương hiệu, bề mặt hoặc nội dung bạn đang tìm. Đội kỹ thuật sẽ giúp bạn đi đúng trang hoặc đúng nhóm vật tư.',
+            'button' => 'Gửi nhu cầu cần tìm',
+        ]);
+    }
+    ?>
 
     <?php
     if (function_exists('my_theme_render_recently_viewed_products')) {

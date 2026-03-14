@@ -2,9 +2,9 @@
 /**
  * Paint area & quantity calculator (UI only).
  */
-$calculator_business = function_exists('my_theme_get_business_profile') ? my_theme_get_business_profile() : [];
-$calculator_phone_href = isset($calculator_business['phone_href']) ? (string) $calculator_business['phone_href'] : 'tel:0944857999';
-$calculator_zalo_url = isset($calculator_business['zalo_url']) ? (string) $calculator_business['zalo_url'] : 'https://zalo.me/0944857999';
+$calculator_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
+$calculator_phone_href = isset($calculator_snapshot['phone_href']) ? (string) $calculator_snapshot['phone_href'] : 'tel:0944857999';
+$calculator_zalo_url = isset($calculator_snapshot['zalo_url']) ? (string) $calculator_snapshot['zalo_url'] : 'https://zalo.me/0944857999';
 ?>
 <section class="page-section paint-calculator" id="tinh-son">
   <div class="section-heading">

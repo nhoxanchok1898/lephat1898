@@ -31,6 +31,16 @@ $returns_zalo_url = isset($returns_business['zalo_url']) ? (string) $returns_bus
         <a class="chip" href="<?php echo esc_url(home_url('/van-chuyen-giao-hang')); ?>">Vận chuyển</a>
         <a class="chip" href="<?php echo esc_url(home_url('/faq')); ?>">FAQ</a>
       </div>
+      <?php
+      if (function_exists('my_theme_render_service_compass')) {
+          my_theme_render_service_compass([
+              'class' => 'service-compass--policy',
+              'eyebrow' => 'Sau khi đọc chính sách',
+              'title' => 'Nếu đang xử lý đơn thực tế, đây là 3 đường đi nhanh hơn',
+              'subtitle' => 'Gửi ảnh và mã đơn nếu cần xử lý đổi trả. Xem thêm vận chuyển nếu đang đối chiếu trách nhiệm giao nhận. Hoặc liên hệ trực tiếp để đội kỹ thuật xác nhận tình huống cụ thể.',
+          ]);
+      }
+      ?>
       <div class="info-grid">
         <div class="info-card">
           <h3>Cần gửi gì?</h3>
@@ -68,6 +78,16 @@ $returns_zalo_url = isset($returns_business['zalo_url']) ? (string) $returns_bus
         <h3>4. Hoàn tiền</h3>
         <p>Chỉ áp dụng khi không thể đổi hàng tương đương. Thời gian hoàn tối đa 3 ngày làm việc.</p>
       </div>
+      <?php
+      if (function_exists('my_theme_render_lead_capture_form')) {
+          echo my_theme_render_lead_capture_form([
+              'source' => 'returns-page',
+              'title' => 'Cần xử lý đổi trả hoặc kiểm tra lỗi đơn hàng?',
+              'subtitle' => 'Điền mã đơn, mô tả tình trạng, bề mặt hoặc lỗi gặp phải. Đội kỹ thuật sẽ phản hồi theo trường hợp thực tế thay vì trả lời chung.',
+              'button' => 'Gửi yêu cầu xử lý',
+          ]);
+      }
+      ?>
       <div class="cta-inline">
         <div class="cta-inline__content">
           <div>

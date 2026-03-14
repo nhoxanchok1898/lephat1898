@@ -5,6 +5,11 @@ $faq_business = function_exists('my_theme_get_business_profile') ? my_theme_get_
 $faq_phone_display = isset($faq_business['phone_display']) ? (string) $faq_business['phone_display'] : '0944 857 999';
 $faq_phone_href = isset($faq_business['phone_href']) ? (string) $faq_business['phone_href'] : 'tel:0944857999';
 $faq_zalo_url = isset($faq_business['zalo_url']) ? (string) $faq_business['zalo_url'] : 'https://zalo.me/0944857999';
+$faq_store_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
+$faq_hours = isset($faq_store_snapshot['hours_display']) ? (string) $faq_store_snapshot['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00';
+$faq_service_areas = isset($faq_store_snapshot['service_areas_display']) ? (string) $faq_store_snapshot['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai';
+$faq_catalog_count = isset($faq_store_snapshot['catalog_count']) ? max(0, (int) $faq_store_snapshot['catalog_count']) : 0;
+$faq_context_links = function_exists('my_theme_get_page_context_links') ? my_theme_get_page_context_links('faq') : [];
 ?>
 <main id="main-content">
   <div class="container">
@@ -32,6 +37,30 @@ $faq_zalo_url = isset($faq_business['zalo_url']) ? (string) $faq_business['zalo_
         <a class="chip" href="#faq-doi-tra">Đổi trả</a>
         <a class="chip" href="#faq-gia-dai-ly">Giá đại lý</a>
       </div>
+
+      <section class="page-context-panel" aria-label="Lối đi nhanh từ FAQ">
+        <div class="page-context-panel__lead">
+          <h2 class="page-context-panel__title">Nếu đã rõ câu trả lời, bước tiếp theo nên là chốt đúng đường</h2>
+          <p class="page-context-panel__copy">FAQ giúp gỡ vướng nhanh. Khi đã đủ thông tin, nên chuyển thẳng sang kho sản phẩm, tính sơn hoặc liên hệ kỹ thuật để không bị quay vòng giữa nhiều trang.</p>
+        </div>
+        <div class="shop-summary__insight" aria-label="Thông tin cửa hàng nhanh">
+          <?php if ($faq_catalog_count > 0) : ?><span class="chip chip--soft"><?php echo esc_html((string) $faq_catalog_count); ?> sản phẩm đang có</span><?php endif; ?>
+          <span class="chip chip--soft"><?php echo esc_html($faq_hours); ?></span>
+          <span class="chip chip--soft"><?php echo esc_html($faq_service_areas); ?></span>
+        </div>
+        <div class="shop-summary__support" aria-label="Đi tiếp từ FAQ">
+          <?php foreach ($faq_context_links as $faq_context_link) : ?>
+            <?php
+            $faq_context_label = isset($faq_context_link['label']) ? trim((string) $faq_context_link['label']) : '';
+            $faq_context_url = isset($faq_context_link['url']) ? trim((string) $faq_context_link['url']) : '';
+            if ($faq_context_label === '' || $faq_context_url === '') {
+                continue;
+            }
+            ?>
+            <a class="chip" href="<?php echo esc_url($faq_context_url); ?>"><?php echo esc_html($faq_context_label); ?></a>
+          <?php endforeach; ?>
+        </div>
+      </section>
 
       <?php
       if (function_exists('my_theme_render_service_compass')) {
@@ -81,6 +110,14 @@ $faq_zalo_url = isset($faq_business['zalo_url']) ? (string) $faq_business['zalo_
               'title' => 'FAQ chưa giải quyết hết trường hợp của bạn?',
               'subtitle' => 'Gửi bề mặt, diện tích, mã đang cân nhắc hoặc yêu cầu giao hàng để đội kỹ thuật phản hồi theo tình huống thực tế thay vì trả lời chung.',
               'button' => 'Gửi câu hỏi thực tế',
+          ]);
+      }
+
+      if (function_exists('my_theme_render_recently_viewed_products')) {
+          my_theme_render_recently_viewed_products([
+              'title' => 'Các mã bạn vừa xem trước khi mở FAQ',
+              'aria_label' => 'Các mã bạn vừa xem trước khi mở FAQ',
+              'class' => 'related-products-block--recently-viewed related-products-block--faq',
           ]);
       }
       ?>

@@ -1,4 +1,17 @@
 (function () {
+  function runSafe(stepName, handler) {
+    if (typeof handler !== 'function') {
+      return;
+    }
+    try {
+      handler();
+    } catch (error) {
+      if (window.console && typeof window.console.error === 'function') {
+        window.console.error('[my-theme][' + stepName + ']', error);
+      }
+    }
+  }
+
   function parseAmount(value) {
     if (value === null || value === undefined) {
       return 0;
@@ -19,6 +32,361 @@
     return new Intl.NumberFormat('vi-VN').format(amount) + ' \u20ab';
   }
 
+  function renderAmountHtml(value, contactClassName) {
+    var amount = Math.round(parseFloat(value) || 0);
+    if (!amount) {
+      return (
+        '<span class="' +
+        (contactClassName || 'product-price-contact-inline') +
+        '">Liên hệ báo giá</span>'
+      );
+    }
+
+    return (
+      '<span class="woocommerce-Price-amount amount"><bdi>' +
+      new Intl.NumberFormat('vi-VN').format(amount) +
+      '&nbsp;<span class="woocommerce-Price-currencySymbol">\u20ab</span></bdi></span>'
+    );
+  }
+
+  function renderSinglePriceHtml(priceValue, regularPriceValue) {
+    var amount = Math.round(parseFloat(priceValue) || 0);
+    var regularAmount = Math.round(parseFloat(regularPriceValue) || 0);
+
+    if (!amount) {
+      return '<span class="product-price-contact-inline">Liên hệ báo giá</span>';
+    }
+
+    if (regularAmount > amount) {
+      return (
+        '<del>' +
+        renderAmountHtml(regularAmount, 'product-price-contact-inline') +
+        '</del><ins>' +
+        renderAmountHtml(amount, 'product-price-contact-inline') +
+        '</ins>'
+      );
+    }
+
+    return renderAmountHtml(amount, 'product-price-contact-inline');
+  }
+
+  function renderLoopPriceHtml(priceValue, regularPriceValue) {
+    var amount = Math.round(parseFloat(priceValue) || 0);
+    var regularAmount = Math.round(parseFloat(regularPriceValue) || 0);
+
+    if (!amount) {
+      return '<span class="product-card__price-contact">Liên hệ báo giá</span>';
+    }
+
+    if (regularAmount > amount) {
+      return (
+        '<del class="product-card__price-regular">' +
+        renderAmountHtml(regularAmount, 'product-card__price-contact') +
+        '</del><ins class="product-card__price-sale"><span class="product-card__price-value" data-price="' +
+        String(amount) +
+        '" data-regular-price="' +
+        String(regularAmount) +
+        '">' +
+        renderAmountHtml(amount, 'product-card__price-contact') +
+        '</span></ins>'
+      );
+    }
+
+    return (
+      '<span class="product-card__price-value" data-price="' +
+      String(amount) +
+      '">' +
+      renderAmountHtml(amount, 'product-card__price-contact') +
+      '</span>'
+    );
+  }
+
+  function setPackItemState(item, isActive) {
+    if (!item || !item.classList) {
+      return;
+    }
+    var active = Boolean(isActive);
+    item.classList.toggle('is-active', active);
+    if (item.hasAttribute('aria-pressed')) {
+      item.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+  }
+
+  function findInputByExactId(scope, selector, id) {
+    if (!scope || !id) {
+      return null;
+    }
+    var matched = null;
+    Array.prototype.some.call(scope.querySelectorAll(selector), function (node) {
+      if ((node.id || '') !== id) {
+        return false;
+      }
+      matched = node;
+      return true;
+    });
+    return matched;
+  }
+
+  function findInputByCapacity(scope, selector, capacity) {
+    if (!scope) {
+      return null;
+    }
+    var targetCapacity = String(capacity || '').trim();
+    if (!targetCapacity) {
+      return null;
+    }
+    var matched = null;
+    Array.prototype.some.call(scope.querySelectorAll(selector), function (node) {
+      var value = String(node.value || '').trim();
+      var dataValue = String(node.getAttribute('data-capacity') || '').trim();
+      if (value !== targetCapacity && dataValue !== targetCapacity) {
+        return false;
+      }
+      matched = node;
+      return true;
+    });
+    return matched;
+  }
+
+  function dispatchChange(input) {
+    if (!input || typeof input.dispatchEvent !== 'function') {
+      return;
+    }
+    try {
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    } catch (error) {
+      if (typeof document.createEvent === 'function') {
+        var event = document.createEvent('Event');
+        event.initEvent('change', true, true);
+        input.dispatchEvent(event);
+      }
+    }
+  }
+
+  function syncSingleCapacityState(input) {
+    if (!input || !input.classList || !input.classList.contains('capacity-option__input')) {
+      return false;
+    }
+
+    var picker = input.closest('.capacity-picker');
+    if (!picker) {
+      return false;
+    }
+
+    var inputs = Array.prototype.slice.call(
+      picker.querySelectorAll('.capacity-option__input')
+    );
+    var labels = Array.prototype.slice.call(
+      picker.querySelectorAll('.capacity-option')
+    );
+    var priceInput = picker.querySelector('input[name="selected_capacity_price"]');
+    var currentLabel = picker.querySelector('[data-capacity-current]');
+
+    inputs.forEach(function (item) {
+      item.checked = item === input;
+    });
+
+    var cap = input.value || input.getAttribute('data-capacity') || '';
+    var priceRaw = input.getAttribute('data-price') || '';
+    var priceValue = parseAmount(priceRaw);
+    var regularPriceValue = parseAmount(input.getAttribute('data-regular-price') || '');
+
+    if (currentLabel) {
+      currentLabel.textContent = cap || '-';
+    }
+    if (priceInput) {
+      priceInput.value = priceValue > 0 ? String(priceValue) : '';
+    }
+
+    labels.forEach(function (label) {
+      var forId = label.getAttribute('for') || '';
+      var isActive = forId === input.id;
+      if (!isActive && forId === '' && label.getAttribute('data-capacity')) {
+        isActive = label.getAttribute('data-capacity') === cap;
+      }
+      label.classList.toggle('is-active', isActive);
+    });
+
+    var summary = picker.closest('.summary');
+    if (!summary) {
+      return true;
+    }
+
+    var priceWrap = summary.querySelector('.price');
+    if (priceWrap) {
+      priceWrap.innerHTML = renderSinglePriceHtml(priceValue, regularPriceValue);
+    }
+
+    Array.prototype.forEach.call(
+      summary.querySelectorAll('.product-pack-prices__item'),
+      function (item) {
+        var size = item.getAttribute('data-pack-size') || '';
+        setPackItemState(item, size === cap);
+      }
+    );
+
+    return true;
+  }
+
+  function syncLoopPackState(input) {
+    if (!input || !input.classList || !input.classList.contains('loop-pack-option__input')) {
+      return false;
+    }
+
+    var form = input.closest('.loop-pack-form');
+    if (!form) {
+      return false;
+    }
+
+    var inputs = Array.prototype.slice.call(
+      form.querySelectorAll('.loop-pack-option__input')
+    );
+    var labels = Array.prototype.slice.call(
+      form.querySelectorAll('.loop-pack-option')
+    );
+    var priceInput = form.querySelector('input[name="selected_capacity_price"]');
+    var card = form.closest('.product-card');
+
+    inputs.forEach(function (item) {
+      item.checked = item === input;
+    });
+
+    var cap = input.value || input.getAttribute('data-capacity') || '';
+    var priceRaw = input.getAttribute('data-price') || '';
+    var priceValue = parseAmount(priceRaw);
+    var regularPriceValue = parseAmount(input.getAttribute('data-regular-price') || '');
+
+    if (priceInput) {
+      priceInput.value = priceValue > 0 ? String(priceValue) : '';
+    }
+
+    labels.forEach(function (label) {
+      var forId = label.getAttribute('for') || '';
+      var isActive = forId === input.id;
+      if (!isActive && forId === '' && label.getAttribute('data-capacity')) {
+        isActive = label.getAttribute('data-capacity') === cap;
+      }
+      label.classList.toggle('is-active', isActive);
+    });
+
+    if (!card) {
+      return true;
+    }
+
+    var priceWrap = card.querySelector('.product-card__price');
+    if (priceWrap) {
+      priceWrap.innerHTML = renderLoopPriceHtml(priceValue, regularPriceValue);
+    }
+
+    Array.prototype.forEach.call(
+      card.querySelectorAll('.product-pack-prices__item'),
+      function (item) {
+        var size = item.getAttribute('data-pack-size') || '';
+        setPackItemState(item, size === cap);
+      }
+    );
+
+    return true;
+  }
+
+  function syncSingleCapacityFallback(option, picker) {
+    if (!option || !picker) {
+      return false;
+    }
+
+    var cap = String(option.getAttribute('data-capacity') || option.value || '').trim();
+    var priceValue = parseAmount(option.getAttribute('data-price') || '');
+    var regularPriceValue = parseAmount(option.getAttribute('data-regular-price') || '');
+    var currentLabel = picker.querySelector('[data-capacity-current]');
+    var priceInput = picker.querySelector('input[name="selected_capacity_price"]');
+
+    if (currentLabel) {
+      currentLabel.textContent = cap || '-';
+    }
+    if (priceInput) {
+      priceInput.value = priceValue > 0 ? String(priceValue) : '';
+    }
+
+    Array.prototype.forEach.call(
+      picker.querySelectorAll('.capacity-option'),
+      function (node) {
+        var nodeCap = String(node.getAttribute('data-capacity') || '').trim();
+        var isActive = node === option;
+        if (!isActive && nodeCap && cap) {
+          isActive = nodeCap === cap;
+        }
+        node.classList.toggle('is-active', isActive);
+      }
+    );
+
+    var summary = picker.closest('.summary');
+    if (!summary) {
+      return true;
+    }
+
+    var priceWrap = summary.querySelector('.price');
+    if (priceWrap) {
+      priceWrap.innerHTML = renderSinglePriceHtml(priceValue, regularPriceValue);
+    }
+
+    Array.prototype.forEach.call(
+      summary.querySelectorAll('.product-pack-prices__item'),
+      function (item) {
+        var size = item.getAttribute('data-pack-size') || '';
+        setPackItemState(item, size === cap);
+      }
+    );
+
+    return true;
+  }
+
+  function syncLoopPackFallback(option, form) {
+    if (!option || !form) {
+      return false;
+    }
+
+    var cap = String(option.getAttribute('data-capacity') || option.value || '').trim();
+    var priceValue = parseAmount(option.getAttribute('data-price') || '');
+    var regularPriceValue = parseAmount(option.getAttribute('data-regular-price') || '');
+    var priceInput = form.querySelector('input[name="selected_capacity_price"]');
+    var card = form.closest('.product-card');
+
+    if (priceInput) {
+      priceInput.value = priceValue > 0 ? String(priceValue) : '';
+    }
+
+    Array.prototype.forEach.call(
+      form.querySelectorAll('.loop-pack-option'),
+      function (node) {
+        var nodeCap = String(node.getAttribute('data-capacity') || '').trim();
+        var isActive = node === option;
+        if (!isActive && nodeCap && cap) {
+          isActive = nodeCap === cap;
+        }
+        node.classList.toggle('is-active', isActive);
+      }
+    );
+
+    if (!card) {
+      return true;
+    }
+
+    var priceWrap = card.querySelector('.product-card__price');
+    if (priceWrap) {
+      priceWrap.innerHTML = renderLoopPriceHtml(priceValue, regularPriceValue);
+    }
+
+    Array.prototype.forEach.call(
+      card.querySelectorAll('.product-pack-prices__item'),
+      function (item) {
+        var size = item.getAttribute('data-pack-size') || '';
+        setPackItemState(item, size === cap);
+      }
+    );
+
+    return true;
+  }
+
   function runWhenIdle(callback, timeoutMs) {
     if (typeof callback !== 'function') {
       return;
@@ -30,6 +398,45 @@
       return;
     }
     window.setTimeout(callback, 1);
+  }
+
+  function initHeaderOffsetVar() {
+    var header = document.querySelector('.site-header');
+    var root = document.documentElement;
+    if (!header || !root) {
+      return;
+    }
+
+    var frame = 0;
+
+    function updateOffset() {
+      frame = 0;
+      var adminBar = document.getElementById('wpadminbar');
+      var adminHeight = adminBar ? adminBar.offsetHeight || 0 : 0;
+      var headerHeight = header.offsetHeight || 0;
+      var extraGap = window.matchMedia('(max-width: 760px)').matches ? 12 : 18;
+      var totalOffset = Math.max(96, headerHeight + adminHeight + extraGap);
+      root.style.setProperty('--site-header-offset', String(totalOffset) + 'px');
+    }
+
+    function scheduleUpdate() {
+      if (frame) {
+        return;
+      }
+      frame = window.requestAnimationFrame(updateOffset);
+    }
+
+    scheduleUpdate();
+    window.addEventListener('load', scheduleUpdate);
+    window.addEventListener('resize', scheduleUpdate);
+    window.addEventListener('orientationchange', scheduleUpdate);
+
+    if ('ResizeObserver' in window) {
+      var observer = new ResizeObserver(function () {
+        scheduleUpdate();
+      });
+      observer.observe(header);
+    }
   }
 
   function initMainNav() {
@@ -154,13 +561,6 @@
     });
 
     nav.addEventListener('click', function (event) {
-      if (!mobileQuery.matches) {
-        return;
-      }
-      if (!nav.classList.contains('is-open')) {
-        return;
-      }
-
       var target = event.target;
       if (!target || typeof target.closest !== 'function') {
         return;
@@ -169,11 +569,21 @@
       if (!link) {
         return;
       }
-      if (link.matches('.menu-item-has-children > a')) {
+
+      if (mobileQuery.matches) {
+        if (!nav.classList.contains('is-open')) {
+          return;
+        }
+        if (link.matches('.menu-item-has-children > a')) {
+          return;
+        }
+        closeMainNav();
         return;
       }
 
-      closeMainNav();
+      if (link.closest('.sub-menu')) {
+        closeDesktopSubMenus();
+      }
     });
 
     document.addEventListener('keydown', function (event) {
@@ -201,6 +611,17 @@
       }
       closeMainNav();
     });
+
+    window.addEventListener(
+      'scroll',
+      function () {
+        if (mobileQuery.matches) {
+          return;
+        }
+        closeDesktopSubMenus();
+      },
+      { passive: true }
+    );
   }
 
   function initStickyHeaderState() {
@@ -481,22 +902,47 @@
       var panels = Array.prototype.slice.call(
         hub.querySelectorAll('[data-hub-panel]')
       );
+      var trigger = hub.querySelector('[data-hub-trigger]');
+      var current = hub.querySelector('[data-hub-current]');
+      var options = hub.querySelector('[data-hub-options]');
       if (!tabs.length || !panels.length) {
         return;
       }
 
-      function activate(target) {
+      function setExpanded(isOpen) {
+        if (!trigger || !options) {
+          return;
+        }
+        hub.classList.toggle('is-open', Boolean(isOpen));
+        trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        if (isOpen) {
+          options.removeAttribute('hidden');
+        } else {
+          options.setAttribute('hidden', 'hidden');
+        }
+      }
+
+      function activate(target, options) {
         var normalizedTarget = String(target || '').trim();
         if (!normalizedTarget) {
           return;
         }
+        var shouldScrollTab = Boolean(options && options.scrollTab);
+        var activeTab = null;
 
+        var activeLabel = '';
         tabs.forEach(function (tab) {
           var tabTarget = (tab.getAttribute('data-hub-target') || '').trim();
           var isActive = tabTarget === normalizedTarget;
           tab.classList.toggle('is-active', isActive);
           tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
           tab.setAttribute('tabindex', isActive ? '0' : '-1');
+          if (isActive) {
+            activeTab = tab;
+            activeLabel = String(
+              tab.getAttribute('data-hub-label') || tab.textContent || ''
+            ).replace(/\s+/g, ' ').trim();
+          }
         });
 
         panels.forEach(function (panel) {
@@ -509,6 +955,24 @@
             panel.setAttribute('hidden', 'hidden');
           }
         });
+
+        if (current && activeLabel) {
+          current.textContent = activeLabel;
+        }
+
+        if (
+          shouldScrollTab &&
+          activeTab &&
+          typeof activeTab.scrollIntoView === 'function'
+        ) {
+          activeTab.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'center'
+          });
+        }
+
+        setExpanded(false);
       }
 
       function focusAndActivateByIndex(index, focusTab) {
@@ -524,14 +988,26 @@
         if (!nextTab) {
           return;
         }
-        activate(nextTab.getAttribute('data-hub-target'));
+        activate(nextTab.getAttribute('data-hub-target'), {
+          scrollTab: true
+        });
         if (focusTab && typeof nextTab.focus === 'function') {
           nextTab.focus();
         }
       }
 
+      if (trigger && options) {
+        trigger.addEventListener('click', function () {
+          var isOpen = trigger.getAttribute('aria-expanded') === 'true';
+          setExpanded(!isOpen);
+        });
+      }
+
       tabs.forEach(function (tab) {
-        tab.addEventListener('click', function () {
+        tab.addEventListener('click', function (event) {
+          if (event && typeof event.preventDefault === 'function') {
+            event.preventDefault();
+          }
           focusAndActivateByIndex(tabs.indexOf(tab), false);
         });
 
@@ -559,11 +1035,36 @@
         });
       });
 
+      document.addEventListener('click', function (event) {
+        if (!trigger || !options) {
+          return;
+        }
+        if (hub.contains(event.target)) {
+          return;
+        }
+        setExpanded(false);
+      });
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape') {
+          return;
+        }
+        if (!trigger || !options || trigger.getAttribute('aria-expanded') !== 'true') {
+          return;
+        }
+        setExpanded(false);
+        if (typeof trigger.focus === 'function') {
+          trigger.focus();
+        }
+      });
+
       var initial =
         tabs.find(function (tab) {
           return tab.classList.contains('is-active');
         }) || tabs[0];
-      activate(initial ? initial.getAttribute('data-hub-target') : '');
+      activate(initial ? initial.getAttribute('data-hub-target') : '', {
+        scrollTab: false
+      });
     });
   }
 
@@ -771,42 +1272,52 @@
     }
     picker.dataset.ready = '1';
 
-    var options = Array.prototype.slice.call(
-      picker.querySelectorAll('.capacity-option')
+    var inputs = Array.prototype.slice.call(
+      picker.querySelectorAll('.capacity-option__input')
     );
-    if (!options.length) {
+    if (!inputs.length) {
       return;
     }
 
-    var capInput = picker.querySelector('input[name="selected_capacity"]');
     var priceInput = picker.querySelector('input[name="selected_capacity_price"]');
     var currentLabel = picker.querySelector('[data-capacity-current]');
     var summary = picker.closest('.summary');
-    var priceAmount = summary ? summary.querySelector('.price .amount') : null;
-    var priceContact = summary
-      ? summary.querySelector('.price .product-price-contact-inline')
-      : null;
+    var priceWrap = summary ? summary.querySelector('.price') : null;
     var priceItems = summary
       ? Array.prototype.slice.call(summary.querySelectorAll('.product-pack-prices__item'))
       : [];
 
-    function activate(option) {
-      if (!option) {
+    function getLabel(input) {
+      if (!input) {
+        return null;
+      }
+
+      var sibling = input.nextElementSibling;
+      return sibling && sibling.classList.contains('capacity-option') ? sibling : null;
+    }
+
+    function activate(input) {
+      if (!input) {
         return;
       }
 
-      options.forEach(function (item) {
-        item.classList.remove('is-active');
-      });
-      option.classList.add('is-active');
-
-      var cap = option.getAttribute('data-capacity') || '';
-      var priceRaw = option.getAttribute('data-price') || '';
-      var priceValue = parseAmount(priceRaw);
-
-      if (capInput) {
-        capInput.value = cap;
+      if (syncSingleCapacityState(input)) {
+        return;
       }
+
+      inputs.forEach(function (item) {
+        item.checked = item === input;
+        var label = getLabel(item);
+        if (label) {
+          label.classList.toggle('is-active', item === input);
+        }
+      });
+
+      var cap = input.value || input.getAttribute('data-capacity') || '';
+      var priceRaw = input.getAttribute('data-price') || '';
+      var priceValue = parseAmount(priceRaw);
+      var regularPriceValue = parseAmount(input.getAttribute('data-regular-price') || '');
+
       if (currentLabel) {
         currentLabel.textContent = cap || '-';
       }
@@ -814,30 +1325,39 @@
         priceInput.value = priceValue > 0 ? String(priceValue) : '';
       }
 
-      if (priceAmount) {
-        priceAmount.textContent = formatCurrency(priceValue, 'Liên hệ báo giá');
-      } else if (priceContact) {
-        priceContact.textContent = formatCurrency(priceValue, 'Liên hệ báo giá');
+      if (priceWrap) {
+        priceWrap.innerHTML = renderSinglePriceHtml(priceValue, regularPriceValue);
       }
 
       if (priceItems.length) {
         priceItems.forEach(function (item) {
           var size = item.getAttribute('data-pack-size') || '';
-          item.classList.toggle('is-active', size === cap);
+          setPackItemState(item, size === cap);
         });
       }
     }
 
     var initial =
-      options.find(function (item) {
-        return item.classList.contains('is-active');
-      }) || options[0];
+      inputs.find(function (item) {
+        return item.checked;
+      }) || inputs[0];
     activate(initial);
 
-    options.forEach(function (option) {
-      option.addEventListener('click', function () {
-        activate(option);
+    inputs.forEach(function (input) {
+      input.addEventListener('change', function () {
+        if (input.checked) {
+          activate(input);
+        }
       });
+
+      var label = getLabel(input);
+      if (label) {
+        label.addEventListener('click', function () {
+          window.requestAnimationFrame(function () {
+            activate(input);
+          });
+        });
+      }
     });
   }
 
@@ -847,89 +1367,307 @@
     }
     form.dataset.loopReady = '1';
 
-    var options = Array.prototype.slice.call(
-      form.querySelectorAll('.loop-pack-option')
+    var inputs = Array.prototype.slice.call(
+      form.querySelectorAll('.loop-pack-option__input')
     );
-    if (!options.length) {
+    if (!inputs.length) {
       return;
     }
 
-    var capInput = form.querySelector('input[name="selected_capacity"]');
     var priceInput = form.querySelector('input[name="selected_capacity_price"]');
     var card = form.closest('.product-card');
     var priceWrap = card ? card.querySelector('.product-card__price') : null;
-    var priceBox = priceWrap
-      ? priceWrap.querySelector('.product-card__price-value, .product-card__price-contact')
-      : null;
-    if (!priceBox && priceWrap) {
-      priceBox = document.createElement('span');
-      priceBox.className = 'product-card__price-value';
-      priceWrap.appendChild(priceBox);
-    }
     var priceItems = card
       ? Array.prototype.slice.call(card.querySelectorAll('.product-pack-prices__item'))
       : [];
 
-    function activate(option) {
-      if (!option) {
+    function getLabel(input) {
+      if (!input) {
+        return null;
+      }
+
+      var sibling = input.nextElementSibling;
+      return sibling && sibling.classList.contains('loop-pack-option') ? sibling : null;
+    }
+
+    function activate(input) {
+      if (!input) {
         return;
       }
 
-      options.forEach(function (item) {
-        item.classList.remove('is-active');
-      });
-      option.classList.add('is-active');
-
-      var cap = option.getAttribute('data-capacity') || '';
-      var priceRaw = option.getAttribute('data-price') || '';
-      var priceValue = parseAmount(priceRaw);
-
-      if (capInput) {
-        capInput.value = cap;
+      if (syncLoopPackState(input)) {
+        return;
       }
+
+      inputs.forEach(function (item) {
+        item.checked = item === input;
+        var label = getLabel(item);
+        if (label) {
+          label.classList.toggle('is-active', item === input);
+        }
+      });
+
+      var cap = input.value || input.getAttribute('data-capacity') || '';
+      var priceRaw = input.getAttribute('data-price') || '';
+      var priceValue = parseAmount(priceRaw);
+      var regularPriceValue = parseAmount(input.getAttribute('data-regular-price') || '');
+
       if (priceInput) {
         priceInput.value = priceValue > 0 ? String(priceValue) : '';
       }
 
-      if (priceBox) {
-        priceBox.textContent = formatCurrency(priceValue, 'Liên hệ báo giá');
-        if (priceValue > 0) {
-          priceBox.classList.add('product-card__price-value');
-          priceBox.classList.remove('product-card__price-contact');
-          priceBox.setAttribute('data-price', String(priceValue));
-        } else {
-          priceBox.classList.add('product-card__price-contact');
-          priceBox.classList.remove('product-card__price-value');
-          priceBox.removeAttribute('data-price');
-        }
+      if (priceWrap) {
+        priceWrap.innerHTML = renderLoopPriceHtml(priceValue, regularPriceValue);
       }
 
       if (priceItems.length) {
         priceItems.forEach(function (item) {
           var size = item.getAttribute('data-pack-size') || '';
-          item.classList.toggle('is-active', size === cap);
+          setPackItemState(item, size === cap);
         });
       }
     }
 
     var initial =
-      options.find(function (item) {
-        return item.classList.contains('is-active');
-      }) || options[0];
+      inputs.find(function (item) {
+        return item.checked;
+      }) || inputs[0];
     activate(initial);
 
-    options.forEach(function (option) {
-      option.addEventListener('click', function () {
-        activate(option);
+    inputs.forEach(function (input) {
+      input.addEventListener('change', function () {
+        if (input.checked) {
+          activate(input);
+        }
       });
+
+      var label = getLabel(input);
+      if (label) {
+        label.addEventListener('click', function () {
+          window.requestAnimationFrame(function () {
+            activate(input);
+          });
+        });
+      }
     });
 
     form.addEventListener('submit', function () {
       var active =
-        options.find(function (item) {
-          return item.classList.contains('is-active');
-        }) || options[0];
+        inputs.find(function (item) {
+          return item.checked;
+        }) || inputs[0];
       activate(active);
+    });
+  }
+
+  function initCommerceDelegates() {
+    var body = document.body;
+    if (!body || body.dataset.commerceDelegatesReady === '1') {
+      return;
+    }
+    body.dataset.commerceDelegatesReady = '1';
+
+    function isElementNode(node) {
+      return !!(node && node.nodeType === 1);
+    }
+
+    document.addEventListener('change', function (event) {
+      var target = event.target;
+      if (!isElementNode(target)) {
+        return;
+      }
+
+      if (target.classList.contains('capacity-option__input')) {
+        syncSingleCapacityState(target);
+        return;
+      }
+
+      if (target.classList.contains('loop-pack-option__input')) {
+        syncLoopPackState(target);
+      }
+    });
+
+    document.addEventListener('click', function (event) {
+      var target = event.target;
+      if (!isElementNode(target) || typeof target.closest !== 'function') {
+        return;
+      }
+
+      var packItem = target.closest('.product-pack-prices__item[data-pack-size]');
+      if (packItem) {
+        var packSize = String(packItem.getAttribute('data-pack-size') || '').trim();
+        if (!packSize) {
+          return;
+        }
+
+        var singleSummary = packItem.closest('.summary');
+        if (singleSummary) {
+          var singlePicker = singleSummary.querySelector('.capacity-picker');
+          if (singlePicker) {
+            var singlePackInput = findInputByCapacity(
+              singlePicker,
+              '.capacity-option__input',
+              packSize
+            );
+            if (singlePackInput) {
+              singlePackInput.checked = true;
+              dispatchChange(singlePackInput);
+              window.requestAnimationFrame(function () {
+                syncSingleCapacityState(singlePackInput);
+              });
+              return;
+            }
+          }
+        }
+
+        var productCard = packItem.closest('.product-card');
+        if (productCard) {
+          var loopPackForm = productCard.querySelector('.loop-pack-form');
+          if (loopPackForm) {
+            var loopPackInput = findInputByCapacity(
+              loopPackForm,
+              '.loop-pack-option__input',
+              packSize
+            );
+            if (loopPackInput) {
+              loopPackInput.checked = true;
+              dispatchChange(loopPackInput);
+              window.requestAnimationFrame(function () {
+                syncLoopPackState(loopPackInput);
+              });
+              return;
+            }
+          }
+        }
+
+        var list = packItem.parentElement;
+        if (list) {
+          Array.prototype.forEach.call(
+            list.querySelectorAll('.product-pack-prices__item[data-pack-size]'),
+            function (item) {
+              setPackItemState(item, item === packItem);
+            }
+          );
+        }
+        return;
+      }
+
+      var singleOption = target.closest('.capacity-option');
+      if (singleOption) {
+        var singleScope = singleOption.closest('.capacity-picker');
+        if (!singleScope) {
+          return;
+        }
+
+        var singleForId = String(singleOption.getAttribute('for') || '').trim();
+        var singleInput = null;
+
+        if (singleForId) {
+          singleInput = findInputByExactId(
+            singleScope,
+            '.capacity-option__input',
+            singleForId
+          );
+          if (!singleInput) {
+            singleInput = document.getElementById(singleForId);
+          }
+        }
+        if (!singleInput) {
+          singleInput = findInputByCapacity(
+            singleScope,
+            '.capacity-option__input',
+            singleOption.getAttribute('data-capacity') || singleOption.textContent
+          );
+        }
+
+        if (
+          singleInput &&
+          singleInput.classList &&
+          singleInput.classList.contains('capacity-option__input')
+        ) {
+          singleInput.checked = true;
+          dispatchChange(singleInput);
+          window.requestAnimationFrame(function () {
+            syncSingleCapacityState(singleInput);
+          });
+          return;
+        }
+
+        window.requestAnimationFrame(function () {
+          syncSingleCapacityFallback(singleOption, singleScope);
+        });
+        return;
+      }
+
+      var loopOption = target.closest('.loop-pack-option');
+      if (!loopOption) {
+        return;
+      }
+
+      var loopScope = loopOption.closest('.loop-pack-form');
+      if (!loopScope) {
+        return;
+      }
+
+      var loopForId = String(loopOption.getAttribute('for') || '').trim();
+      var loopInput = null;
+
+      if (loopForId) {
+        loopInput = findInputByExactId(
+          loopScope,
+          '.loop-pack-option__input',
+          loopForId
+        );
+      }
+      if (!loopInput) {
+        loopInput = findInputByCapacity(
+          loopScope,
+          '.loop-pack-option__input',
+          loopOption.getAttribute('data-capacity') || loopOption.textContent
+        );
+      }
+      if (!loopInput && loopForId) {
+        loopInput = document.getElementById(loopForId);
+      }
+
+      if (
+        loopInput &&
+        loopInput.classList &&
+        loopInput.classList.contains('loop-pack-option__input')
+      ) {
+        loopInput.checked = true;
+        dispatchChange(loopInput);
+        window.requestAnimationFrame(function () {
+          syncLoopPackState(loopInput);
+        });
+        return;
+      }
+
+      window.requestAnimationFrame(function () {
+        syncLoopPackFallback(loopOption, loopScope);
+      });
+    });
+
+    document.addEventListener('keydown', function (event) {
+      var target = event.target;
+      if (!isElementNode(target) || typeof target.closest !== 'function') {
+        return;
+      }
+
+      var item = target.closest('.product-pack-prices__item[data-pack-size]');
+      if (!item) {
+        return;
+      }
+
+      var key = event.key;
+      if (key !== 'Enter' && key !== ' ' && key !== 'Spacebar') {
+        return;
+      }
+
+      event.preventDefault();
+      if (typeof item.click === 'function') {
+        item.click();
+      }
     });
   }
 
@@ -1134,11 +1872,17 @@
       function openPanel() {
         root.classList.add('is-open');
         panel.hidden = false;
+        if (isHeaderContext && document.body) {
+          document.body.classList.add('header-search-open');
+        }
       }
 
       function closePanel() {
         root.classList.remove('is-open');
         panel.hidden = true;
+        if (isHeaderContext && document.body) {
+          document.body.classList.remove('header-search-open');
+        }
       }
 
       function render(items, query) {
@@ -1221,30 +1965,144 @@
     });
   }
 
-  function boot() {
-    initStickyHeaderState();
-    initMainNav();
-    initSearchAssist();
-    initCatalogDock();
-    initHomeHubTabs();
-    initHeroRotators();
-    initImageOnlyLinkLabels(document);
-    initAccountAuthForms();
-    runWhenIdle(initRevealMotion, 1400);
-
-    var dynamicCommerceSelector = '.capacity-picker, .loop-pack-form';
-
-    function initCommerceBlocks() {
-      document.querySelectorAll('.capacity-picker').forEach(initSingleCapacityPicker);
-      document.querySelectorAll('.loop-pack-form').forEach(initLoopPackForm);
+  function initShopFilterDrawer() {
+    if (!document.body || !document.body.classList.contains('woocommerce-shop')) {
+      return;
     }
 
-    initCommerceBlocks();
+    var toggle = document.querySelector('[data-shop-filter-toggle]');
+    var panel = document.querySelector('[data-shop-filter-panel]');
+    var backdrop = document.querySelector('[data-shop-filter-backdrop]');
+
+    if (!toggle || !panel || !backdrop) {
+      return;
+    }
+    if (panel.dataset.shopFilterReady === '1') {
+      return;
+    }
+    panel.dataset.shopFilterReady = '1';
+
+    var mobileQuery = window.matchMedia('(max-width: 980px)');
+    document.body.classList.add('shop-filter-ready');
+
+    function setExpanded(isOpen) {
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    function openDrawer() {
+      if (!mobileQuery.matches) {
+        return;
+      }
+      panel.classList.add('is-open');
+      backdrop.hidden = false;
+      backdrop.classList.add('is-open');
+      document.body.classList.add('shop-filter-open');
+      setExpanded(true);
+    }
+
+    function closeDrawer() {
+      panel.classList.remove('is-open');
+      backdrop.classList.remove('is-open');
+      document.body.classList.remove('shop-filter-open');
+      setExpanded(false);
+      window.setTimeout(function () {
+        if (!panel.classList.contains('is-open')) {
+          backdrop.hidden = true;
+        }
+      }, 180);
+    }
+
+    toggle.addEventListener('click', function () {
+      if (panel.classList.contains('is-open')) {
+        closeDrawer();
+        return;
+      }
+      openDrawer();
+    });
+
+    Array.prototype.forEach.call(
+      panel.querySelectorAll('[data-shop-filter-close]'),
+      function (button) {
+        button.addEventListener('click', function () {
+          closeDrawer();
+        });
+      }
+    );
+
+    backdrop.addEventListener('click', function () {
+      closeDrawer();
+    });
+
+    panel.addEventListener('click', function (event) {
+      if (!mobileQuery.matches) {
+        return;
+      }
+      var target = event.target;
+      if (!target || typeof target.closest !== 'function') {
+        return;
+      }
+      var link = target.closest('a');
+      if (link) {
+        closeDrawer();
+      }
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape') {
+        return;
+      }
+      if (!panel.classList.contains('is-open')) {
+        return;
+      }
+      closeDrawer();
+    });
+
+    window.addEventListener('resize', function () {
+      if (mobileQuery.matches) {
+        return;
+      }
+      closeDrawer();
+      backdrop.hidden = true;
+    });
+  }
+
+  function boot() {
+    runSafe('initHeaderOffsetVar', initHeaderOffsetVar);
+    runSafe('initStickyHeaderState', initStickyHeaderState);
+    runSafe('initMainNav', initMainNav);
+    runSafe('initSearchAssist', initSearchAssist);
+    runSafe('initShopFilterDrawer', initShopFilterDrawer);
+    runSafe('initCatalogDock', initCatalogDock);
+    runSafe('initHomeHubTabs', initHomeHubTabs);
+    runSafe('initHeroRotators', initHeroRotators);
+    runSafe('initImageOnlyLinkLabels', function () {
+      initImageOnlyLinkLabels(document);
+    });
+    runSafe('initAccountAuthForms', initAccountAuthForms);
+    runWhenIdle(function () {
+      runSafe('initRevealMotion', initRevealMotion);
+    }, 1400);
+
+    var dynamicCommerceSelector = '.capacity-picker, .loop-pack-form';
+    runSafe('initCommerceDelegates', initCommerceDelegates);
+
+    function initCommerceBlocks() {
+      runSafe('initSingleCapacityPicker', function () {
+        document.querySelectorAll('.capacity-picker').forEach(initSingleCapacityPicker);
+      });
+      runSafe('initLoopPackForm', function () {
+        document.querySelectorAll('.loop-pack-form').forEach(initLoopPackForm);
+      });
+    }
+
+    runSafe('initCommerceBlocks', initCommerceBlocks);
 
     if (window.jQuery && window.jQuery.fn && window.jQuery(document.body).on) {
       window.jQuery(document.body).on(
         'updated_wc_div wc_fragments_loaded updated_cart_totals',
-        initCommerceBlocks
+        function () {
+          runSafe('initCommerceBlocks:jquery', initCommerceBlocks);
+        }
       );
     }
 
@@ -1288,8 +2146,10 @@
 
       pending = true;
       window.requestAnimationFrame(function () {
-        initCommerceBlocks();
-        initImageOnlyLinkLabels(document);
+        runSafe('initCommerceBlocks:observer', initCommerceBlocks);
+        runSafe('initImageOnlyLinkLabels:observer', function () {
+          initImageOnlyLinkLabels(document);
+        });
         pending = false;
       });
     });

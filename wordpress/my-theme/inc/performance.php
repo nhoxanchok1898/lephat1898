@@ -6,12 +6,68 @@ if (!defined('ABSPATH')) {
 if (!function_exists('my_theme_enqueue_optional_stylesheet')) {
     function my_theme_enqueue_optional_stylesheet($handle, $relative_path, $deps = [])
     {
-        $path = get_theme_file_path($relative_path);
-        if (!is_string($path) || !file_exists($path)) {
+        $asset = function_exists('my_theme_resolve_theme_asset')
+            ? my_theme_resolve_theme_asset($relative_path)
+            : null;
+        if (!is_array($asset) || empty($asset['path']) || empty($asset['uri'])) {
             return;
         }
-        $ver = filemtime($path);
-        wp_enqueue_style($handle, get_theme_file_uri($relative_path), $deps, $ver ?: null);
+        wp_enqueue_style($handle, $asset['uri'], $deps, $asset['ver'] ?? null);
+    }
+}
+
+if (!function_exists('my_theme_resolve_theme_asset')) {
+    function my_theme_resolve_theme_asset($relative_path)
+    {
+        $relative_path = ltrim((string) $relative_path, '/\\');
+        if ($relative_path === '') {
+            return null;
+        }
+
+        $candidates = [$relative_path];
+        if (preg_match('/\.(css|js)$/i', $relative_path) === 1) {
+            $candidates = [preg_replace('/\.(css|js)$/i', '.min.$1', $relative_path), $relative_path];
+        }
+
+        foreach ($candidates as $candidate) {
+            $path = get_theme_file_path($candidate);
+            if (!is_string($path) || !file_exists($path)) {
+                continue;
+            }
+
+            return [
+                'path' => $path,
+                'uri' => get_theme_file_uri($candidate),
+                'ver' => filemtime($path) ?: null,
+            ];
+        }
+
+        return null;
+    }
+}
+
+if (!function_exists('my_theme_get_main_stylesheet_asset')) {
+    function my_theme_get_main_stylesheet_asset()
+    {
+        $candidates = [
+            'assets/css/theme-runtime.min.css',
+            'style.css',
+        ];
+
+        foreach ($candidates as $candidate) {
+            $path = get_theme_file_path($candidate);
+            if (!is_string($path) || !file_exists($path)) {
+                continue;
+            }
+
+            return [
+                'path' => $path,
+                'uri' => $candidate === 'style.css' ? get_stylesheet_uri() : get_theme_file_uri($candidate),
+                'ver' => filemtime($path) ?: null,
+            ];
+        }
+
+        return null;
     }
 }
 
@@ -52,11 +108,11 @@ if (!function_exists('my_theme_is_core_woocommerce_page')) {
 if (!function_exists('my_theme_should_load_paint_calculator_script')) {
     function my_theme_should_load_paint_calculator_script()
     {
-        if (is_front_page()) {
+        if (function_exists('is_product') && is_product()) {
             return true;
         }
 
-        if (is_page(['gia-tho', 'bang-gia-son', 'huong-dan-mua-hang'])) {
+        if (is_page(['gia-tho', 'bang-gia-son', 'huong-dan-mua-hang', 'tinh-son'])) {
             return true;
         }
 
@@ -113,51 +169,47 @@ if (!function_exists('my_theme_should_load_lead_capture_assets')) {
             return true;
         }
 
-        if (!is_page()) {
-            return false;
-        }
-
-        $template = (string) get_page_template_slug(get_queried_object_id());
-        if ($template !== '' && strpos($template, 'page-giai-phap-') === 0) {
+        if (is_page()) {
             return true;
         }
 
-        $page = get_post(get_queried_object_id());
-        if (!$page instanceof WP_Post) {
+        return false;
+    }
+}
+
+if (!function_exists('my_theme_should_load_search_assist_assets')) {
+    function my_theme_should_load_search_assist_assets()
+    {
+        if (is_admin()) {
             return false;
         }
 
-        $slug = sanitize_title((string) $page->post_name);
-        $lead_pages = [
-            'lien-he',
-            'faq',
-            'huong-dan-mua-hang',
-            'giai-phap',
-            'giai-phap-son-noi-that',
-            'giai-phap-son-ngoai-that',
-            'giai-phap-chong-tham',
-            'giai-phap-son-epoxy',
-            'giai-phap-son-kim-loai',
-            'giai-phap-keo-va-ron',
-        ];
+        $is_product_archive = (function_exists('is_shop') && is_shop())
+            || (function_exists('is_product_taxonomy') && is_product_taxonomy())
+            || (function_exists('is_post_type_archive') && is_post_type_archive('product'));
 
-        return in_array($slug, $lead_pages, true);
+        if ($is_product_archive) {
+            return true;
+        }
+
+        return !my_theme_is_core_woocommerce_page();
     }
 }
 
 add_action('wp_enqueue_scripts', function () {
-    $asset_rev = '20260224-scroll-fix';
-    $style_path = get_stylesheet_directory() . '/style.css';
-    $style_mtime = file_exists($style_path) ? (int) filemtime($style_path) : time();
-    $style_ver = $style_mtime . '-' . $asset_rev;
+    $asset_rev = '20260310-commerce-pass';
+    $style_asset = my_theme_get_main_stylesheet_asset();
+    $style_ver = is_array($style_asset) && isset($style_asset['ver']) ? ($style_asset['ver'] . '-' . $asset_rev) : null;
 
     wp_enqueue_style(
-        'my-custom-theme-font',
-        'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap',
+        'my-custom-theme-fonts',
+        'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap',
         [],
         null
     );
-    wp_enqueue_style('my-custom-theme-style', get_stylesheet_uri(), [], $style_ver);
+    if (is_array($style_asset) && !empty($style_asset['uri'])) {
+        wp_enqueue_style('my-custom-theme-style', $style_asset['uri'], ['my-custom-theme-fonts'], $style_ver);
+    }
 
     if (is_home() || is_archive() || is_singular('post')) {
         my_theme_enqueue_optional_stylesheet('my-custom-theme-blog', 'assets/css/blog.css', ['my-custom-theme-style']);
@@ -171,11 +223,12 @@ add_action('wp_enqueue_scripts', function () {
         my_theme_enqueue_optional_stylesheet('my-custom-theme-lead-capture', 'assets/css/lead-capture.css', ['my-custom-theme-style']);
     }
 
-    $main_js_path = get_theme_file_path('assets/main.js');
-    $main_js_mtime = file_exists($main_js_path) ? (int) filemtime($main_js_path) : time();
-    $main_js_ver = $main_js_mtime . '-' . $asset_rev;
-    wp_enqueue_script('my-custom-theme-main', get_theme_file_uri('assets/main.js'), [], $main_js_ver, true);
-    if (function_exists('my_theme_get_search_assist_payload')) {
+    $main_js_asset = my_theme_resolve_theme_asset('assets/main.js');
+    $main_js_ver = is_array($main_js_asset) && isset($main_js_asset['ver']) ? ($main_js_asset['ver'] . '-' . $asset_rev) : null;
+    if (is_array($main_js_asset) && !empty($main_js_asset['uri'])) {
+        wp_enqueue_script('my-custom-theme-main', $main_js_asset['uri'], [], $main_js_ver, true);
+    }
+    if (my_theme_should_load_search_assist_assets() && function_exists('my_theme_get_search_assist_payload')) {
         wp_add_inline_script(
             'my-custom-theme-main',
             'window.MyThemeSearchAssist = ' . wp_json_encode(my_theme_get_search_assist_payload()) . ';',
@@ -184,10 +237,11 @@ add_action('wp_enqueue_scripts', function () {
     }
 
     if (my_theme_should_load_paint_calculator_script()) {
-        $calc_path = get_theme_file_path('assets/paint-calculator.js');
-        $calc_mtime = file_exists($calc_path) ? (int) filemtime($calc_path) : time();
-        $calc_ver = $calc_mtime . '-' . $asset_rev;
-        wp_enqueue_script('my-custom-theme-paint-calculator', get_theme_file_uri('assets/paint-calculator.js'), [], $calc_ver, true);
+        $calc_asset = my_theme_resolve_theme_asset('assets/paint-calculator.js');
+        $calc_ver = is_array($calc_asset) && isset($calc_asset['ver']) ? ($calc_asset['ver'] . '-' . $asset_rev) : null;
+        if (is_array($calc_asset) && !empty($calc_asset['uri'])) {
+            wp_enqueue_script('my-custom-theme-paint-calculator', $calc_asset['uri'], [], $calc_ver, true);
+        }
     }
 });
 
@@ -248,6 +302,10 @@ add_action('wp_enqueue_scripts', function () {
         wp_deregister_style('wp-block-library-theme');
         wp_deregister_style('classic-theme-styles');
         wp_deregister_style('global-styles');
+    }
+
+    if (!is_user_logged_in()) {
+        wp_dequeue_style('dashicons');
     }
 
     if (!$is_core_woo_page) {

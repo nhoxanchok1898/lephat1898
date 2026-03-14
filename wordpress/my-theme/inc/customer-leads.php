@@ -1782,7 +1782,9 @@ if (!function_exists('my_theme_sync_customer_lead_from_wc_order')) {
         $customer_note = method_exists($order, 'get_customer_note') ? sanitize_textarea_field((string) $order->get_customer_note()) : '';
         $items_summary = my_theme_lead_build_wc_order_items_summary($order, 4);
         $source_tag = 'woocommerce-checkout';
-        $source_url = home_url('/checkout');
+        $source_url = function_exists('my_theme_get_checkout_url_safe')
+            ? my_theme_get_checkout_url_safe()
+            : home_url('/thanh-toan');
         $submitted_at = current_time('mysql');
 
         $summary_parts = ['Đơn WooCommerce #' . $order_number];
@@ -1945,6 +1947,10 @@ if (!function_exists('my_theme_render_lead_capture_form')) {
         $utm_content = isset($_GET['utm_content']) ? sanitize_text_field((string) wp_unslash($_GET['utm_content'])) : '';
         $fbclid = isset($_GET['fbclid']) ? sanitize_text_field((string) wp_unslash($_GET['fbclid'])) : '';
         $gclid = isset($_GET['gclid']) ? sanitize_text_field((string) wp_unslash($_GET['gclid'])) : '';
+        $requested_product = isset($_GET['lead_product']) ? sanitize_text_field((string) wp_unslash($_GET['lead_product'])) : '';
+        $requested_colour_code = isset($_GET['lead_colour_code']) ? sanitize_text_field((string) wp_unslash($_GET['lead_colour_code'])) : '';
+        $requested_colour_name = isset($_GET['lead_colour_name']) ? sanitize_text_field((string) wp_unslash($_GET['lead_colour_name'])) : '';
+        $requested_product_code = isset($_GET['lead_product_code']) ? sanitize_text_field((string) wp_unslash($_GET['lead_product_code'])) : '';
 
         $status = isset($_GET['lead_status']) ? sanitize_key((string) wp_unslash($_GET['lead_status'])) : '';
         $status_form = isset($_GET['lead_form']) ? sanitize_key((string) wp_unslash($_GET['lead_form'])) : '';
@@ -1960,6 +1966,25 @@ if (!function_exists('my_theme_render_lead_capture_form')) {
             }
         }
 
+        $lead_context_lines = [];
+        if ($requested_product !== '') {
+            $lead_context_lines[] = 'Sản phẩm: ' . $requested_product;
+        }
+        if ($requested_colour_code !== '' || $requested_colour_name !== '') {
+            $colour_line = 'Màu đã chọn: ';
+            if ($requested_colour_code !== '') {
+                $colour_line .= $requested_colour_code;
+            }
+            if ($requested_colour_name !== '') {
+                $colour_line .= ($requested_colour_code !== '' ? ' - ' : '') . $requested_colour_name;
+            }
+            $lead_context_lines[] = $colour_line;
+        }
+        if ($requested_product_code !== '') {
+            $lead_context_lines[] = 'Mã đặt hàng: ' . $requested_product_code;
+        }
+        $prefill_message = implode("\n", $lead_context_lines);
+
         ob_start();
         ?>
         <section class="page-section lead-capture" id="<?php echo esc_attr('lead-capture-' . $form_key); ?>">
@@ -1971,6 +1996,13 @@ if (!function_exists('my_theme_render_lead_capture_form')) {
           </div>
 
           <?php echo $notice_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+          <?php if (!empty($lead_context_lines)) : ?>
+            <div class="lead-capture__notice lead-capture__notice--info">
+              <?php foreach ($lead_context_lines as $context_line) : ?>
+                <div><?php echo esc_html($context_line); ?></div>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
 
           <form class="lead-capture__form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
             <input type="hidden" name="action" value="my_theme_submit_customer_lead" />
@@ -2036,7 +2068,7 @@ if (!function_exists('my_theme_render_lead_capture_form')) {
 
               <div class="lead-capture__field lead-capture__field--full">
                 <label for="<?php echo esc_attr('lead-message-' . $form_key); ?>">Ghi chú thêm</label>
-                <textarea id="<?php echo esc_attr('lead-message-' . $form_key); ?>" name="lead_message" rows="4" placeholder="Ví dụ: Diện tích, loại bề mặt, thời gian cần giao..."></textarea>
+                <textarea id="<?php echo esc_attr('lead-message-' . $form_key); ?>" name="lead_message" rows="4" placeholder="Ví dụ: Diện tích, loại bề mặt, thời gian cần giao..."><?php echo esc_textarea($prefill_message); ?></textarea>
               </div>
             </div>
 

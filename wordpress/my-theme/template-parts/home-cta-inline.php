@@ -1,10 +1,10 @@
 <?php
-$cta_business = function_exists('my_theme_get_business_profile') ? my_theme_get_business_profile() : [];
-$cta_phone_href = isset($cta_business['phone_href']) ? (string) $cta_business['phone_href'] : 'tel:0944857999';
-$cta_zalo_url = isset($cta_business['zalo_url']) ? (string) $cta_business['zalo_url'] : 'https://zalo.me/0944857999';
-$cta_hours = isset($cta_business['hours_display']) ? (string) $cta_business['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00';
-$cta_hours_note = isset($cta_business['hours_note']) ? (string) $cta_business['hours_note'] : 'Ngoài giờ vẫn nhận yêu cầu qua Zalo và phản hồi sớm trong khung tiếp theo.';
-$cta_service_areas = isset($cta_business['service_areas_display']) ? (string) $cta_business['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai';
+$cta_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
+$cta_phone_href = isset($cta_snapshot['phone_href']) ? (string) $cta_snapshot['phone_href'] : 'tel:0944857999';
+$cta_zalo_url = isset($cta_snapshot['zalo_url']) ? (string) $cta_snapshot['zalo_url'] : 'https://zalo.me/0944857999';
+$cta_hours = isset($cta_snapshot['hours_display']) ? (string) $cta_snapshot['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00';
+$cta_hours_note = isset($cta_snapshot['hours_note']) ? (string) $cta_snapshot['hours_note'] : 'Ngoài giờ vẫn nhận yêu cầu qua Zalo và phản hồi sớm trong khung tiếp theo.';
+$cta_service_areas = isset($cta_snapshot['service_areas_display']) ? (string) $cta_snapshot['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai';
 ?>
 <section class="page-section cta-inline cta-inline--essentials">
   <div class="cta-inline__content">

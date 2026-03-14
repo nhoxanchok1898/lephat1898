@@ -40,15 +40,15 @@ if (empty($home_solution_cards)) {
 <section class="page-section home-solutions" aria-label="Giải pháp theo nhu cầu">
   <div class="section-heading home-solutions__head">
     <div>
-      <p class="eyebrow eyebrow-muted">Giải pháp theo nhu cầu</p>
-      <h2 class="section-title">Đi thẳng vào đúng nhóm bề mặt và hạng mục</h2>
-      <p class="section-sub">Chọn nhanh nhu cầu thực tế như nội thất, ngoại thất, chống thấm, epoxy, kim loại hay keo ron để xem ngay vật tư gợi ý, ảnh minh họa và form nhận báo giá.</p>
+      <p class="eyebrow eyebrow-muted">Khi chưa có mã sản phẩm</p>
+      <h2 class="section-title">Chọn theo bề mặt và hạng mục thi công</h2>
+      <p class="section-sub">Dùng lối này khi bạn mới xác định nhu cầu như nội thất, ngoại thất, chống thấm, epoxy hoặc kim loại. Nếu đã có hãng hay mã, ưu tiên xem sản phẩm nổi bật và kho sản phẩm ở trên.</p>
     </div>
     <div class="home-solutions__chips" aria-label="Lối tắt hỗ trợ">
-      <a class="chip" href="<?php echo esc_url(home_url('/giai-phap')); ?>">Mở tất cả giải pháp</a>
       <a class="chip" href="<?php echo esc_url(home_url('/shop')); ?>">Mở kho sản phẩm</a>
-      <a class="chip" href="<?php echo esc_url(home_url('/huong-dan-mua-hang')); ?>">Hướng dẫn mua hàng</a>
+      <a class="chip" href="<?php echo esc_url(home_url('/giai-phap')); ?>">Mở tất cả giải pháp</a>
       <a class="chip" href="<?php echo esc_url(home_url('/lien-he')); ?>">Gửi yêu cầu báo giá</a>
+      <a class="chip" href="<?php echo esc_url(home_url('/huong-dan-mua-hang')); ?>">Hướng dẫn mua hàng</a>
     </div>
   </div>
 

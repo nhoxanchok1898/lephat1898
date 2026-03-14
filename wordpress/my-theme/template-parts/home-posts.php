@@ -5,78 +5,69 @@ $section_action_url = $posts_url;
 $section_action_label = 'Xem góc tư vấn';
 $is_fallback_content = false;
 $placeholder_post_ids = function_exists('my_theme_get_placeholder_blog_post_ids') ? my_theme_get_placeholder_blog_post_ids() : [];
+$blog_cache_version = (string) get_option('my_theme_blog_cache_version', '1');
+$cards_cache_key = 'my_theme_home_posts_cards_v1_' . md5($blog_cache_version . '|' . implode(',', array_map('intval', (array) $placeholder_post_ids)));
 
-$resolve_page_permalink = function ($path = '', $template_file = '') {
-  $path = trim((string) $path, '/');
-  if ($path !== '') {
-    $page = get_page_by_path($path);
-    if ($page instanceof WP_Post) {
-      return (string) get_permalink($page);
+$cards = get_transient($cards_cache_key);
+if (!is_array($cards)) {
+  $cards = [];
+  $q = new WP_Query([
+    'post_type' => 'post',
+    'post_status' => 'publish',
+    'posts_per_page' => 6,
+    'ignore_sticky_posts' => true,
+    'post__not_in' => $placeholder_post_ids,
+    'suppress_filters' => true,
+    'no_found_rows' => true,
+  ]);
+
+  if ($q->have_posts()) {
+    while ($q->have_posts()) {
+      $q->the_post();
+      $title = trim((string) get_the_title());
+      if ($title === '' || (function_exists('my_theme_is_placeholder_blog_post') && my_theme_is_placeholder_blog_post(get_post()))) {
+        continue;
+      }
+
+      $excerpt = trim((string) get_the_excerpt());
+      if ($excerpt === '') {
+        $excerpt = wp_trim_words(wp_strip_all_tags((string) get_the_content()), 22);
+      }
+
+      $cards[] = [
+        'title' => $title,
+        'excerpt' => $excerpt,
+        'url' => get_permalink(),
+        'date' => get_the_date(),
+        'thumb' => get_the_post_thumbnail(null, 'medium'),
+        'thumb_label' => '',
+        'cta_label' => 'Đọc tiếp',
+      ];
     }
+    wp_reset_postdata();
   }
 
-  $template_file = trim((string) $template_file);
-  if ($template_file !== '') {
-    $pages = get_pages([
-      'meta_key' => '_wp_page_template',
-      'meta_value' => $template_file,
-      'number' => 1,
-    ]);
-
-    if (!empty($pages) && $pages[0] instanceof WP_Post) {
-      return (string) get_permalink($pages[0]);
-    }
-  }
-
-  return '';
-};
-
-$cards = [];
-$q = new WP_Query([
-  'post_type' => 'post',
-  'post_status' => 'publish',
-  'posts_per_page' => 6,
-  'ignore_sticky_posts' => true,
-  'post__not_in' => $placeholder_post_ids,
-  'suppress_filters' => true,
-]);
-
-if ($q->have_posts()) {
-  while ($q->have_posts()) {
-    $q->the_post();
-    $title = trim((string) get_the_title());
-    if ($title === '' || (function_exists('my_theme_is_placeholder_blog_post') && my_theme_is_placeholder_blog_post(get_post()))) {
-      continue;
-    }
-
-    $excerpt = trim((string) get_the_excerpt());
-    if ($excerpt === '') {
-      $excerpt = wp_trim_words(wp_strip_all_tags((string) get_the_content()), 22);
-    }
-
-    $cards[] = [
-      'title' => $title,
-      'excerpt' => $excerpt,
-      'url' => get_permalink(),
-      'date' => get_the_date(),
-      'thumb' => get_the_post_thumbnail(null, 'medium'),
-      'thumb_label' => '',
-      'cta_label' => 'Đọc tiếp',
-    ];
-  }
-  wp_reset_postdata();
+  set_transient($cards_cache_key, $cards, 30 * MINUTE_IN_SECONDS);
 }
 
 if (empty($cards)) {
   $is_fallback_content = true;
 
-  $guide_url = $resolve_page_permalink('huong-dan-mua-hang', 'page-huong-dan-mua-hang.php');
-  $faq_url = $resolve_page_permalink('faq', 'page-faq.php');
+  $guide_url = function_exists('my_theme_get_page_permalink_by_path_or_template')
+    ? my_theme_get_page_permalink_by_path_or_template('huong-dan-mua-hang', 'page-huong-dan-mua-hang.php')
+    : '';
+  $faq_url = function_exists('my_theme_get_page_permalink_by_path_or_template')
+    ? my_theme_get_page_permalink_by_path_or_template('faq', 'page-faq.php')
+    : '';
   if ($faq_url === '') {
-    $faq_url = $resolve_page_permalink('cau-hoi-thuong-gap', 'page-faq.php');
+    $faq_url = function_exists('my_theme_get_page_permalink_by_path_or_template')
+      ? my_theme_get_page_permalink_by_path_or_template('cau-hoi-thuong-gap', 'page-faq.php')
+      : '';
   }
-  $contact_url = $resolve_page_permalink('lien-he', 'page-lien-he.php');
-  $calculator_url = trailingslashit(home_url('/')) . '#tinh-son';
+  $contact_url = function_exists('my_theme_get_page_permalink_by_path_or_template')
+    ? my_theme_get_page_permalink_by_path_or_template('lien-he', 'page-lien-he.php')
+    : '';
+  $calculator_url = function_exists('my_theme_get_paint_calculator_url') ? my_theme_get_paint_calculator_url() : home_url('/tinh-son');
 
   $fallback_cards = [
     [
@@ -90,7 +81,7 @@ if (empty($cards)) {
     ],
     [
       'title' => 'Câu hỏi thường gặp khi chọn sơn và nhận hàng',
-      'excerpt' => 'Xem nhanh các câu hỏi phổ biến về phối màu, hóa đơn, đổi trả, thời gian giao và hỗ trợ kỹ thuật.',
+      'excerpt' => 'Xem nhanh các câu hỏi phổ biến về phối màu, hóa đơn, thời gian giao và hỗ trợ kỹ thuật.',
       'url' => $faq_url,
       'date' => 'Giải đáp nhanh',
       'thumb' => '',

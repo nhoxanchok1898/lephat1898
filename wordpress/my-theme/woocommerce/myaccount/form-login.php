@@ -22,13 +22,18 @@ if ( 'yes' !== get_option( 'woocommerce_enable_myaccount_registration' ) ) {
 }
 
 if ( ! $show_login && ! $show_register ) {
-  $show_register = true;
+  $show_login = true;
 }
 ?>
 
 <div class="account-auth page-section">
   <div class="account-auth__intro">
     <p class="text-muted">Quản lý đơn hàng, cập nhật thông tin nhận hàng và nhận hỗ trợ kỹ thuật nhanh từ Đại lý Sơn Phát Tấn.</p>
+    <div class="shop-summary__insight" aria-label="Lối tắt tài khoản">
+      <a class="chip chip--soft" href="<?php echo esc_url( function_exists( 'my_theme_get_shop_url' ) ? my_theme_get_shop_url() : home_url( '/shop' ) ); ?>">Mở kho sản phẩm</a>
+      <a class="chip chip--soft" href="<?php echo esc_url( home_url( '/lien-he' ) ); ?>">Liên hệ kỹ thuật</a>
+      <a class="chip chip--soft" href="<?php echo esc_url( home_url( '/huong-dan-mua-hang' ) ); ?>">Xem cách đặt hàng</a>
+    </div>
   </div>
 
   <?php if ( $show_login ) : ?>
@@ -124,5 +129,17 @@ if ( ! $show_login && ! $show_register ) {
     </form>
   <?php endif; ?>
 </div>
+
+<?php if ( function_exists( 'my_theme_render_commerce_support' ) ) : ?>
+  <?php my_theme_render_commerce_support( 'account' ); ?>
+<?php endif; ?>
+
+<?php if ( function_exists( 'my_theme_render_recently_viewed_products' ) ) : ?>
+  <?php my_theme_render_recently_viewed_products( [
+    'title' => 'Các mã bạn vừa xem trước khi đăng nhập',
+    'aria_label' => 'Các mã bạn vừa xem trước khi đăng nhập',
+    'class' => 'related-products-block--recently-viewed related-products-block--account',
+  ] ); ?>
+<?php endif; ?>
 
 <?php do_action( 'woocommerce_after_customer_login_form' ); ?>

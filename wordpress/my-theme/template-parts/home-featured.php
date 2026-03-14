@@ -1,7 +1,9 @@
 <?php
-$core_brands = ['dulux', 'maxilite', 'weber', 'jotun', 'nippon', 'kova', 'toa', 'sika', 'apollo'];
+$core_brands = function_exists('my_theme_get_home_brand_priority_slugs')
+    ? my_theme_get_home_brand_priority_slugs()
+    : ['dulux', 'maxilite', 'weber', 'jotun', 'nippon', 'kova', 'toa', 'sika', 'apollo'];
 $shop_page_url = function_exists('my_theme_get_shop_url') ? my_theme_get_shop_url() : home_url('/shop');
-$per_brand_display = 4;
+$per_brand_display = 8;
 
 $visible_ids = function_exists('my_theme_get_catalog_visible_product_ids')
     ? my_theme_get_catalog_visible_product_ids(false)
@@ -20,14 +22,11 @@ $visible_ids = array_values(array_filter(array_map('intval', (array) $visible_id
 }));
 $cache_version = (string) get_option('my_theme_filter_cache_version', '1');
 $digest = md5(implode(',', $visible_ids));
-$section_cache_key = 'my_theme_home_featured_sections_' . $cache_version . '_' . md5($digest . '|' . $shop_page_url . '|' . (string) $per_brand_display);
+$section_cache_key = 'my_theme_home_featured_sections_v4_' . $cache_version . '_' . md5($digest . '|' . $shop_page_url . '|' . (string) $per_brand_display);
 $brand_sections_data = get_transient($section_cache_key);
 
 if (!is_array($brand_sections_data)) {
     $brand_sections_data = [];
-    $product_map = function_exists('my_theme_get_product_object_map')
-        ? my_theme_get_product_object_map($visible_ids)
-        : [];
 
     $brand_options = function_exists('my_theme_get_brand_filter_options')
         ? my_theme_get_brand_filter_options($visible_ids)
@@ -82,7 +81,7 @@ if (!is_array($brand_sections_data)) {
         }
 
         $line_options = function_exists('my_theme_get_line_filter_options')
-            ? my_theme_get_line_filter_options($brand_ids, $brand_slug)
+            ? my_theme_get_line_filter_options($brand_ids)
             : [];
         if (!is_array($line_options)) {
             $line_options = [];
@@ -110,50 +109,12 @@ if (!is_array($brand_sections_data)) {
             ];
         }
 
-        $brand_products_all = [];
-        foreach ($brand_ids as $pid) {
-            $pid = (int) $pid;
-            if ($pid <= 0) {
-                continue;
-            }
-            if (isset($product_map[$pid]) && $product_map[$pid] instanceof WC_Product) {
-                $brand_products_all[] = $product_map[$pid];
-            }
-        }
-
-        if (!empty($brand_products_all)) {
-            usort($brand_products_all, function ($a, $b) {
-                if (!$a instanceof WC_Product || !$b instanceof WC_Product) {
-                    return 0;
-                }
-
-                $pa = function_exists('my_theme_get_default_loop_price') ? (float) my_theme_get_default_loop_price($a) : (float) $a->get_price();
-                $pb = function_exists('my_theme_get_default_loop_price') ? (float) my_theme_get_default_loop_price($b) : (float) $b->get_price();
-                $a_has_price = $pa > 0 ? 1 : 0;
-                $b_has_price = $pb > 0 ? 1 : 0;
-                if ($a_has_price !== $b_has_price) {
-                    return ($a_has_price > $b_has_price) ? -1 : 1;
-                }
-                if ($pa !== $pb) {
-                    return ($pa > $pb) ? -1 : 1;
-                }
-
-                $an = function_exists('my_theme_get_product_display_name') ? (string) my_theme_get_product_display_name($a) : (string) $a->get_name();
-                $bn = function_exists('my_theme_get_product_display_name') ? (string) my_theme_get_product_display_name($b) : (string) $b->get_name();
-                return strnatcasecmp($an, $bn);
-            });
-        }
-
-        $product_ids = [];
-        foreach (array_slice($brand_products_all, 0, $per_brand_display) as $product_obj) {
-            if (!$product_obj instanceof WC_Product) {
-                continue;
-            }
-            $product_id = (int) $product_obj->get_id();
-            if ($product_id > 0) {
-                $product_ids[] = $product_id;
-            }
-        }
+        $product_ids = function_exists('my_theme_get_catalog_ranked_product_ids')
+            ? my_theme_get_catalog_ranked_product_ids($brand_ids, $per_brand_display)
+            : array_slice($brand_ids, 0, $per_brand_display);
+        $product_ids = array_values(array_filter(array_map('intval', (array) $product_ids), function ($id) {
+            return $id > 0;
+        }));
         if (empty($product_ids)) {
             continue;
         }
@@ -230,16 +191,25 @@ foreach ($brand_sections_data as $section_data) {
 }
 
 $catalog_count = count($visible_ids);
+$home_featured_base_url = home_url('/');
+$requested_featured_brand = isset($_GET['featured_brand']) ? sanitize_title(wp_unslash((string) $_GET['featured_brand'])) : '';
+$available_featured_slugs = array_values(array_filter(array_map(function ($section) {
+    return isset($section['slug']) ? sanitize_title((string) $section['slug']) : '';
+}, $brand_sections)));
+$active_featured_slug = '';
+if ($requested_featured_brand !== '' && in_array($requested_featured_brand, $available_featured_slugs, true)) {
+    $active_featured_slug = $requested_featured_brand;
+} elseif (!empty($available_featured_slugs)) {
+    $active_featured_slug = (string) $available_featured_slugs[0];
+}
 ?>
-<section class="page-section featured-by-brand" id="featured-by-brand">
+<section class="page-section featured-by-brand home-featured-tabs" id="featured-home" data-home-hub>
   <div class="section-heading section-heading--structured">
     <div class="section-heading__main">
-      <h2 class="section-title">Sản phẩm theo từng danh mục hãng</h2>
-      <p class="section-sub">Xem theo từng hãng: hết Dulux sẽ tới Maxilite, mỗi hãng có nút xem thêm sản phẩm ở cuối.</p>
+      <h2 class="section-title">Sản phẩm nổi bật</h2>
+      <p class="section-sub">Chọn thương hiệu để xem ngay các mã nổi bật và vào chi tiết sản phẩm nhanh hơn.</p>
     </div>
     <div class="section-heading__meta" aria-label="Tóm tắt sản phẩm theo hãng">
-      <span class="section-heading__meta-item"><?php echo esc_html((string) count($brand_sections)); ?> hãng đang hiển thị</span>
-      <span class="section-heading__meta-item"><?php echo esc_html((string) max(0, $per_brand_display)); ?> mã tiêu biểu mỗi hãng</span>
       <a class="btn btn-outline btn-sm" href="<?php echo esc_url($shop_page_url); ?>">
         <?php echo ($catalog_count > 0) ? esc_html('Xem toàn bộ ' . $catalog_count . ' sản phẩm') : 'Xem toàn bộ sản phẩm'; ?>
       </a>
@@ -247,32 +217,43 @@ $catalog_count = count($visible_ids);
   </div>
 
   <?php if (!empty($brand_sections)) : ?>
-    <nav class="brand-strip home-brand-menu" aria-label="Menu thương hiệu">
-      <?php foreach ($brand_sections as $section) : ?>
+    <nav class="brand-strip home-brand-menu home-featured-tabs__nav" role="tablist" aria-label="Chọn hãng nổi bật">
+      <?php foreach ($brand_sections as $index => $section) : ?>
         <?php
         $menu_slug = isset($section['slug']) ? sanitize_title((string) $section['slug']) : '';
         $menu_label = isset($section['label']) ? (string) $section['label'] : '';
         $menu_count = isset($section['total_count']) ? (int) $section['total_count'] : 0;
+        $menu_active = ($menu_slug !== '' && $menu_slug === $active_featured_slug) || ($active_featured_slug === '' && $index === 0);
+        $menu_url = add_query_arg('featured_brand', $menu_slug, $home_featured_base_url) . '#featured-home';
         if ($menu_slug === '' || $menu_label === '') {
             continue;
         }
         ?>
-        <a class="brand-chip" href="<?php echo esc_url('#featured-brand-' . $menu_slug); ?>">
+        <a
+          href="<?php echo esc_url($menu_url); ?>"
+          role="tab"
+          id="<?php echo esc_attr('featured-tab-' . $menu_slug); ?>"
+          class="brand-chip home-featured-tabs__tab <?php echo $menu_active ? 'is-active' : ''; ?>"
+          data-hub-target="<?php echo esc_attr('featured-brand-' . $menu_slug); ?>"
+          data-hub-label="<?php echo esc_attr($menu_label); ?>"
+          aria-controls="<?php echo esc_attr('featured-brand-' . $menu_slug); ?>"
+          aria-selected="<?php echo $menu_active ? 'true' : 'false'; ?>"
+          tabindex="<?php echo $menu_active ? '0' : '-1'; ?>">
           <span><?php echo esc_html($menu_label); ?></span>
           <span class="brand-chip__count"><?php echo esc_html((string) max(0, $menu_count)); ?></span>
         </a>
       <?php endforeach; ?>
     </nav>
 
-    <div class="brand-showcase-list">
-      <?php foreach ($brand_sections as $section) : ?>
+    <div class="home-featured-tabs__panels">
+      <?php foreach ($brand_sections as $index => $section) : ?>
         <?php
         $section_slug = isset($section['slug']) ? sanitize_title((string) $section['slug']) : '';
         $section_label = isset($section['label']) ? (string) $section['label'] : '';
         $section_total = isset($section['total_count']) ? (int) $section['total_count'] : 0;
         $section_url = isset($section['url']) ? (string) $section['url'] : $shop_page_url;
-        $section_lines = isset($section['line_items']) && is_array($section['line_items']) ? $section['line_items'] : [];
         $section_products = isset($section['products']) && is_array($section['products']) ? $section['products'] : [];
+        $section_active = ($section_slug !== '' && $section_slug === $active_featured_slug) || ($active_featured_slug === '' && $index === 0);
         if ($section_slug === '' || $section_label === '' || empty($section_products)) {
             continue;
         }
@@ -282,78 +263,42 @@ $catalog_count = count($visible_ids);
             ? ('Xem thêm ' . $remain_count . ' sản phẩm ' . $section_label)
             : ('Xem toàn bộ sản phẩm ' . $section_label);
         ?>
-        <article id="<?php echo esc_attr('featured-brand-' . $section_slug); ?>" class="brand-showcase">
+        <article
+          id="<?php echo esc_attr('featured-brand-' . $section_slug); ?>"
+          class="brand-showcase home-featured-tabs__panel <?php echo $section_active ? 'is-active' : ''; ?>"
+          data-hub-panel="<?php echo esc_attr('featured-brand-' . $section_slug); ?>"
+          role="tabpanel"
+          aria-labelledby="<?php echo esc_attr('featured-tab-' . $section_slug); ?>"
+          <?php echo $section_active ? '' : 'hidden'; ?>>
           <div class="brand-showcase__head">
-            <h3><?php echo esc_html($section_label); ?></h3>
-            <span class="brand-showcase__meta"><?php echo esc_html((string) max(0, $section_total)); ?> sản phẩm</span>
-          </div>
-
-          <?php if (!empty($section_lines)) : ?>
-            <div class="brand-showcase__lines" aria-label="Dòng sản phẩm">
-              <?php foreach ($section_lines as $line_item) : ?>
-                <?php
-                $line_label = isset($line_item['label']) ? (string) $line_item['label'] : '';
-                $line_count = isset($line_item['count']) ? (int) $line_item['count'] : 0;
-                $line_url = isset($line_item['url']) ? (string) $line_item['url'] : $section_url;
-                if ($line_label === '') {
-                    continue;
-                }
-                ?>
-                <a class="brand-showcase__line" href="<?php echo esc_url($line_url); ?>">
-                  <span><?php echo esc_html($line_label); ?></span>
-                  <?php if ($line_count > 0) : ?><strong><?php echo esc_html((string) $line_count); ?></strong><?php endif; ?>
-                </a>
-              <?php endforeach; ?>
+            <div>
+              <h3><?php echo esc_html($section_label); ?></h3>
+              <p class="brand-showcase__lead"><?php echo esc_html((string) $shown_count); ?> mã nổi bật đang hiển thị cho nhu cầu mua nhanh.</p>
             </div>
-          <?php endif; ?>
+            <div class="brand-showcase__summary">
+              <span class="brand-showcase__meta"><?php echo esc_html((string) max(0, $section_total)); ?> sản phẩm</span>
+              <a class="btn btn-outline btn-sm brand-showcase__jump" href="<?php echo esc_url($section_url); ?>"><?php echo esc_html($more_label); ?></a>
+            </div>
+          </div>
 
           <div class="product-grid product-grid--home brand-showcase__grid">
             <?php foreach ($section_products as $product) : ?>
               <?php
-              $brand_label = function_exists('my_theme_get_product_brand_label') ? my_theme_get_product_brand_label($product) : 'Sản phẩm';
-              $line_label = function_exists('my_theme_get_product_line_label') ? my_theme_get_product_line_label($product) : '';
-              $cat_label = function_exists('my_theme_get_product_primary_category_label') ? my_theme_get_product_primary_category_label($product) : '';
-              $product_name = function_exists('my_theme_get_product_display_name') ? my_theme_get_product_display_name($product) : $product->get_name();
+              $catalog_profile = function_exists('my_theme_get_product_catalog_profile')
+                  ? my_theme_get_product_catalog_profile($product)
+                  : [];
+              $brand_label = isset($catalog_profile['brand_label']) ? (string) $catalog_profile['brand_label'] : 'Sản phẩm';
+              $product_name = isset($catalog_profile['display_name']) && (string) $catalog_profile['display_name'] !== ''
+                  ? (string) $catalog_profile['display_name']
+                  : $product->get_name();
               $brand_display = ($brand_label !== '' && $brand_label !== 'Sản phẩm') ? (string) $brand_label : '';
-              $line_display = ($line_label !== '') ? (string) $line_label : '';
-              $cat_display = ($cat_label !== '') ? (string) $cat_label : '';
-              if ($line_display !== '' && $cat_display !== '') {
-                  $line_norm = function_exists('my_theme_normalize_search_text')
-                      ? my_theme_normalize_search_text($line_display)
-                      : strtolower((string) $line_display);
-                  $cat_norm = function_exists('my_theme_normalize_search_text')
-                      ? my_theme_normalize_search_text($cat_display)
-                      : strtolower((string) $cat_display);
-                  if ($line_norm === $cat_norm) {
-                      $line_display = '';
-                  }
-              }
-              $excerpt = function_exists('my_theme_get_product_card_excerpt') ? trim((string) my_theme_get_product_card_excerpt($product, 15)) : '';
               $brand_class = 'product-card__brand' . ($brand_display === '' ? ' product-card__brand--empty' : '');
-              $line_class = 'product-card__line' . ($line_display === '' ? ' product-card__line--empty' : '');
-              $cat_class = 'product-card__taxonomy' . ($cat_display === '' ? ' product-card__taxonomy--empty' : '');
-              $thumb_id = function_exists('my_theme_get_preferred_product_image_id')
-                  ? (int) my_theme_get_preferred_product_image_id($product)
-                  : (int) $product->get_image_id();
-              $has_placeholder_thumb = $thumb_id <= 0;
-              $thumb_class = 'product-card__thumb';
-              if ($thumb_id > 0) {
-                  $thumb_meta = wp_get_attachment_metadata($thumb_id);
-                  $thumb_w = isset($thumb_meta['width']) ? (int) $thumb_meta['width'] : 0;
-                  $thumb_h = isset($thumb_meta['height']) ? (int) $thumb_meta['height'] : 0;
-                  if ($thumb_w > 0 && $thumb_h > 0) {
-                      if ($thumb_w < 320 || $thumb_h < 320) {
-                          $thumb_class .= ' product-card__thumb--small-source';
-                      }
-                      $thumb_ratio = $thumb_h > 0 ? ((float) $thumb_w / (float) $thumb_h) : 1.0;
-                      if ($thumb_ratio > 1.8 || $thumb_ratio < 0.55) {
-                          $thumb_class .= ' product-card__thumb--extreme-ratio';
-                      }
-                  }
-              }
-              if ($has_placeholder_thumb) {
-                  $thumb_class .= ' product-card__thumb--fallback';
-              }
+              $media_state = function_exists('my_theme_get_product_card_media_state')
+                  ? my_theme_get_product_card_media_state($product)
+                  : [];
+              $thumb_id = isset($media_state['thumb_id']) ? (int) $media_state['thumb_id'] : 0;
+              $thumb_class = isset($media_state['thumb_class']) ? (string) $media_state['thumb_class'] : 'product-card__thumb';
+              $has_placeholder_thumb = !empty($media_state['has_placeholder']);
               $home_actions_class = 'product-card__actions product-card__actions--simple';
               ?>
               <article class="product-card">
@@ -380,23 +325,15 @@ $catalog_count = count($visible_ids);
                 </a>
                 <div class="product-card__body">
                   <div class="<?php echo esc_attr($brand_class); ?>"<?php echo ($brand_display === '') ? ' aria-hidden="true"' : ''; ?>><?php echo esc_html($brand_display); ?></div>
-                  <div class="<?php echo esc_attr($line_class); ?>"<?php echo ($line_display === '') ? ' aria-hidden="true"' : ''; ?>><?php echo esc_html($line_display); ?></div>
                   <h3 class="product-card__title"><a href="<?php echo esc_url($product->get_permalink()); ?>"><?php echo esc_html($product_name); ?></a></h3>
-                  <div class="<?php echo esc_attr($cat_class); ?>"<?php echo ($cat_display === '') ? ' aria-hidden="true"' : ''; ?>><?php echo esc_html($cat_display); ?></div>
-                  <?php if ($excerpt !== '') : ?><p class="product-card__excerpt"><?php echo esc_html($excerpt); ?></p><?php endif; ?>
-                  <?php if (function_exists('my_theme_render_loop_price')) { my_theme_render_loop_price($product); } else { ?><div class="product-card__price"><?php echo wp_kses_post($product->get_price_html()); ?></div><?php } ?>
+                  <?php if (function_exists('my_theme_render_loop_price')) { my_theme_render_loop_price($product); } else { ?><div class="product-card__price"><span class="product-card__price-contact">Liên hệ báo giá</span></div><?php } ?>
                   <?php if (function_exists('my_theme_render_loop_pack_summary')) { my_theme_render_loop_pack_summary($product, true); } ?>
-                  <?php if (function_exists('my_theme_render_product_colour_swatches')) { my_theme_render_product_colour_swatches($product, ['context' => 'home', 'limit' => 4]); } ?>
                 </div>
                 <div class="<?php echo esc_attr($home_actions_class); ?>">
                   <a class="btn btn-primary w-100" href="<?php echo esc_url($product->get_permalink()); ?>">Xem chi tiết</a>
                 </div>
               </article>
             <?php endforeach; ?>
-          </div>
-
-          <div class="brand-showcase__foot">
-            <a class="btn btn-outline btn-sm" href="<?php echo esc_url($section_url); ?>"><?php echo esc_html($more_label); ?></a>
           </div>
         </article>
       <?php endforeach; ?>

@@ -104,6 +104,10 @@
   grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
   gap: 16px;
   align-items: start;
+  max-width: none;
+  margin: 0;
+  font-size: 16px;
+  width: 100%;
 }
 
 .woocommerce-account .woocommerce::after,
@@ -173,7 +177,22 @@
   border: 1px solid #d7e3f2;
   border-radius: 12px;
   background: #ffffff;
-  padding: 12px 14px;
+  padding: 16px;
+}
+
+.account-dashboard-panel--compact {
+  margin-top: 10px;
+}
+
+.account-dashboard-panel--compact .account-section-intro__header {
+  align-items: flex-end;
+}
+
+.account-dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .woocommerce-account .woocommerce-MyAccount-content > :first-child {
@@ -394,6 +413,15 @@
 
 .account-form-note li + li {
   margin-top: 6px;
+}
+
+.woocommerce-account .woocommerce-MyAccount-content .commerce-support--account,
+.woocommerce-account .woocommerce-MyAccount-content .related-products-block--account {
+  margin-top: 14px;
+}
+
+.woocommerce-account .woocommerce-MyAccount-content .lead-capture {
+  margin-top: 14px;
 }
 
 .woocommerce-account .woocommerce-MyAccount-content .form-row {
@@ -952,6 +980,10 @@
   .account-dashboard-panel > .account-section-intro__header .btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .account-dashboard-actions {
+    width: 100%;
   }
 
   .account-summary-card,

@@ -41,6 +41,16 @@ $shipping_zalo_url = isset($shipping_business['zalo_url']) ? (string) $shipping_
         <a class="chip" href="<?php echo esc_url(home_url('/chinh-sach-doi-tra')); ?>">Chính sách đổi trả</a>
         <a class="chip" href="<?php echo esc_url(home_url('/faq')); ?>">FAQ</a>
       </div>
+      <?php
+      if (function_exists('my_theme_render_service_compass')) {
+          my_theme_render_service_compass([
+              'class' => 'service-compass--shipping',
+              'eyebrow' => 'Chốt giao hàng gọn hơn',
+              'title' => 'Nếu đang chuẩn bị nhận hàng, bạn có thể đi tiếp theo 3 hướng này',
+              'subtitle' => 'Gọi để chốt phí và giờ giao. Nhắn Zalo nếu cần gửi vị trí hoặc mốc nhận hàng. Hoặc quay lại liên hệ nếu đơn còn phải điều chỉnh vật tư.',
+          ]);
+      }
+      ?>
 
       <div class="content-block">
         <h3>Lưu ý khi nhận hàng</h3>
@@ -50,6 +60,17 @@ $shipping_zalo_url = isset($shipping_business['zalo_url']) ? (string) $shipping_
           <li>Đơn công trình nên xác nhận lịch giao theo từng giai đoạn thi công.</li>
         </ul>
       </div>
+
+      <?php
+      if (function_exists('my_theme_render_lead_capture_form')) {
+          echo my_theme_render_lead_capture_form([
+              'source' => 'shipping-page',
+              'title' => 'Cần chốt phí giao hoặc lịch giao theo công trình?',
+              'subtitle' => 'Gửi địa điểm nhận hàng, khối lượng vật tư, thời gian cần giao và ghi chú xuống hàng. Đội vận hành sẽ phản hồi phương án phù hợp hơn.',
+              'button' => 'Gửi yêu cầu giao hàng',
+          ]);
+      }
+      ?>
 
       <div class="cta-inline">
         <div class="cta-inline__content">

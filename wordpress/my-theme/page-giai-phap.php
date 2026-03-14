@@ -9,6 +9,16 @@ $solutions_zalo_url = function_exists('my_theme_get_business_profile') ? (string
 $solutions_shop_url = function_exists('my_theme_get_shop_url') ? my_theme_get_shop_url() : home_url('/shop');
 $solutions_contact_url = home_url('/lien-he');
 $solutions_guide_url = home_url('/huong-dan-mua-hang');
+$solutions_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
+$solutions_hours = isset($solutions_snapshot['hours_display']) ? (string) $solutions_snapshot['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00';
+$solutions_areas = isset($solutions_snapshot['service_areas_display']) ? (string) $solutions_snapshot['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai';
+$solutions_address = isset($solutions_snapshot['address_full']) ? (string) $solutions_snapshot['address_full'] : '392 TL10, Bình Trị Đông, Bình Tân, TP.HCM';
+$solutions_catalog_count = isset($solutions_snapshot['catalog_count']) ? (int) $solutions_snapshot['catalog_count'] : 0;
+$solutions_category_count = isset($solutions_snapshot['category_count']) ? (int) $solutions_snapshot['category_count'] : 0;
+$solutions_brand_count = isset($solutions_snapshot['brand_count']) ? (int) $solutions_snapshot['brand_count'] : 0;
+$solutions_brand_preview = isset($solutions_snapshot['brand_preview']) && is_array($solutions_snapshot['brand_preview'])
+    ? $solutions_snapshot['brand_preview']
+    : [];
 $solutions_cards = [];
 
 foreach (['interior', 'exterior', 'waterproofing', 'epoxy', 'metal', 'grout'] as $solutions_group_key) {
@@ -64,6 +74,21 @@ foreach (['interior', 'exterior', 'waterproofing', 'epoxy', 'metal', 'grout'] as
             <a class="btn btn-outline" href="<?php echo esc_url($solutions_zalo_url); ?>" target="_blank" rel="noopener">Zalo kỹ thuật</a>
             <a class="btn btn-accent" href="<?php echo esc_url($solutions_shop_url); ?>">Mở kho sản phẩm</a>
           </div>
+
+          <div class="landing-kpis" aria-label="Tóm tắt kho vật tư">
+            <div class="landing-kpi">
+              <strong><?php echo esc_html((string) max(0, $solutions_catalog_count)); ?></strong>
+              <span>Mã hàng để đối chiếu nhanh khi khách đã có hãng hoặc mã.</span>
+            </div>
+            <div class="landing-kpi">
+              <strong><?php echo esc_html((string) max(0, $solutions_category_count)); ?></strong>
+              <span>Nhóm hàng để khách đi theo bề mặt thay vì mò từng sản phẩm lẻ.</span>
+            </div>
+            <div class="landing-kpi">
+              <strong><?php echo esc_html((string) max(0, $solutions_brand_count)); ?></strong>
+              <span>Thương hiệu đang có để so nhanh giữa các hệ vật tư.</span>
+            </div>
+          </div>
         </div>
 
         <aside class="landing-hero__panel">
@@ -74,6 +99,35 @@ foreach (['interior', 'exterior', 'waterproofing', 'epoxy', 'metal', 'grout'] as
             <li>Nếu có dấu hiệu thấm, ưu tiên nhóm chống thấm trước khi chọn sơn phủ.</li>
             <li>Nếu là nền sàn, cửa sắt hoặc gạch ốp lát, chọn đúng epoxy, kim loại hoặc keo ron.</li>
           </ol>
+
+          <div class="about-store-facts">
+            <div class="about-store-fact">
+              <strong>Giờ hỗ trợ</strong>
+              <span><?php echo esc_html($solutions_hours); ?></span>
+            </div>
+            <div class="about-store-fact">
+              <strong>Khu vực phục vụ</strong>
+              <span><?php echo esc_html($solutions_areas); ?></span>
+            </div>
+            <div class="about-store-fact">
+              <strong>Địa chỉ cửa hàng</strong>
+              <span><?php echo esc_html($solutions_address); ?></span>
+            </div>
+          </div>
+
+          <?php if (!empty($solutions_brand_preview)) : ?>
+            <div class="about-store-brands" aria-label="Một số thương hiệu đang có">
+              <?php foreach ($solutions_brand_preview as $solutions_brand_meta) : ?>
+                <?php
+                $solutions_brand_label = isset($solutions_brand_meta['label']) ? trim((string) $solutions_brand_meta['label']) : '';
+                if ($solutions_brand_label === '') {
+                    continue;
+                }
+                ?>
+                <span class="chip chip--soft"><?php echo esc_html($solutions_brand_label); ?></span>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
         </aside>
       </section>
 
@@ -147,6 +201,16 @@ foreach (['interior', 'exterior', 'waterproofing', 'epoxy', 'metal', 'grout'] as
               ]
           );
       }
+
+      if (function_exists('my_theme_render_quick_answers')) {
+          my_theme_render_quick_answers([
+              'class' => 'quick-answers--solutions',
+              'eyebrow' => 'FAQ ngắn trước khi chọn nhóm',
+              'title' => 'Một vài câu hỏi nên chốt trước khi rẽ sang từng landing page',
+              'subtitle' => 'Nếu chưa biết mình nên vào nhóm nào, hãy đối chiếu nhanh các câu hỏi nền tảng này trước khi gửi ảnh hoặc chọn vật tư.',
+              'indexes' => [0, 1, 3],
+          ]);
+      }
       ?>
 
       <div class="info-grid landing-faq-grid">
@@ -165,9 +229,14 @@ foreach (['interior', 'exterior', 'waterproofing', 'epoxy', 'metal', 'grout'] as
       </div>
 
       <?php
-      echo do_shortcode(
-          '[lead_capture_form source="landing-giai-phap" title="Chưa chắc nên đi theo giải pháp nào? Gửi nhu cầu để được điều hướng nhanh" subtitle="Điền bề mặt, diện tích và mô tả hiện trạng. Đội kỹ thuật sẽ gọi lại và hướng bạn vào đúng nhóm giải pháp phù hợp." button="Nhận tư vấn giải pháp"]'
-      );
+      if (function_exists('my_theme_render_lead_capture_form')) {
+          echo my_theme_render_lead_capture_form([
+              'source' => 'landing-giai-phap',
+              'title' => 'Chưa chắc nên đi theo giải pháp nào? Gửi nhu cầu để được điều hướng nhanh',
+              'subtitle' => 'Điền bề mặt, diện tích và mô tả hiện trạng. Đội kỹ thuật sẽ gọi lại và hướng bạn vào đúng nhóm giải pháp phù hợp.',
+              'button' => 'Nhận tư vấn giải pháp',
+          ]);
+      }
       ?>
 
       <div class="page-section cta-inline cta-inline--essentials">

@@ -5,6 +5,11 @@ $guide_business = function_exists('my_theme_get_business_profile') ? my_theme_ge
 $guide_phone_display = isset($guide_business['phone_display']) ? (string) $guide_business['phone_display'] : '0944 857 999';
 $guide_phone_href = isset($guide_business['phone_href']) ? (string) $guide_business['phone_href'] : 'tel:0944857999';
 $guide_zalo_url = isset($guide_business['zalo_url']) ? (string) $guide_business['zalo_url'] : 'https://zalo.me/0944857999';
+$guide_store_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
+$guide_hours = isset($guide_store_snapshot['hours_display']) ? (string) $guide_store_snapshot['hours_display'] : 'Thứ 2 - Thứ 7: 7:30 - 18:00';
+$guide_service_areas = isset($guide_store_snapshot['service_areas_display']) ? (string) $guide_store_snapshot['service_areas_display'] : 'TP.HCM, Bình Dương, Đồng Nai';
+$guide_catalog_count = isset($guide_store_snapshot['catalog_count']) ? max(0, (int) $guide_store_snapshot['catalog_count']) : 0;
+$guide_context_links = function_exists('my_theme_get_page_context_links') ? my_theme_get_page_context_links('huong-dan-mua-hang') : [];
 ?>
 <main id="main-content">
   <div class="container">
@@ -32,6 +37,30 @@ $guide_zalo_url = isset($guide_business['zalo_url']) ? (string) $guide_business[
         <a class="chip" href="#guide-step-4">Bước 4</a>
         <a class="chip" href="<?php echo esc_url(home_url('/van-chuyen-giao-hang')); ?>">Vận chuyển</a>
       </div>
+
+      <section class="page-context-panel" aria-label="Lối đi nhanh từ hướng dẫn mua hàng">
+        <div class="page-context-panel__lead">
+          <h2 class="page-context-panel__title">Quy trình đã rõ, giờ đi đúng bước để chốt nhanh hơn</h2>
+          <p class="page-context-panel__copy">Nếu bạn đã biết mình đang ở bước nào, hãy chuyển ngay sang kho sản phẩm, giỏ hàng hoặc liên hệ kỹ thuật để rút ngắn thời gian chốt đơn.</p>
+        </div>
+        <div class="shop-summary__insight" aria-label="Thông tin cửa hàng nhanh">
+          <?php if ($guide_catalog_count > 0) : ?><span class="chip chip--soft"><?php echo esc_html((string) $guide_catalog_count); ?> sản phẩm đang có</span><?php endif; ?>
+          <span class="chip chip--soft"><?php echo esc_html($guide_hours); ?></span>
+          <span class="chip chip--soft"><?php echo esc_html($guide_service_areas); ?></span>
+        </div>
+        <div class="shop-summary__support" aria-label="Đi tiếp từ hướng dẫn mua hàng">
+          <?php foreach ($guide_context_links as $guide_context_link) : ?>
+            <?php
+            $guide_context_label = isset($guide_context_link['label']) ? trim((string) $guide_context_link['label']) : '';
+            $guide_context_url = isset($guide_context_link['url']) ? trim((string) $guide_context_link['url']) : '';
+            if ($guide_context_label === '' || $guide_context_url === '') {
+                continue;
+            }
+            ?>
+            <a class="chip" href="<?php echo esc_url($guide_context_url); ?>"><?php echo esc_html($guide_context_label); ?></a>
+          <?php endforeach; ?>
+        </div>
+      </section>
 
       <?php
       if (function_exists('my_theme_render_service_compass')) {
@@ -96,6 +125,14 @@ $guide_zalo_url = isset($guide_business['zalo_url']) ? (string) $guide_business[
               'title' => 'Muốn bỏ qua các bước thủ công và nhận báo giá nhanh hơn?',
               'subtitle' => 'Gửi diện tích, bề mặt, thương hiệu dự kiến và thời gian cần hàng. Đội kỹ thuật sẽ gom giúp bạn các bước cần thiết để chốt vật tư nhanh hơn.',
               'button' => 'Nhận hỗ trợ đặt hàng',
+          ]);
+      }
+
+      if (function_exists('my_theme_render_recently_viewed_products')) {
+          my_theme_render_recently_viewed_products([
+              'title' => 'Các mã bạn vừa xem trước khi mở hướng dẫn',
+              'aria_label' => 'Các mã bạn vừa xem trước khi mở hướng dẫn',
+              'class' => 'related-products-block--recently-viewed related-products-block--guide',
           ]);
       }
       ?>

@@ -1,9 +1,9 @@
 <?php
 $hero_shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop');
-$hero_business = function_exists('my_theme_get_business_profile') ? my_theme_get_business_profile() : [];
-$hero_phone_display = isset($hero_business['phone_display']) ? (string) $hero_business['phone_display'] : '0944 857 999';
-$hero_phone_href = isset($hero_business['phone_href']) ? (string) $hero_business['phone_href'] : 'tel:0944857999';
-$hero_zalo_url = isset($hero_business['zalo_url']) ? (string) $hero_business['zalo_url'] : 'https://zalo.me/0944857999';
+$store_snapshot = function_exists('my_theme_get_store_snapshot') ? my_theme_get_store_snapshot() : [];
+$hero_phone_display = isset($store_snapshot['phone_display']) ? (string) $store_snapshot['phone_display'] : '0944 857 999';
+$hero_phone_href = isset($store_snapshot['phone_href']) ? (string) $store_snapshot['phone_href'] : 'tel:0944857999';
+$hero_zalo_url = isset($store_snapshot['zalo_url']) ? (string) $store_snapshot['zalo_url'] : 'https://zalo.me/0944857999';
 $hero_solutions_url = home_url('/giai-phap');
 $hero_contact_url = home_url('/lien-he');
 $hero_visible_ids = function_exists('my_theme_get_catalog_visible_product_ids')
@@ -12,15 +12,12 @@ $hero_visible_ids = function_exists('my_theme_get_catalog_visible_product_ids')
 $hero_visible_ids = array_values(array_filter(array_map('intval', (array) $hero_visible_ids), function ($id) {
     return $id > 0;
 }));
-$hero_brand_options = function_exists('my_theme_get_brand_filter_options')
-  ? my_theme_get_brand_filter_options($hero_visible_ids)
+$hero_brand_preview = isset($store_snapshot['brand_preview']) && is_array($store_snapshot['brand_preview'])
+  ? array_slice($store_snapshot['brand_preview'], 0, 5, true)
   : [];
-$hero_brand_preview = array_slice($hero_brand_options, 0, 5, true);
-$hero_product_count = is_array($hero_visible_ids) ? count($hero_visible_ids) : 0;
-$hero_brand_count = is_array($hero_brand_options) ? count($hero_brand_options) : 0;
-$hero_cat_count = function_exists('my_theme_count_visible_product_categories')
-    ? (int) my_theme_count_visible_product_categories($hero_visible_ids)
-    : 0;
+$hero_product_count = isset($store_snapshot['catalog_count']) ? max(0, (int) $store_snapshot['catalog_count']) : count($hero_visible_ids);
+$hero_brand_count = isset($store_snapshot['brand_count']) ? max(0, (int) $store_snapshot['brand_count']) : 0;
+$hero_cat_count = isset($store_snapshot['category_count']) ? max(0, (int) $store_snapshot['category_count']) : 0;
 
 $hero_core_brands = ['dulux', 'maxilite', 'weber', 'jotun', 'nippon', 'kova', 'toa', 'sika', 'apollo'];
 $hero_cache_version = (string) get_option('my_theme_filter_cache_version', '1');
@@ -102,23 +99,38 @@ if (!empty($hero_index_data)) {
             continue;
         }
 
-        $hero_brand_label = function_exists('my_theme_get_brand_label_from_slug')
-            ? (string) my_theme_get_brand_label_from_slug($hero_brand_slug)
-            : ucfirst($hero_brand_slug);
-        $hero_line_label = function_exists('my_theme_get_product_line_label')
-            ? (string) my_theme_get_product_line_label($hero_selected_product)
-            : '';
-        $hero_cat_label = function_exists('my_theme_get_product_primary_category_label')
-            ? (string) my_theme_get_product_primary_category_label($hero_selected_product)
-            : '';
-        $hero_product_name = function_exists('my_theme_get_product_display_name')
-            ? (string) my_theme_get_product_display_name($hero_selected_product)
+        $hero_catalog_profile = function_exists('my_theme_get_product_catalog_profile')
+            ? my_theme_get_product_catalog_profile($hero_selected_product)
+            : [];
+        $hero_brand_label = isset($hero_catalog_profile['brand_label']) && (string) $hero_catalog_profile['brand_label'] !== ''
+            ? (string) $hero_catalog_profile['brand_label']
+            : (function_exists('my_theme_get_brand_label_from_slug')
+                ? (string) my_theme_get_brand_label_from_slug($hero_brand_slug)
+                : ucfirst($hero_brand_slug));
+        $hero_line_label = isset($hero_catalog_profile['line_label']) ? (string) $hero_catalog_profile['line_label'] : '';
+        $hero_cat_label = isset($hero_catalog_profile['category_label']) ? (string) $hero_catalog_profile['category_label'] : '';
+        $hero_product_name = isset($hero_catalog_profile['display_name']) && (string) $hero_catalog_profile['display_name'] !== ''
+            ? (string) $hero_catalog_profile['display_name']
             : (string) $hero_selected_product->get_name();
 
-        $hero_price_raw = (float) $hero_selected_product->get_price();
-        $hero_price_html = $hero_price_raw > 0
-            ? wc_price($hero_price_raw)
-            : 'Liên hệ báo giá';
+        $hero_price_html = function_exists('my_theme_get_loop_price_html')
+            ? my_theme_get_loop_price_html($hero_selected_product, 'hero-rotator__price product-card__price')
+            : '';
+        if ($hero_price_html === '') {
+            $hero_price = function_exists('my_theme_get_default_loop_price')
+                ? (float) my_theme_get_default_loop_price($hero_selected_product)
+                : (float) $hero_selected_product->get_price();
+            $hero_regular_price = function_exists('my_theme_get_default_loop_regular_price')
+                ? (float) my_theme_get_default_loop_regular_price($hero_selected_product)
+                : (float) $hero_selected_product->get_regular_price();
+            if ($hero_price > 0 && $hero_regular_price > $hero_price) {
+                $hero_price_html = '<div class="hero-rotator__price product-card__price"><del class="product-card__price-regular">' . wp_kses_post(wc_price($hero_regular_price)) . '</del><ins class="product-card__price-sale"><span class="product-card__price-value" data-price="' . esc_attr($hero_price) . '" data-regular-price="' . esc_attr($hero_regular_price) . '">' . wp_kses_post(wc_price($hero_price)) . '</span></ins></div>';
+            } else {
+                $hero_price_html = $hero_price > 0
+                    ? '<div class="hero-rotator__price product-card__price"><span class="product-card__price-value" data-price="' . esc_attr($hero_price) . '">' . wp_kses_post(wc_price($hero_price)) . '</span></div>'
+                    : '<div class="hero-rotator__price product-card__price"><span class="product-card__price-contact">Liên hệ báo giá</span></div>';
+            }
+        }
 
         $hero_ad_items[] = [
             'brand_slug' => $hero_brand_slug,
@@ -127,10 +139,15 @@ if (!empty($hero_index_data)) {
             'line' => $hero_line_label,
             'category' => $hero_cat_label,
             'url' => $hero_selected_product->get_permalink(),
-            'image' => $hero_selected_product->get_image('woocommerce_thumbnail', [
-                'alt' => $hero_product_name,
-                'title' => $hero_product_name,
-            ]),
+            'image' => function_exists('my_theme_get_product_thumbnail_markup')
+                ? my_theme_get_product_thumbnail_markup($hero_selected_product, 'woocommerce_thumbnail', [
+                    'alt' => $hero_product_name,
+                    'title' => $hero_product_name,
+                ])
+                : $hero_selected_product->get_image('woocommerce_thumbnail', [
+                    'alt' => $hero_product_name,
+                    'title' => $hero_product_name,
+                ]),
             'price_html' => $hero_price_html,
         ];
     }
@@ -230,7 +247,7 @@ if (!empty($hero_index_data)) {
               <?php if (!empty($hero_item['category'])) : ?>
                 <div class="hero-rotator__cat"><?php echo esc_html((string) $hero_item['category']); ?></div>
               <?php endif; ?>
-              <div class="hero-rotator__price"><?php echo wp_kses_post((string) $hero_item['price_html']); ?></div>
+              <?php echo wp_kses_post((string) $hero_item['price_html']); ?>
               <a class="btn btn-accent btn-sm" href="<?php echo esc_url((string) $hero_item['url']); ?>">Xem sản phẩm</a>
             </div>
           </article>

@@ -11,7 +11,7 @@ services:
       - wp_db_data:/var/lib/mysql
 
   wordpress:
-    image: wordpress:6.4-php8.2-fpm
+    image: wordpress:6.9.4-php8.2-fpm
     restart: unless-stopped
     depends_on:
       - wp-db
@@ -36,9 +36,16 @@ services:
     volumes:
       - wp_app:/var/www/html
       - ./wordpress/my-theme:/var/www/html/wp-content/themes/my-theme:rw
+    command: >
+      sh -lc "
+      mkdir -p /var/www/html/wp-content/uploads/wc-logs &&
+      chown -R www-data:www-data /var/www/html/wp-content/uploads &&
+      chmod -R ug+rwX /var/www/html/wp-content/uploads &&
+      exec php-fpm
+      "
 
   wp-cron:
-    image: wordpress:6.4-php8.2-fpm
+    image: wordpress:6.9.4-php8.2-fpm
     restart: unless-stopped
     depends_on:
       - wordpress
@@ -46,7 +53,12 @@ services:
       - wp_app:/var/www/html
       - ./wordpress/my-theme:/var/www/html/wp-content/themes/my-theme:rw
     command: >
-      sh -c "while true; do php -d memory_limit=512M /var/www/html/wp-cron.php >/dev/null 2>&1; sleep 60; done"
+      sh -lc "
+      mkdir -p /var/www/html/wp-content/uploads/wc-logs &&
+      chown -R www-data:www-data /var/www/html/wp-content/uploads &&
+      chmod -R ug+rwX /var/www/html/wp-content/uploads &&
+      while true; do php -d memory_limit=512M /var/www/html/wp-cron.php >/dev/null 2>&1; sleep 60; done
+      "
 
   wp-nginx:
     image: nginx:1.25-alpine
