@@ -3,8 +3,60 @@ Production Settings for Paint Store E-commerce
 Optimized for security, performance, and scalability
 """
 import os
-from pathlib import Path
+from urllib.parse import unquote, urlparse
 from .settings import *
+
+
+def _parse_database_url(url):
+    parsed = urlparse(url)
+    scheme = parsed.scheme.lower()
+
+    if scheme in {'postgres', 'postgresql', 'pgsql', 'postgresql_psycopg2'}:
+        engine = 'django.db.backends.postgresql'
+    elif scheme == 'sqlite':
+        engine = 'django.db.backends.sqlite3'
+    else:
+        raise ValueError(f'Unsupported DATABASE_URL scheme: {scheme}')
+
+    if engine == 'django.db.backends.sqlite3':
+        if parsed.path in ('', '/'):
+            name = ':memory:'
+        else:
+            raw_path = parsed.netloc + parsed.path
+            if raw_path.startswith('/') and len(raw_path) > 3 and raw_path[2] == ':':
+                raw_path = raw_path.lstrip('/')
+            name = unquote(raw_path)
+        return {
+            'ENGINE': engine,
+            'NAME': name,
+        }
+
+    return {
+        'ENGINE': engine,
+        'NAME': unquote(parsed.path.lstrip('/')),
+        'USER': unquote(parsed.username or ''),
+        'PASSWORD': unquote(parsed.password or ''),
+        'HOST': parsed.hostname or '',
+        'PORT': str(parsed.port or ''),
+        'CONN_MAX_AGE': 600,
+        'OPTIONS': {
+            'sslmode': os.environ.get('DB_SSLMODE', 'require'),
+        },
+    }
+
+
+def _build_trusted_origins(hosts, site_url):
+    origins = set()
+    for host in hosts:
+        host = (host or '').strip()
+        if not host or host == '*':
+            continue
+        origins.add(f'https://{host}')
+        if DEBUG:
+            origins.add(f'http://{host}')
+    if site_url and site_url.startswith(('http://', 'https://')):
+        origins.add(site_url.rstrip('/'))
+    return sorted(origins)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -14,38 +66,68 @@ if not SECRET_KEY:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
-if not ALLOWED_HOSTS or ALLOWED_HOSTS == ['']:
-    raise ValueError('ALLOWED_HOSTS must be set in production')
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '').strip()
+
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS', '').split(',') if host.strip()]
+if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+if not ALLOWED_HOSTS:
+    raise ValueError('ALLOWED_HOSTS or RENDER_EXTERNAL_HOSTNAME must be set in production')
+
+if not os.environ.get('SITE_URL') and RENDER_EXTERNAL_HOSTNAME:
+    SITE_URL = f'https://{RENDER_EXTERNAL_HOSTNAME}'
 
 # Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'lephat'),
-        'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
-        'CONN_MAX_AGE': 600,  # Connection pooling
+DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
+if DATABASE_URL:
+    DATABASES = {
+        'default': _parse_database_url(DATABASE_URL)
     }
-}
+else:
+    db_name = os.environ.get('DB_NAME', '').strip()
+    db_user = os.environ.get('DB_USER', '').strip()
+    db_password = os.environ.get('DB_PASSWORD', '').strip()
+    db_host = os.environ.get('DB_HOST', '').strip()
+    db_port = os.environ.get('DB_PORT', '5432').strip()
+    if not any([db_name, db_user, db_password, db_host]):
+        raise ValueError('DATABASE_URL or DB_* variables must be set in production')
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': db_name or 'lephat',
+            'USER': db_user or 'postgres',
+            'PASSWORD': db_password,
+            'HOST': db_host or 'localhost',
+            'PORT': db_port,
+            'CONN_MAX_AGE': 600,
+            'OPTIONS': {
+                'sslmode': os.environ.get('DB_SSLMODE', 'require'),
+            },
+        }
+    }
 
-# Cache Configuration (Redis)
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        },
-        'KEY_PREFIX': 'lephat',
-        'TIMEOUT': 300,  # 5 minutes default
+# Cache Configuration (Redis when available, safe fallback otherwise)
+REDIS_URL = os.environ.get('REDIS_URL', '').strip()
+if REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
+            'KEY_PREFIX': 'lephat',
+            'TIMEOUT': 300,
+        }
     }
-}
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'production-fallback',
+            'TIMEOUT': 300,
+        }
+    }
 
 # Session Configuration
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache' if REDIS_URL else 'django.contrib.sessions.backends.db'
 SESSION_CACHE_ALIAS = 'default'
 
 # Security Settings
@@ -64,10 +146,14 @@ SESSION_COOKIE_SAMESITE = 'Strict'
 CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Strict'
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+CSRF_TRUSTED_ORIGINS = _build_trusted_origins(ALLOWED_HOSTS, SITE_URL)
 
 # Static Files (WhiteNoise)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+WHITENOISE_MANIFEST_STRICT = False
 
 # Media Files (Use S3 or similar in production)
 # DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
@@ -172,15 +258,15 @@ RATELIMIT_ENABLE = True
 RATELIMIT_USE_CACHE = 'default'
 
 # Celery Configuration (if using)
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
-CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/0')
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', REDIS_URL)
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', REDIS_URL)
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Ho_Chi_Minh'
 
 # Payment Gateway Configuration
-STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY')
+STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY') or os.environ.get('STRIPE_PUBLISHABLE_KEY')
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
 

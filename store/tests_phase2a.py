@@ -15,7 +15,7 @@ import unittest
 from .models import (
     Brand, Category, Product, Order, OrderItem,
     Cart, CartItem, Coupon, Review, Wishlist,
-    ProductView, SearchQuery, SavedSearch
+    ProductView, SearchQuery, SavedSearch, StockLevel
 )
 
 
@@ -50,6 +50,19 @@ class ProductModelTests(TestCase):
         """Test is_in_stock method"""
         self.assertTrue(self.product.is_in_stock())
         self.product.stock_quantity = 0
+        self.product.quantity = 0
+        self.assertFalse(self.product.is_in_stock())
+
+    def test_available_stock_prefers_stocklevel_when_present(self):
+        """StockLevel should override legacy quantity fields for storefront availability."""
+        self.product.quantity = 99
+        self.product.stock_quantity = 99
+        self.product.save()
+        StockLevel.objects.create(product=self.product, quantity=0, low_stock_threshold=5)
+
+        self.product.refresh_from_db()
+
+        self.assertEqual(self.product.available_stock, 0)
         self.assertFalse(self.product.is_in_stock())
 
 
@@ -278,6 +291,39 @@ class CartAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['total_items'], 2)
 
+    def test_add_item_to_cart_clamps_to_available_stock(self):
+        """Session cart API should clamp quantity to current stock."""
+        self.product.stock_quantity = 3
+        self.product.quantity = 3
+        self.product.save()
+
+        url = reverse('cart-add-item')
+        response = self.client.post(url, {'product_id': self.product.pk, 'quantity': 9})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['quantity'], 3)
+        self.assertEqual(response.data['total_items'], 3)
+
+    def test_add_item_to_cart_rejects_out_of_stock(self):
+        """Session cart API should reject products with managed zero stock."""
+        sold_out = Product.objects.create(
+            name='Sold Out API Product',
+            brand=self.brand,
+            category=self.category,
+            price=Decimal('120.00'),
+            volume=5,
+            stock_quantity=0,
+            quantity=0,
+            is_active=True
+        )
+        StockLevel.objects.create(product=sold_out, quantity=0, low_stock_threshold=1)
+
+        url = reverse('cart-add-item')
+        response = self.client.post(url, {'product_id': sold_out.pk, 'quantity': 1})
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(response.data['error'], 'out_of_stock')
+
     def test_update_cart_item(self):
         """Test updating cart item quantity"""
         # First add item
@@ -290,6 +336,21 @@ class CartAPITests(APITestCase):
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['total_items'], 5)
+
+    def test_update_cart_item_clamps_to_available_stock(self):
+        """Database cart API should clamp updated quantity to stock."""
+        self.product.stock_quantity = 4
+        self.product.quantity = 4
+        self.product.save()
+        cart = Cart.objects.create(user=self.user)
+        CartItem.objects.create(cart=cart, product=self.product, quantity=2)
+
+        url = reverse('cart-update-item')
+        response = self.client.post(url, {'product_id': self.product.pk, 'quantity': 9})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['quantity'], 4)
+        self.assertEqual(response.data['total_items'], 4)
 
     def test_remove_cart_item(self):
         """Test removing item from cart"""

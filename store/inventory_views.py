@@ -12,20 +12,16 @@ def update_stock(request, product_id):
     """Update stock level for a product"""
     product = get_object_or_404(Product, pk=product_id)
     quantity = int(request.POST.get('quantity', 0))
-    
-    stock, created = StockLevel.objects.get_or_create(product=product)
-    old_quantity = stock.quantity
-    stock.quantity = quantity
+
+    old_quantity = product.available_stock
+    product.set_available_stock(quantity, ensure_stock_record=True)
+    stock = product.stock
     
     # Check if restocked
     if quantity > old_quantity:
-        stock.last_restocked = timezone.now()
-        
         # Notify people waiting for back in stock
         if old_quantity == 0 and quantity > 0:
             notify_back_in_stock(product)
-    
-    stock.save()
     
     # Create alerts if needed
     if stock.is_out_of_stock:

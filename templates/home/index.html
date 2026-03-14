@@ -3,106 +3,155 @@
 {% load price_extras %}
 {% block title %}Trang chủ - Đại lý Sơn Phát Tấn{% endblock %}
 {% block content %}
-<section class="hero">
-  <div>
-    <p class="eyebrow">Đại lý sơn chính hãng · Dulux · Jotun · Kova · Nippon Paint · Maxilite</p>
-    <h1>Giải pháp sơn chuyên nghiệp cho mọi công trình</h1>
-    <p>Danh mục đa dạng cho nội thất, ngoại thất và chống thấm. Tư vấn phối màu miễn phí, giao nhanh, báo giá rõ ràng theo nhu cầu thực tế.</p>
-    <div class="hero-actions">
-      <a class="btn btn-accent btn-lg" href="{% url 'store:product_list' %}">Xem bảng giá</a>
-      <a class="btn btn-outline btn-lg" href="{% url 'store:contact' %}">Nhận tư vấn</a>
+<section class="hero hero-vortex">
+  <div class="hero-vortex__content">
+    <p class="eyebrow hero-vortex__eyebrow">Hệ sinh thái sơn chính hãng: Dulux · Jotun · Kova · Nippon Paint · Maxilite</p>
+    <h1>Trang bị công trình với năng lực sơn mạnh, nhanh và chuẩn kỹ thuật</h1>
+    <p class="hero-vortex__lead">Từ nhà dân đến dự án lớn, Phát Tấn cung cấp giải pháp vật tư, phối màu và triển khai thực chiến để đội thi công đi đúng ngay từ lớp đầu tiên.</p>
+    <div class="hero-actions hero-vortex__actions">
+      <a class="btn btn-accent btn-lg" href="{% url 'store:product_list' %}">Khám phá bảng giá</a>
+      <a class="btn btn-outline btn-lg" href="{% url 'store:contact' %}">Nhận tư vấn kỹ thuật</a>
+    </div>
+
+    <div class="hero-vortex__metrics">
+      <article class="metric-card">
+        <span class="metric-card__value">48h</span>
+        <span class="metric-card__label">Quy trình chốt vật tư nhanh</span>
+      </article>
+      <article class="metric-card">
+        <span class="metric-card__value">5+</span>
+        <span class="metric-card__label">Thương hiệu đối tác chiến lược</span>
+      </article>
+      <article class="metric-card">
+        <span class="metric-card__value">100%</span>
+        <span class="metric-card__label">Hàng chính hãng có chứng từ</span>
+      </article>
+      <article class="metric-card">
+        <span class="metric-card__value">24/7</span>
+        <span class="metric-card__label">Hỗ trợ sau bán hàng</span>
+      </article>
     </div>
   </div>
-  <div class="hero-card">
-    <h3>Lý do khách hàng chọn Phát Tấn</h3>
-    <ul class="list-plain">
-      <li>Cam kết hàng chính hãng, đầy đủ chứng từ.</li>
-      <li>Tư vấn vật tư theo diện tích và ngân sách.</li>
-      <li>Hỗ trợ giao nhanh trong ngày tại TP. Hồ Chí Minh.</li>
-      <li>Đội ngũ kỹ thuật đồng hành trước và sau mua.</li>
+
+  <aside class="hero-vortex__panel">
+    <h3>Command Center Thi Công</h3>
+    <p>Chọn đúng hệ sơn theo bề mặt giúp giảm lỗi, giữ màu bền và kiểm soát chi phí vật tư ngay từ đầu.</p>
+    <ul class="list-plain list-plain--tight">
+      <li>Khảo sát bề mặt và dự trù vật tư theo diện tích thực tế.</li>
+      <li>Đề xuất hệ sơn tối ưu cho nội thất, ngoại thất, chống thấm.</li>
+      <li>Bàn giao checklist thi công để đội thợ triển khai thống nhất.</li>
+      <li>Theo dõi và hỗ trợ kỹ thuật trong suốt vòng đời công trình.</li>
     </ul>
-  </div>
+    <a class="btn btn-ghost hero-vortex__panel-btn" href="{% url 'store:contact' %}">Đặt lịch khảo sát</a>
+  </aside>
 </section>
 
-<section class="page-section">
+<section class="proof-strip" aria-label="Cam kết vận hành">
+  <article class="proof-item">
+    <span class="proof-item__label">Tư vấn kỹ thuật</span>
+    <strong>Đúng hệ sơn theo bề mặt</strong>
+    <p>Đưa ra cấu hình vật tư theo điều kiện thực tế, không tư vấn theo cảm tính.</p>
+  </article>
+  <article class="proof-item">
+    <span class="proof-item__label">Báo giá minh bạch</span>
+    <strong>Chi phí rõ ngay từ đầu</strong>
+    <p>Bóc tách khối lượng, vật tư và phương án tối ưu để dễ kiểm soát ngân sách.</p>
+  </article>
+  <article class="proof-item">
+    <span class="proof-item__label">Hậu mãi công trình</span>
+    <strong>Đồng hành xuyên suốt</strong>
+    <p>Hỗ trợ kỹ thuật sau giao hàng để đội thi công xử lý phát sinh nhanh chóng.</p>
+  </article>
+</section>
+
+<section class="page-section page-section--dense page-section--band">
   <div class="section-heading">
-    <h2 class="section-title">Thương hiệu đối tác</h2>
-    <p class="section-sub">Nguồn hàng ổn định, cập nhật dòng sản phẩm mới liên tục</p>
+    <h2 class="section-title">Thương hiệu đối tác chiến lược</h2>
+    <p class="section-sub">Nguồn hàng ổn định, chính hãng và có tài liệu kỹ thuật rõ ràng</p>
   </div>
-  <div class="brand-strip">
+  <div class="brand-marquee" aria-label="Danh sách thương hiệu">
     {% for brand in brands %}
-      <span class="brand-chip">{{ brand.name }}</span>
+      <span class="brand-chip brand-chip--power">{{ brand.name }}</span>
     {% empty %}
-      <span class="brand-chip">Dulux</span>
-      <span class="brand-chip">Jotun</span>
-      <span class="brand-chip">Kova</span>
-      <span class="brand-chip">Nippon Paint</span>
-      <span class="brand-chip">Maxilite</span>
+      <span class="brand-chip brand-chip--power">Dulux</span>
+      <span class="brand-chip brand-chip--power">Jotun</span>
+      <span class="brand-chip brand-chip--power">Kova</span>
+      <span class="brand-chip brand-chip--power">Nippon Paint</span>
+      <span class="brand-chip brand-chip--power">Maxilite</span>
     {% endfor %}
   </div>
 </section>
 
-<section class="page-section">
+<section class="page-section page-section--dense">
   <div class="section-heading">
-    <h2 class="section-title">Danh mục nổi bật</h2>
-    <p class="section-sub">Tối ưu theo từng bề mặt và điều kiện công trình</p>
+    <h2 class="section-title">Giải pháp theo mục tiêu công trình</h2>
+    <p class="section-sub">Định nghĩa rõ mục tiêu trước khi vào vật tư để tránh phát sinh</p>
   </div>
-  <div class="product-grid category-grid">
-    <article class="product-card">
-      <div class="product-card__body">
-        <div class="product-card__brand">Danh mục</div>
-        <h3 class="product-card__title">Sơn nội thất</h3>
-        <p class="text-muted">Màng sơn mịn, độ phủ cao, dễ lau chùi.</p>
-      </div>
-      <div class="product-card__actions">
-        <a class="btn btn-primary w-100" href="{% url 'store:product_list' %}?q=Sơn nội thất">Xem sản phẩm</a>
-      </div>
+  <div class="impact-grid">
+    <article class="impact-card">
+      <span class="impact-card__tag">Nội thất</span>
+      <h3>Lớp phủ mịn và dễ vệ sinh</h3>
+      <p>Ưu tiên độ che phủ, cảm giác hoàn thiện cao cấp và khả năng lau chùi thường xuyên.</p>
+      <a class="btn btn-primary" href="{% url 'store:product_list' %}?q=Sơn nội thất">Xem giải pháp</a>
     </article>
 
-    <article class="product-card">
-      <div class="product-card__body">
-        <div class="product-card__brand">Danh mục</div>
-        <h3 class="product-card__title">Sơn ngoại thất</h3>
-        <p class="text-muted">Bền màu, chống tia UV, hạn chế bám bẩn.</p>
-      </div>
-      <div class="product-card__actions">
-        <a class="btn btn-primary w-100" href="{% url 'store:product_list' %}?q=Sơn ngoại thất">Xem sản phẩm</a>
-      </div>
+    <article class="impact-card">
+      <span class="impact-card__tag">Ngoại thất</span>
+      <h3>Bền màu trước nắng mưa khắc nghiệt</h3>
+      <p>Tối ưu khả năng chống tia UV, chống bám bụi và độ ổn định theo thời gian sử dụng.</p>
+      <a class="btn btn-primary" href="{% url 'store:product_list' %}?q=Sơn ngoại thất">Xem giải pháp</a>
     </article>
 
-    <article class="product-card">
-      <div class="product-card__body">
-        <div class="product-card__brand">Danh mục</div>
-        <h3 class="product-card__title">Chống thấm</h3>
-        <p class="text-muted">Giải pháp cho mái, sân thượng, tường ngoài.</p>
-      </div>
-      <div class="product-card__actions">
-        <a class="btn btn-primary w-100" href="{% url 'store:product_list' %}?q=Chống thấm">Xem sản phẩm</a>
-      </div>
+    <article class="impact-card">
+      <span class="impact-card__tag">Chống thấm</span>
+      <h3>Khóa ẩm cho mái và tường ngoài</h3>
+      <p>Định cấu hình hệ chống thấm theo vị trí ứng suất và mức độ tiếp xúc nước thực tế.</p>
+      <a class="btn btn-primary" href="{% url 'store:product_list' %}?q=Chống thấm">Xem giải pháp</a>
     </article>
 
-    <article class="product-card">
-      <div class="product-card__body">
-        <div class="product-card__brand">Danh mục</div>
-        <h3 class="product-card__title">Bột bả</h3>
-        <p class="text-muted">Bề mặt phẳng mịn, tăng độ bám cho lớp sơn phủ.</p>
-      </div>
-      <div class="product-card__actions">
-        <a class="btn btn-primary w-100" href="{% url 'store:product_list' %}?q=Bột bả">Xem sản phẩm</a>
-      </div>
+    <article class="impact-card">
+      <span class="impact-card__tag">Nền bề mặt</span>
+      <h3>Tăng độ bám bằng bột bả chuẩn</h3>
+      <p>Cân bằng bề mặt trước khi phủ để giảm hao hụt sơn và nâng chất lượng hoàn thiện.</p>
+      <a class="btn btn-primary" href="{% url 'store:product_list' %}?q=Bột bả">Xem giải pháp</a>
     </article>
   </div>
 </section>
 
-<section class="page-section">
+<section class="page-section page-section--dense">
+  <div class="section-heading">
+    <h2 class="section-title">Quy trình triển khai chuyên nghiệp</h2>
+    <p class="section-sub">Chuẩn hóa từng bước để đảm bảo tiến độ và chất lượng đồng đều</p>
+  </div>
+  <div class="ops-grid">
+    <article class="ops-card process-step">
+      <span class="process-step__index">01</span>
+      <h3>Khảo sát</h3>
+      <p>Đánh giá bề mặt, điều kiện môi trường và yêu cầu thẩm mỹ của công trình.</p>
+    </article>
+    <article class="ops-card process-step">
+      <span class="process-step__index">02</span>
+      <h3>Đề xuất hệ sơn</h3>
+      <p>Thiết kế cấu hình vật tư và tiến độ thi công tương ứng với ngân sách thực tế.</p>
+    </article>
+    <article class="ops-card process-step">
+      <span class="process-step__index">03</span>
+      <h3>Cung ứng &amp; hỗ trợ</h3>
+      <p>Giao hàng đồng bộ theo giai đoạn, theo dõi và hỗ trợ kỹ thuật xuyên suốt dự án.</p>
+    </article>
+  </div>
+</section>
+
+<section class="page-section page-section--dense">
   <div class="section-heading">
     <h2 class="section-title">Sản phẩm nổi bật</h2>
     <a class="btn btn-outline btn-sm" href="{% url 'store:product_list' %}">Xem tất cả</a>
   </div>
-  <div class="product-grid">
+  <div class="product-grid product-grid--home">
     {% for product in featured_products|default:new_products %}
-      <article class="product-card">
-        <a href="{% url 'store:product_detail' product.pk %}" class="product-card__thumb">
+      <article class="product-card product-card--home">
+        <a href="{% url 'store:product_detail' product.pk %}" class="product-card__thumb product-card__thumb--home">
+          <span class="product-card__badge">Top {{ forloop.counter }}</span>
           {% if product.image %}
             <img src="{{ product.image.url }}" alt="{{ product.name }}">
           {% else %}
@@ -110,7 +159,10 @@
           {% endif %}
         </a>
         <div class="product-card__body">
-          {% if product.brand %}<div class="product-card__brand">{{ product.brand.name }}</div>{% endif %}
+          <div class="product-card__meta-row">
+            {% if product.brand %}<div class="product-card__brand">{{ product.brand.name }}</div>{% endif %}
+            <span class="stock-pill{% if product.available_stock <= 0 %} is-out{% endif %}">{% if product.available_stock > 0 %}Sẵn kho{% else %}Hết hàng{% endif %}</span>
+          </div>
           <h3 class="product-card__title"><a href="{% url 'store:product_detail' product.pk %}">{{ product.name }}</a></h3>
           <div class="product-card__price"><span class="price-current">{{ product.price|vnd }}</span></div>
         </div>
@@ -119,8 +171,54 @@
         </div>
       </article>
     {% empty %}
-      <p class="text-muted">Đang cập nhật sản phẩm...</p>
+      <p class="text-muted">Đang cập nhật sản phẩm nổi bật...</p>
     {% endfor %}
+  </div>
+</section>
+
+<section class="page-section page-section--dense">
+  <div class="section-heading">
+    <h2 class="section-title">Năng lực phục vụ theo quy mô công trình</h2>
+    <p class="section-sub">Một khung làm việc thống nhất cho nhà dân, chuỗi cửa hàng và dự án lớn</p>
+  </div>
+  <div class="assurance-grid">
+    <article class="assurance-card">
+      <h3>Nhà dân &amp; cải tạo</h3>
+      <p>Tối ưu chi phí vật tư, giảm phát sinh trong quá trình thi công hoàn thiện.</p>
+      <ul class="list-plain list-plain--tight">
+        <li>Định mức vật tư theo từng khu vực</li>
+        <li>Checklist thi công rõ cho đội thợ</li>
+      </ul>
+    </article>
+    <article class="assurance-card">
+      <h3>Cửa hàng &amp; văn phòng</h3>
+      <p>Ưu tiên tiến độ và độ đồng nhất màu sắc để không gián đoạn vận hành kinh doanh.</p>
+      <ul class="list-plain list-plain--tight">
+        <li>Lên lịch giao hàng theo giai đoạn</li>
+        <li>Kiểm soát màu theo batch thực tế</li>
+      </ul>
+    </article>
+    <article class="assurance-card">
+      <h3>Dự án nhiều hạng mục</h3>
+      <p>Phối hợp vật tư đa khu vực với dữ liệu theo dõi tập trung, dễ giám sát.</p>
+      <ul class="list-plain list-plain--tight">
+        <li>Báo cáo tiêu hao và tồn kho theo tuần</li>
+        <li>Hỗ trợ kỹ thuật khi đổi điều kiện thi công</li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<section class="page-section page-section--cta">
+  <div class="cta-split">
+    <div>
+      <h2>Sẵn sàng đẩy chất lượng công trình lên một cấp độ mới?</h2>
+      <p>Gửi nhu cầu ngay hôm nay để nhận đề xuất hệ sơn đúng mục tiêu thi công và khung ngân sách của bạn.</p>
+    </div>
+    <div class="cta-split__actions">
+      <a class="btn btn-accent btn-lg" href="{% url 'store:contact' %}">Liên hệ chuyên gia</a>
+      <a class="btn btn-outline btn-lg" href="{% url 'store:product_list' %}">Xem danh mục đầy đủ</a>
+    </div>
   </div>
 </section>
 {% endblock %}

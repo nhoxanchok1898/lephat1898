@@ -10,21 +10,24 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/main.css' %}?v=5">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}?v=7">
     {% block extra_css %}{% endblock %}
   </head>
   <body>
     <header class="site-header">
       <div class="container header-bar">
-        <a class="brand" href="{% url 'store:home' %}">
-          <span class="brand-mark">🎨</span>
-          <span>Đại lý Sơn Phát Tấn</span>
+        <a class="brand" href="{% url 'home:index' %}" aria-label="{{ business_name }}">
+          <span class="brand-mark" aria-hidden="true">PT</span>
+          <span class="brand-copy">
+            <strong>{{ business_name }}</strong>
+            <small>Paint &amp; Coating Solutions</small>
+          </span>
         </a>
 
         <button id="nav-toggle" class="nav-toggle" aria-label="Mở menu" aria-controls="primary-nav" aria-expanded="false">☰</button>
 
         <nav id="primary-nav" class="main-nav">
-          <a href="{% url 'store:home' %}">Trang chủ</a>
+          <a href="{% url 'home:index' %}">Trang chủ</a>
           <a href="{% url 'store:product_list' %}">Sản phẩm</a>
           <a href="{% url 'store:contact' %}">Liên hệ</a>
         </nav>
@@ -39,10 +42,12 @@
           {% endif %}
 
           {% with cart=request.session.cart %}
+            {% with cart_count=cart|cart_quantity %}
             <a class="cart-link" href="{% url 'store:cart_view' %}">
               <span>Giỏ hàng</span>
-              {% if cart %}<span class="cart-link__count">{{ cart|length }}</span>{% endif %}
+              {% if cart_count %}<span class="cart-link__count">{{ cart_count }}</span>{% endif %}
             </a>
+            {% endwith %}
           {% endwith %}
         </div>
       </div>
@@ -64,8 +69,10 @@
     <footer>
       <div class="container footer-grid">
         <div>
-          <div class="footer-heading">Đại lý Sơn Phát Tấn</div>
+          <div class="footer-heading">{{ business_name }}</div>
           <p>Giải pháp sơn chuyên nghiệp cho nhà ở, công trình dân dụng và dự án.</p>
+          <p>Tư vấn vật tư theo bề mặt, ngân sách và tiến độ thi công thực tế.</p>
+          <p class="footer-kicker">Khu vực phục vụ chính: {{ business_service_areas }}</p>
         </div>
         <div>
           <div class="footer-heading">Danh mục</div>
@@ -85,12 +92,16 @@
         </div>
         <div>
           <div class="footer-heading">Liên hệ</div>
-          <p>📞 1900-xxxx</p>
-          <p>📧 info@paintstore.vn</p>
-          <p>📍 392 TL10, Bình Trị Đông, Bình Tân, TP. Hồ Chí Minh</p>
+          <div class="footer-links footer-links--contact">
+            <a href="{{ business_phone_href }}">{{ business_phone_display }}</a>
+            <a href="{{ business_email_href }}">{{ business_email }}</a>
+            <a href="{{ business_zalo_url }}" target="_blank" rel="noopener">Zalo kỹ thuật</a>
+          </div>
+          <p>{{ business_hours }}</p>
+          <p>{{ business_address }}</p>
         </div>
       </div>
-      <div class="footer-copy">© {% now "Y" %} Đại lý Sơn Phát Tấn.</div>
+      <div class="footer-copy">© {% now "Y" %} {{ business_name }}.</div>
     </footer>
 
     <script>
@@ -106,7 +117,7 @@
             });
           }
 
-          var revealNodes = document.querySelectorAll('.page-section, .product-card, .card, .cart-item, .checkout-card, .auth-card');
+          var revealNodes = document.querySelectorAll('.page-section, .product-card, .card, .cart-item, .checkout-card, .auth-card, .impact-card, .ops-card, .process-step, .metric-card');
           if (!revealNodes.length) {
             return;
           }

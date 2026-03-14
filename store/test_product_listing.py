@@ -5,7 +5,7 @@ Tests all filtering, sorting, and UI features
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
-from store.models import Product, Category, Brand
+from store.models import Product, Category, Brand, StockLevel
 from decimal import Decimal
 from datetime import timedelta
 from django.utils import timezone
@@ -167,6 +167,44 @@ class ProductListingUITest(TestCase):
         self.assertContains(response, "Sơn Jotun Xanh")
         # product3 has quantity=0
         self.assertNotContains(response, "Chống thấm Dulux")
+
+    def test_in_stock_filter_honors_stocklevel_presence(self):
+        """Managed stock should be included even when legacy quantity fields are zero."""
+        managed = Product.objects.create(
+            name="Managed Stock Paint",
+            slug="managed-stock-paint",
+            category=self.cat_paint,
+            brand=self.brand_dulux,
+            price=Decimal('210000'),
+            quantity=0,
+            stock_quantity=0,
+            is_active=True,
+        )
+        StockLevel.objects.create(product=managed, quantity=6, low_stock_threshold=2)
+
+        response = self.client.get(reverse('store:product_list'), {'in_stock': '1'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Managed Stock Paint")
+
+    def test_in_stock_filter_prefers_stocklevel_over_legacy_fields(self):
+        """Managed stock set to zero should not leak into in-stock filters via stale legacy fields."""
+        managed = Product.objects.create(
+            name="Managed Out Paint",
+            slug="managed-out-paint",
+            category=self.cat_paint,
+            brand=self.brand_dulux,
+            price=Decimal('220000'),
+            quantity=9,
+            stock_quantity=9,
+            is_active=True,
+        )
+        StockLevel.objects.create(product=managed, quantity=0, low_stock_threshold=2)
+
+        response = self.client.get(reverse('store:product_list'), {'in_stock': '1'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Managed Out Paint")
     
     def test_search_functionality(self):
         """Test search by product name"""
@@ -269,7 +307,7 @@ class ProductListingUITest(TestCase):
             self.assertEqual(p.brand, self.brand_jotun)
             self.assertGreaterEqual(p.price, Decimal('150000'))
             self.assertLessEqual(p.price, Decimal('250000'))
-            self.assertGreater(p.quantity, 0)
+            self.assertGreater(p.available_stock, 0)
     
     def test_context_data(self):
         """Test that all required context data is passed to template"""

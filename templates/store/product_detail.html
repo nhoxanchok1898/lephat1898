@@ -7,7 +7,7 @@
 <section class="page-section">
   <div class="breadcrumb-nav" aria-label="breadcrumb">
     <ol class="breadcrumb">
-      <li><a href="{% url 'store:home' %}">Trang chủ</a></li>
+      <li><a href="{% url 'home:index' %}">Trang chủ</a></li>
       <li><a href="{% url 'store:product_list' %}">Sản phẩm</a></li>
       <li>{{ product.name }}</li>
     </ol>
@@ -41,7 +41,7 @@
         {% if product.volume %}
           <li>Quy cách: {{ product.volume }} {% if product.unit_type == 'KG' %}Kg{% else %}L{% endif %}</li>
         {% endif %}
-        <li>Tồn kho: {% if product.quantity > 0 %}Còn hàng{% else %}Hết hàng{% endif %}</li>
+        <li>Tồn kho: {% if product.available_stock > 0 %}Còn hàng{% else %}Hết hàng{% endif %}</li>
       </ul>
 
       {% if product.description %}
@@ -54,10 +54,10 @@
         {% csrf_token %}
         <div class="qty-row">
           <label class="form-label" for="quantity">Số lượng</label>
-          <input id="quantity" class="form-control" type="number" name="quantity" value="1" min="1" {% if product.quantity <= 0 %}disabled{% endif %}>
+          <input id="quantity" class="form-control" type="number" name="quantity" value="1" min="1" max="{{ product.available_stock|default:1 }}" {% if product.available_stock <= 0 %}disabled{% endif %}>
         </div>
         <div class="hero-actions">
-          {% if product.quantity > 0 %}
+          {% if product.available_stock > 0 %}
             <button type="submit" class="btn btn-primary">Thêm vào giỏ</button>
           {% else %}
             <button type="button" class="btn btn-secondary" disabled>Hiện đang hết hàng</button>

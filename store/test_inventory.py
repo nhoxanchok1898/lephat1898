@@ -34,6 +34,9 @@ class InventoryTests(TestCase):
         # Verify stock level was created
         stock = StockLevel.objects.get(product=self.product)
         self.assertEqual(stock.quantity, 50)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock_quantity, 50)
+        self.assertEqual(self.product.quantity, 50)
     
     def test_low_stock_alert(self):
         """Test low stock alert creation"""

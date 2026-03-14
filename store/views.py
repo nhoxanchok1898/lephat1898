@@ -10,6 +10,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.db.models import Q, Count, Avg, Sum
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
 
@@ -40,10 +41,14 @@ def home_view(request):
     
     # Use select_related for performance
     brands = Brand.objects.all()[:8]
-    new_products = Product.objects.filter(is_active=True).select_related('brand', 'category').order_by('-created_at')[:12]
+    new_products = Product.with_effective_stock(
+        Product.objects.filter(is_active=True).select_related('brand', 'category')
+    ).order_by('-created_at')[:12]
     
     # Get trending products (most viewed in last 7 days)
-    trending_products = Product.objects.filter(is_active=True).order_by('-view_count')[:8]
+    trending_products = Product.with_effective_stock(
+        Product.objects.filter(is_active=True).select_related('brand', 'category')
+    ).order_by('-view_count')[:8]
     featured_products = trending_products  # Use same data for featured
     
     template = 'store/home_redesign.html' if use_redesign else 'store/home.html'
@@ -57,7 +62,9 @@ def home_view(request):
 
 
 def product_list(request):
-    qs = Product.objects.filter(is_active=True).select_related('brand', 'category')
+    qs = Product.with_effective_stock(
+        Product.objects.filter(is_active=True).select_related('brand', 'category')
+    )
     
     # Get filter parameters
     category = request.GET.get('category')
@@ -120,8 +127,8 @@ def product_list(request):
         qs = qs.filter(created_at__gte=thirty_days_ago)
     
     if in_stock:
-        # Filter products that have quantity > 0
-        qs = qs.filter(quantity__gt=0)
+        # Filter products with sellable stock.
+        qs = qs.filter(effective_stock__gt=0)
     
     # Sorting
     if sort_by == 'price_asc':
@@ -187,7 +194,13 @@ def product_list(request):
 
 
 def product_detail(request, pk):
-    p = get_object_or_404(Product, pk=pk, is_active=True)
+    p = get_object_or_404(
+        Product.with_effective_stock(
+            Product.objects.select_related('brand', 'category', 'stock')
+        ),
+        pk=pk,
+        is_active=True,
+    )
     
     # Track product view
     user = request.user if request.user.is_authenticated else None
@@ -214,29 +227,46 @@ def product_detail(request, pk):
     # Get users who viewed this product
     viewers = ProductView.objects.filter(product=p).exclude(user__isnull=True).values_list('user', flat=True).distinct()
     # Get other products viewed by these users
-    recommended_products = Product.objects.filter(
-        views__user__in=viewers,
-        is_active=True
+    recommended_products = Product.with_effective_stock(
+        Product.objects.filter(
+            views__user__in=viewers,
+            is_active=True
+        ).select_related('brand', 'category')
     ).exclude(pk=p.pk).annotate(
         total_views=Count('views')
     ).order_by('-total_views')[:6]
     
     # Get products in the same category
-    related_products = Product.objects.filter(
-        category=p.category,
-        is_active=True
+    related_products = Product.with_effective_stock(
+        Product.objects.filter(
+            category=p.category,
+            is_active=True
+        ).select_related('brand', 'category')
     ).exclude(pk=p.pk)[:6]
     
-    # Get stock information
+    # Get stock information from stock table when available; fallback to product field.
     try:
         stock = p.stock
+        available_qty = int(getattr(stock, 'quantity', 0))
         stock_info = {
-            'available': stock.available_quantity(),
-            'is_low': stock.is_low_stock(),
-            'is_out': stock.is_out_of_stock(),
+            'available': available_qty,
+            'is_low': bool(getattr(stock, 'is_low_stock', False)),
+            'is_out': bool(getattr(stock, 'is_out_of_stock', available_qty <= 0)),
         }
     except StockLevel.DoesNotExist:
-        stock_info = None
+        available_qty = int(getattr(p, 'available_stock', 0))
+        stock_info = {
+            'available': available_qty,
+            'is_low': 0 < available_qty <= 10,
+            'is_out': available_qty <= 0,
+        }
+    except Exception:
+        available_qty = int(getattr(p, 'available_stock', 0))
+        stock_info = {
+            'available': available_qty,
+            'is_low': 0 < available_qty <= 10,
+            'is_out': available_qty <= 0,
+        }
     
     # Get average rating (use the stored `rating` field)
     avg_rating = p.rating
@@ -254,13 +284,22 @@ def _get_cart(request):
     return request.session.setdefault('cart', {})
 
 
+def _is_json_request(request):
+    return request.content_type == 'application/json' or request.META.get('HTTP_CONTENT_TYPE', '').startswith('application/json')
+
+
+def _get_product_stock_state(product):
+    """Return normalized stock state for mixed legacy/new inventory fields."""
+    return product.get_stock_state()
+
+
 @require_POST
 def cart_add(request, pk):
     product = get_object_or_404(Product, pk=pk, is_active=True)
     cart = _get_cart(request)
     qty = 1
     # support JSON body from fetch() as well as form-encoded POST
-    if request.content_type == 'application/json' or request.META.get('HTTP_CONTENT_TYPE', '').startswith('application/json'):
+    if _is_json_request(request):
         try:
             data = json.loads(request.body.decode('utf-8')) if request.body else {}
             qty = int(data.get('quantity', 1))
@@ -271,13 +310,40 @@ def cart_add(request, pk):
             qty = int(request.POST.get('quantity', 1))
         except Exception:
             qty = 1
-    if str(pk) in cart:
-        cart[str(pk)] += qty
+
+    if qty <= 0:
+        qty = 1
+
+    stock_state = _get_product_stock_state(product)
+    stock_available = stock_state['stock_available']
+    has_defined_stock = stock_state['has_defined_stock']
+
+    key = str(pk)
+    current_qty = int(cart.get(key, 0))
+
+    if has_defined_stock and stock_available <= 0:
+        if _is_json_request(request):
+            return JsonResponse({'success': False, 'error': 'out_of_stock'}, status=409)
+        messages.error(request, f'"{product.name}" hiện đang hết hàng.')
+        return redirect('store:product_detail', pk=pk)
+
+    if has_defined_stock:
+        requested_qty = current_qty + qty
+        cart[key] = min(requested_qty, stock_available)
     else:
-        cart[str(pk)] = qty
+        cart[key] = current_qty + qty
     request.session.modified = True
+
+    if not _is_json_request(request):
+        if has_defined_stock and current_qty >= stock_available:
+            messages.warning(request, f'"{product.name}" đã đạt mức tối đa theo tồn kho hiện tại.')
+        elif has_defined_stock and cart[key] < current_qty + qty:
+            messages.warning(request, f'Số lượng "{product.name}" đã được giới hạn còn {cart[key]} theo tồn kho.')
+        else:
+            messages.success(request, f'Đã thêm "{product.name}" vào giỏ hàng.')
+
     # If JSON request, return JSON summary
-    if request.content_type == 'application/json' or request.META.get('HTTP_CONTENT_TYPE', '').startswith('application/json'):
+    if _is_json_request(request):
         total = 0
         count = 0
         items = []
@@ -298,15 +364,36 @@ def cart_view(request):
     cart = _get_cart(request)
     items = []
     total = 0
+    item_count = 0
+    cart_changed = False
     for pid, qty in cart.items():
         try:
             p = Product.objects.get(pk=int(pid))
         except Product.DoesNotExist:
+            cart_changed = True
             continue
+
+        stock_state = _get_product_stock_state(p)
+        if stock_state['has_defined_stock']:
+            bounded_qty = min(max(0, int(qty)), stock_state['stock_available'])
+            if bounded_qty <= 0:
+                cart_changed = True
+                continue
+            if bounded_qty != qty:
+                cart_changed = True
+                qty = bounded_qty
+
         subtotal = p.price * qty
         total += subtotal
+        item_count += int(qty)
         items.append({'product': p, 'qty': qty, 'subtotal': subtotal})
-    return render(request, 'store/cart.html', {'items': items, 'total': total})
+
+    if cart_changed:
+        refreshed_cart = {str(item['product'].pk): int(item['qty']) for item in items}
+        request.session['cart'] = refreshed_cart
+        request.session.modified = True
+
+    return render(request, 'store/cart.html', {'items': items, 'total': total, 'item_count': item_count})
 
 
 def cart_remove(request, pk):
@@ -324,10 +411,23 @@ def cart_update(request, pk):
         qty = int(request.POST.get('quantity', 0))
     except Exception:
         qty = 0
+    key = str(pk)
     if qty <= 0:
-        cart.pop(str(pk), None)
+        cart.pop(key, None)
     else:
-        cart[str(pk)] = qty
+        product = Product.objects.filter(pk=pk, is_active=True).first()
+        if product is None:
+            cart.pop(key, None)
+        else:
+            stock_state = _get_product_stock_state(product)
+            if stock_state['has_defined_stock']:
+                bounded_qty = min(qty, stock_state['stock_available'])
+                if bounded_qty <= 0:
+                    cart.pop(key, None)
+                else:
+                    cart[key] = bounded_qty
+            else:
+                cart[key] = qty
     request.session.modified = True
     return redirect('store:cart_view')
 
@@ -338,7 +438,7 @@ def cart_update_ajax(request, pk):
     cart = _get_cart(request)
     # support JSON body from fetch() as well as form posts
     qty = None
-    if request.content_type == 'application/json' or request.META.get('HTTP_CONTENT_TYPE', '').startswith('application/json'):
+    if _is_json_request(request):
         try:
             data = json.loads(request.body.decode('utf-8')) if request.body else {}
             qty = int(data.get('quantity', 0))
@@ -350,20 +450,28 @@ def cart_update_ajax(request, pk):
         except Exception:
             return JsonResponse({'error': 'invalid quantity'}, status=400)
 
-    if qty <= 0:
-        cart.pop(str(pk), None)
+    key = str(pk)
+    product = Product.objects.filter(pk=pk, is_active=True).first()
+
+    if qty <= 0 or product is None:
+        cart.pop(key, None)
     else:
-        cart[str(pk)] = qty
+        stock_state = _get_product_stock_state(product)
+        if stock_state['has_defined_stock']:
+            bounded_qty = min(qty, stock_state['stock_available'])
+            if bounded_qty <= 0:
+                cart.pop(key, None)
+            else:
+                cart[key] = bounded_qty
+        else:
+            cart[key] = qty
     request.session.modified = True
 
     # compute new subtotal for this product and total for cart
     subtotal = 0
     total = 0
-    try:
-        p = Product.objects.get(pk=pk)
-        subtotal = p.price * cart.get(str(pk), 0)
-    except Product.DoesNotExist:
-        subtotal = 0
+    if product is not None:
+        subtotal = product.price * cart.get(key, 0)
 
     for pid, q in cart.items():
         try:
@@ -372,7 +480,7 @@ def cart_update_ajax(request, pk):
             continue
         total += prod.price * q
 
-    return JsonResponse({'pk': pk, 'quantity': cart.get(str(pk), 0), 'subtotal': subtotal, 'total': total})
+    return JsonResponse({'pk': pk, 'quantity': cart.get(key, 0), 'subtotal': subtotal, 'total': total})
 
 
 def cart_summary_ajax(request):
@@ -412,8 +520,14 @@ def api_cart_add_public(request):
     data = request.data or {}
     product_id = data.get('product_id')
     try:
+        product_id = int(product_id)
+    except (TypeError, ValueError):
+        return Response({'error': 'product_id must be an integer'}, status=drf_status.HTTP_400_BAD_REQUEST)
+    try:
         quantity = int(data.get('quantity', 1))
     except Exception:
+        quantity = 1
+    if quantity <= 0:
         quantity = 1
 
     if not product_id:
@@ -430,7 +544,18 @@ def api_cart_add_public(request):
 
     cart = request.session.get('cart', {})
     product_key = str(product_id)
-    cart[product_key] = cart.get(product_key, 0) + quantity
+    stock_state = _get_product_stock_state(product)
+    stock_available = stock_state['stock_available']
+    has_defined_stock = stock_state['has_defined_stock']
+    current_qty = int(cart.get(product_key, 0))
+
+    if has_defined_stock and stock_available <= 0:
+        return Response({'success': False, 'error': 'out_of_stock'}, status=drf_status.HTTP_409_CONFLICT)
+
+    if has_defined_stock:
+        cart[product_key] = min(current_qty + quantity, stock_available)
+    else:
+        cart[product_key] = current_qty + quantity
     request.session['cart'] = cart
     request.session.modified = True
 
@@ -465,12 +590,38 @@ def cart_remove_ajax(request, pk):
 def checkout_view(request):
     cart = _get_cart(request)
     if request.method == 'POST':
-        name = request.POST.get('name')
-        phone = request.POST.get('phone')
-        address = request.POST.get('address')
+        if not cart:
+            messages.error(request, 'Giỏ hàng đang trống. Vui lòng thêm sản phẩm trước khi thanh toán.')
+            return redirect('store:cart_view')
+
+        name = (request.POST.get('name') or '').strip()
+        phone = (request.POST.get('phone') or '').strip()
+        address = (request.POST.get('address') or '').strip()
+
+        if not name or not phone or not address:
+            items = []
+            total = 0
+            for pid, qty in cart.items():
+                try:
+                    p = Product.objects.get(pk=int(pid))
+                except Product.DoesNotExist:
+                    continue
+                subtotal = p.price * qty
+                total += subtotal
+                items.append({'product': p, 'qty': qty, 'subtotal': subtotal})
+            messages.error(request, 'Vui lòng nhập đầy đủ họ tên, số điện thoại và địa chỉ giao hàng.')
+            return render(request, 'store/checkout.html', {'items': items, 'total': total}, status=400)
+
         payment_method = request.POST.get('payment_method', Order.PAYMENT_METHOD_COD)
         # Map legacy value to new COD identifier so existing clients continue to work
         if payment_method == Order.PAYMENT_METHOD_OFFLINE:
+            payment_method = Order.PAYMENT_METHOD_COD
+        allowed_payment_methods = {
+            Order.PAYMENT_METHOD_COD,
+            Order.PAYMENT_METHOD_STRIPE,
+            Order.PAYMENT_METHOD_PAYPAL,
+        }
+        if payment_method not in allowed_payment_methods:
             payment_method = Order.PAYMENT_METHOD_COD
         order = Order.objects.create(
             user=request.user if request.user.is_authenticated else None,

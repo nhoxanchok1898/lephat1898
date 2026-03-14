@@ -1,16 +1,104 @@
 {% extends 'store/base.html' %}
 {% block title %}Liên hệ - Đại lý Sơn Phát Tấn{% endblock %}
 {% block content %}
+<section class="page-section contact-hero">
+  <div class="contact-hero__content">
+    <p class="eyebrow contact-hero__eyebrow">Liên hệ cửa hàng</p>
+    <h1 class="page-title contact-hero__title">Chốt vật tư nhanh qua điện thoại, Zalo hoặc email</h1>
+    <p class="section-sub contact-hero__lead">Nếu bạn đã có mã sơn hoặc cần báo giá gấp, gọi điện hoặc nhắn Zalo là nhanh nhất. Nếu cần tư vấn theo bề mặt, gửi thêm diện tích, ảnh hiện trạng và tiến độ thi công để đội ngũ phản hồi đúng ngữ cảnh hơn.</p>
+    <div class="hero-actions">
+      <a class="btn btn-accent" href="{{ business_phone_href }}">Gọi {{ business_phone_display }}</a>
+      <a class="btn btn-outline" href="{{ business_zalo_url }}" target="_blank" rel="noopener">Nhắn Zalo kỹ thuật</a>
+      <a class="btn btn-ghost" href="{{ business_email_href }}">Gửi email</a>
+    </div>
+    <div class="contact-kpis">
+      <article class="contact-kpi">
+        <strong>{{ business_hours }}</strong>
+        <span>Khung giờ phản hồi ưu tiên để báo giá và chốt vật tư nhanh.</span>
+      </article>
+      <article class="contact-kpi">
+        <strong>{{ business_service_areas }}</strong>
+        <span>Khu vực phục vụ chính cho nhà dân, đội thợ và công trình.</span>
+      </article>
+      <article class="contact-kpi">
+        <strong>15 phút</strong>
+        <span>Mục tiêu phản hồi ban đầu trong giờ làm việc khi đủ thông tin.</span>
+      </article>
+    </div>
+  </div>
+
+  <aside class="contact-hero__card">
+    <h2 class="section-title">Thông tin cửa hàng</h2>
+    <div class="contact-fact-list">
+      <div class="contact-fact">
+        <span class="contact-fact__label">Điện thoại</span>
+        <a href="{{ business_phone_href }}">{{ business_phone_display }}</a>
+      </div>
+      <div class="contact-fact">
+        <span class="contact-fact__label">Email</span>
+        <a href="{{ business_email_href }}">{{ business_email }}</a>
+      </div>
+      <div class="contact-fact">
+        <span class="contact-fact__label">Địa chỉ</span>
+        <span>{{ business_address }}</span>
+      </div>
+      <div class="contact-fact">
+        <span class="contact-fact__label">Giờ làm việc</span>
+        <span>{{ business_hours }}</span>
+      </div>
+    </div>
+    <div class="contact-hero__actions">
+      <a class="btn btn-primary w-100" href="{{ business_maps_url }}" target="_blank" rel="noopener">Mở Google Maps</a>
+    </div>
+  </aside>
+</section>
+
 <section class="page-section">
   <div class="section-heading">
-    <h2 class="section-title">Liên hệ</h2>
-    <p class="section-sub">Đại lý Sơn Phát Tấn · Dulux · Jotun · Kova · Nippon Paint · Maxilite</p>
+    <h2 class="section-title">Chọn kênh liên hệ theo tình huống</h2>
+    <p class="section-sub">Mỗi kênh phù hợp với một tốc độ xử lý và lượng thông tin khác nhau.</p>
   </div>
-  <div class="card-flat">
-    <div class="card-flat__body stack">
-      <p><strong>Địa chỉ:</strong> 392 TL10, Bình Trị Đông, Bình Tân, TP. Hồ Chí Minh</p>
-      <p><strong>Điện thoại:</strong> 1900-xxxx</p>
-      <p><strong>Email:</strong> info@paintstore.vn</p>
+  <div class="contact-channel-grid">
+    <article class="contact-channel-card">
+      <span class="contact-channel-card__tag">Nhanh nhất</span>
+      <h3>Gọi điện trực tiếp</h3>
+      <p>Phù hợp khi bạn đã gần chốt đơn, cần hỏi ngay giá, số lượng có sẵn hoặc thời gian giao.</p>
+      <a class="btn btn-primary" href="{{ business_phone_href }}">Gọi ngay</a>
+    </article>
+    <article class="contact-channel-card">
+      <span class="contact-channel-card__tag">Có hình ảnh</span>
+      <h3>Zalo kỹ thuật</h3>
+      <p>Thuận tiện khi cần gửi ảnh bề mặt, bảng màu, video hiện trạng hoặc yêu cầu trao đổi nhanh ngoài cuộc gọi.</p>
+      <a class="btn btn-outline" href="{{ business_zalo_url }}" target="_blank" rel="noopener">Mở Zalo</a>
+    </article>
+    <article class="contact-channel-card">
+      <span class="contact-channel-card__tag">Chi tiết</span>
+      <h3>Email &amp; chứng từ</h3>
+      <p>Dùng khi bạn cần gửi khối lượng lớn thông tin, file đính kèm, thông tin dự án hoặc yêu cầu báo giá theo nhiều hạng mục.</p>
+      <a class="btn btn-outline" href="{{ business_email_href }}">Gửi email</a>
+    </article>
+  </div>
+</section>
+
+<section class="page-section">
+  <div class="section-heading">
+    <h2 class="section-title">Thông tin nên chuẩn bị trước khi liên hệ</h2>
+    <p class="section-sub">Chuẩn bị đủ dữ liệu sẽ giúp đội ngũ tư vấn sát nhu cầu hơn và báo giá nhanh hơn.</p>
+  </div>
+  <div class="contact-support-grid">
+    <article class="contact-support-card">
+      <h3>Checklist gửi yêu cầu</h3>
+      <ol class="contact-checklist">
+        <li>Diện tích hoặc khối lượng công việc cần sơn, chống thấm hoặc bột bả.</li>
+        <li>Bề mặt thi công: tường mới, tường cũ, sàn, mái, kim loại hay khu vực ẩm ướt.</li>
+        <li>Thương hiệu hoặc mã sơn đang quan tâm nếu bạn đã có sẵn.</li>
+        <li>Địa chỉ giao hàng và thời điểm cần nhận vật tư.</li>
+      </ol>
+      <p class="contact-note">Nếu là đơn công trình nhiều đợt, nên gửi thêm tiến độ từng giai đoạn để dễ sắp lịch giao hàng.</p>
+    </article>
+
+    <article class="contact-support-card">
+      <h3>Bản đồ cửa hàng</h3>
       <iframe
         class="map-embed"
         src="https://www.google.com/maps?q=10.7569515,106.6221241&z=17&output=embed"
@@ -18,8 +106,10 @@
         loading="lazy"
         title="Bản đồ đại lý"
       ></iframe>
-      <a class="btn btn-outline" href="https://www.google.com/maps/place/392+TL10,+B%C3%ACnh+Tr%E1%BB%8B+%C4%90%C3%B4ng,+B%C3%ACnh+T%C3%A2n,+Th%C3%A0nh+ph%E1%BB%91+H%E1%BB%93+Ch%C3%AD+Minh,+Vi%E1%BB%87t+Nam/@10.7569568,106.6195492,17z/data=!3m1!4b1!4m6!3m5!1s0x31752c2ec14b688b:0xe43d34f4d14c3f98!8m2!3d10.7569515!4d106.6221241!16s%2Fg%2F11rp3djv_1?entry=ttu&g_ep=EgoyMDI2MDEyOC4wIKXMDSoASAFQAw%3D%3D">Xem trên Google Maps</a>
-    </div>
+      <div class="contact-map-actions">
+        <a class="btn btn-outline" href="{{ business_maps_url }}" target="_blank" rel="noopener">Xem trên Google Maps</a>
+      </div>
+    </article>
   </div>
 </section>
 {% endblock %}

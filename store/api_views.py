@@ -3,8 +3,6 @@ from rest_framework.decorators import api_view, action, permission_classes, auth
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
-from decimal import Decimal
 from .models import Product, Order, ProductView, Brand, Category, Cart, CartItem, Coupon
 from .serializers import (
     ProductSerializer, OrderSerializer, ProductViewSerializer,
@@ -15,13 +13,34 @@ from .recommendation_views import (
 )
 
 
+def _parse_int(value, field_name, default=None):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        if default is not None:
+            return default
+        raise ValueError(f'{field_name} must be an integer')
+
+
+def _session_cart_total_items(cart):
+    total = 0
+    for quantity in cart.values():
+        try:
+            total += int(quantity)
+        except (TypeError, ValueError):
+            continue
+    return total
+
+
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint for products
     GET /api/products/ - List all products
     GET /api/products/<id>/ - Get product details
     """
-    queryset = Product.objects.filter(is_active=True)
+    queryset = Product.with_effective_stock(
+        Product.objects.filter(is_active=True).select_related('brand', 'category')
+    )
     serializer_class = ProductSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -106,19 +125,45 @@ def cart_view_api(request):
     cart = request.session.get('cart', {})
     items = []
     total = 0
+    cart_changed = False
     
     for product_id, quantity in cart.items():
         try:
-            product = Product.objects.get(pk=int(product_id), is_active=True)
-            item_total = product.price * quantity
+            product = Product.with_effective_stock(
+                Product.objects.filter(is_active=True).select_related('brand', 'category')
+            ).get(pk=int(product_id))
+        except (Product.DoesNotExist, ValueError, TypeError):
+            cart_changed = True
+            continue
+
+        stock_state = product.get_stock_state()
+        bounded_quantity = int(quantity)
+        if stock_state['has_defined_stock']:
+            bounded_quantity = min(max(0, bounded_quantity), stock_state['stock_available'])
+            if bounded_quantity <= 0:
+                cart_changed = True
+                continue
+            if bounded_quantity != quantity:
+                cart_changed = True
+
+        try:
+            item_total = product.price * bounded_quantity
             total += item_total
             items.append({
                 'product': ProductSerializer(product).data,
-                'quantity': quantity,
+                'quantity': bounded_quantity,
                 'item_total': str(item_total)
             })
-        except Product.DoesNotExist:
+        except Exception:
+            cart_changed = True
             continue
+
+    if cart_changed:
+        request.session['cart'] = {
+            str(item['product']['id']): int(item['quantity'])
+            for item in items
+        }
+        request.session.modified = True
     
     return Response({
         'items': items,
@@ -132,14 +177,22 @@ def cart_view_api(request):
 def cart_add_api(request):
     """Add item to cart"""
     """Add item to cart (session-backed, public)."""
-    product_id = request.data.get('product_id')
-    quantity = int(request.data.get('quantity', 1))
+    try:
+        product_id = _parse_int(request.data.get('product_id'), 'product_id')
+    except ValueError as exc:
+        return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+    quantity = _parse_int(request.data.get('quantity', 1), 'quantity', default=1)
+    if quantity <= 0:
+        quantity = 1
     
     if not product_id:
         return Response({'error': 'product_id is required'}, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        product = Product.objects.get(pk=product_id, is_active=True)
+        product = Product.with_effective_stock(
+            Product.objects.filter(is_active=True).select_related('brand', 'category')
+        ).get(pk=product_id)
     except Product.DoesNotExist:
         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
     
@@ -149,15 +202,21 @@ def cart_add_api(request):
     
     cart = request.session.get('cart', {})
     product_key = str(product_id)
-    
-    if product_key in cart:
-        cart[product_key] += quantity
+
+    stock_state = product.get_stock_state()
+    current_quantity = int(cart.get(product_key, 0))
+
+    if stock_state['has_defined_stock'] and stock_state['stock_available'] <= 0:
+        return Response({'success': False, 'error': 'out_of_stock'}, status=status.HTTP_409_CONFLICT)
+
+    if stock_state['has_defined_stock']:
+        cart[product_key] = min(current_quantity + quantity, stock_state['stock_available'])
     else:
-        cart[product_key] = quantity
+        cart[product_key] = current_quantity + quantity
     
     request.session['cart'] = cart
     request.session.modified = True
-    total_items = sum(cart.values())
+    total_items = _session_cart_total_items(cart)
     
     return Response({
         'success': True,
@@ -194,7 +253,9 @@ def recommendations_api(request):
     
     if product_id:
         try:
-            product = Product.objects.get(pk=product_id, is_active=True)
+            product = Product.with_effective_stock(
+                Product.objects.filter(is_active=True).select_related('brand', 'category')
+            ).get(pk=product_id)
             similar = get_similar_products(product)[:10]
             return Response({
                 'recommendations': ProductSerializer(similar, many=True).data
@@ -203,7 +264,9 @@ def recommendations_api(request):
             return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
     
     # Return trending products
-    trending = Product.objects.filter(is_active=True).order_by('-created_at')[:10]
+    trending = Product.with_effective_stock(
+        Product.objects.filter(is_active=True).select_related('brand', 'category')
+    ).order_by('-created_at')[:10]
     return Response({
         'recommendations': ProductSerializer(trending, many=True).data
     })
@@ -214,30 +277,48 @@ def recommendations_api(request):
 @permission_classes([IsAuthenticated])
 def cart_add_item_api(request):
     """Add item to cart (API for tests)"""
-    product_id = request.data.get('product_id')
-    quantity = int(request.data.get('quantity', 1))
+    try:
+        product_id = _parse_int(request.data.get('product_id'), 'product_id')
+    except ValueError as exc:
+        return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+    quantity = _parse_int(request.data.get('quantity', 1), 'quantity', default=1)
+    if quantity <= 0:
+        quantity = 1
     
     if not product_id:
         return Response({'error': 'product_id is required'}, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        product = Product.objects.get(pk=product_id, is_active=True)
+        product = Product.with_effective_stock(
+            Product.objects.filter(is_active=True).select_related('brand', 'category')
+        ).get(pk=product_id)
     except Product.DoesNotExist:
         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
     
-    # Get or create cart for user
-    cart, created = Cart.objects.get_or_create(user=request.user)
-    
-    # Get or create cart item
-    cart_item, created = CartItem.objects.get_or_create(
-        cart=cart,
-        product=product,
-        defaults={'quantity': quantity, 'price': product.get_price()}
-    )
-    
-    if not created:
-        cart_item.quantity += quantity
-        cart_item.save()
+    stock_state = product.get_stock_state()
+    if stock_state['has_defined_stock'] and stock_state['stock_available'] <= 0:
+        return Response({'success': False, 'error': 'out_of_stock'}, status=status.HTTP_409_CONFLICT)
+
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+    cart_item = CartItem.objects.filter(cart=cart, product=product).first()
+    current_quantity = cart_item.quantity if cart_item else 0
+
+    bounded_quantity = current_quantity + quantity
+    if stock_state['has_defined_stock']:
+        bounded_quantity = min(bounded_quantity, stock_state['stock_available'])
+
+    if cart_item is None:
+        cart_item = CartItem.objects.create(
+            cart=cart,
+            product=product,
+            quantity=bounded_quantity,
+            price=product.get_price(),
+        )
+    else:
+        cart_item.quantity = bounded_quantity
+        cart_item.price = product.get_price()
+        cart_item.save(update_fields=['quantity', 'price'])
     
     # Calculate totals
     total_items = sum(item.quantity for item in cart.items.all())
@@ -256,14 +337,20 @@ def cart_add_item_api(request):
 @permission_classes([IsAuthenticated])
 def cart_update_item_api(request):
     """Update cart item quantity (API for tests)"""
-    product_id = request.data.get('product_id')
-    quantity = int(request.data.get('quantity', 1))
+    try:
+        product_id = _parse_int(request.data.get('product_id'), 'product_id')
+    except ValueError as exc:
+        return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+    quantity = _parse_int(request.data.get('quantity', 1), 'quantity', default=1)
     
     if not product_id:
         return Response({'error': 'product_id is required'}, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        product = Product.objects.get(pk=product_id, is_active=True)
+        product = Product.with_effective_stock(
+            Product.objects.filter(is_active=True).select_related('brand', 'category')
+        ).get(pk=product_id)
     except Product.DoesNotExist:
         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
     
@@ -271,10 +358,31 @@ def cart_update_item_api(request):
     try:
         cart = Cart.objects.get(user=request.user)
         cart_item = CartItem.objects.get(cart=cart, product=product)
-        cart_item.quantity = quantity
-        cart_item.save()
     except (Cart.DoesNotExist, CartItem.DoesNotExist):
         return Response({'error': 'Item not in cart'}, status=status.HTTP_404_NOT_FOUND)
+
+    if quantity <= 0:
+        cart_item.delete()
+        total_items = sum(item.quantity for item in cart.items.all())
+        subtotal = sum(item.get_total_price() for item in cart.items.all())
+        return Response({
+            'success': True,
+            'quantity': 0,
+            'total_items': total_items,
+            'subtotal': subtotal
+        }, status=status.HTTP_200_OK)
+
+    stock_state = product.get_stock_state()
+    bounded_quantity = quantity
+    if stock_state['has_defined_stock']:
+        if stock_state['stock_available'] <= 0:
+            cart_item.delete()
+            return Response({'success': False, 'error': 'out_of_stock'}, status=status.HTTP_409_CONFLICT)
+        bounded_quantity = min(quantity, stock_state['stock_available'])
+
+    cart_item.quantity = bounded_quantity
+    cart_item.price = product.get_price()
+    cart_item.save(update_fields=['quantity', 'price'])
     
     # Calculate totals
     total_items = sum(item.quantity for item in cart.items.all())

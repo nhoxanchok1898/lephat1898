@@ -73,7 +73,7 @@ def product_search_view(request):
             'brand': product.brand.name,
             'category': product.category.name if product.category else None,
             'rating': float(product.rating),
-            'stock_quantity': product.stock_quantity,
+            'stock_quantity': product.available_stock,
             'is_on_sale': product.is_on_sale,
             'is_new': product.is_new,
             'image_url': product.image.url if product.image else None,
