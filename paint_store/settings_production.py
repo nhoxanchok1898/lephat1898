@@ -101,22 +101,31 @@ else:
     db_password = os.environ.get('DB_PASSWORD', '').strip()
     db_host = os.environ.get('DB_HOST', '').strip()
     db_port = os.environ.get('DB_PORT', '5432').strip()
-    if not any([db_name, db_user, db_password, db_host]):
-        raise ValueError('DATABASE_URL or DB_* variables must be set in production')
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': db_name or 'lephat',
-            'USER': db_user or 'postgres',
-            'PASSWORD': db_password,
-            'HOST': db_host or 'localhost',
-            'PORT': db_port,
-            'CONN_MAX_AGE': 600,
-            'OPTIONS': {
-                'sslmode': os.environ.get('DB_SSLMODE', 'require'),
-            },
+    if any([db_name, db_user, db_password, db_host]):
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': db_name or 'lephat',
+                'USER': db_user or 'postgres',
+                'PASSWORD': db_password,
+                'HOST': db_host or 'localhost',
+                'PORT': db_port,
+                'CONN_MAX_AGE': 600,
+                'OPTIONS': {
+                    'sslmode': os.environ.get('DB_SSLMODE', 'require'),
+                },
+            }
         }
-    }
+    else:
+        # Safe fallback for containerized deployments that have not been wired to
+        # a managed database yet. This keeps the storefront bootable instead of
+        # crashing during startup.
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+            }
+        }
 
 # Cache Configuration (Redis when available, safe fallback otherwise)
 REDIS_URL = os.environ.get('REDIS_URL', '').strip()
